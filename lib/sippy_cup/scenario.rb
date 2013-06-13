@@ -2,12 +2,15 @@ require 'nokogiri'
 
 module SippyCup
   class Scenario
+    VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
+
     def initialize(name, &block)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.scenario name: name
       end
 
       @doc = builder.doc
+      @media = Media.new
       @scenario = @doc.xpath('//scenario').first
 
       instance_eval &block
@@ -87,6 +90,16 @@ module SippyCup
       @scenario << new_send(msg)
     end
 
+    ##
+    # Send DTMF digits
+    # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
+    def send_digits(digits, delay = 250)
+      digits.split('').each do |digit|
+        raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
+
+        self.pause delay
+
+
     def receive_bye
       @scenario.add_child new_recv response: 'BYE'
     end
@@ -109,6 +122,12 @@ module SippyCup
 
     def to_xml
       @doc.to_xml
+    end
+
+    def compile!
+      # TODO: Write out @doc to a .xml file
+      # TODO: Write out the combined silence and DTMF audio to a .pcap file
+      raise NotImplementedError
     end
 
   private
