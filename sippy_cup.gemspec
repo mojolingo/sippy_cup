@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Ben Klang"]
   s.email       = "bklang&mojolingo.com"
-  s.homepage    = "http://mojolingo.com"
+  s.homepage    = "https://github.com/bklang/sippy_cup"
   s.summary     = "SIPp profile and RTP stream generator"
   s.description = "This tool makes it easier to generate SIPp load tests with DTMF interactions."
 
