@@ -20,7 +20,7 @@ module SippyCup
           Int32.new(args[:timestamp] ? args[:timestamp] : 0),
           Int32.new(args[:ssrc_id] ? args[:ssrc_id] : 0),
           (args[:csrc_ids] ? Array(args[:csrc_ids]) : []),
-          ''
+          StructFu::String.new('')
         )
       end
 
@@ -38,6 +38,7 @@ module SippyCup
         num_csrcs.times do
           self[:csrc_ids] << Int32.new(str[i += 4, 4])
         end
+        self[:body] = str[i, str.length - i]
       end
 
       def csrc_count

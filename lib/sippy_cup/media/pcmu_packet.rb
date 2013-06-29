@@ -8,6 +8,7 @@ module SippyCup
 
       def initialize(marker = false)
         super RTP_PAYLOAD_ID, marker
+        @header.body = StructFu::String.new media
       end
 
       def media
