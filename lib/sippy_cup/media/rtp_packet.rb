@@ -5,6 +5,7 @@ require 'sippy_cup/media/rtp_header'
 module SippyCup
   class Media
     class RTPPacket < PacketFu::UDPPacket
+      attr_reader :header
 
       def initialize(payload_id = 0, marker = false)
         super({})
@@ -19,13 +20,6 @@ module SippyCup
         else
           raise NoMethodError
         end
-      end
-
-      def header
-        @header
-      end
-      def peek_format
-        "hello"
       end
     end
   end
