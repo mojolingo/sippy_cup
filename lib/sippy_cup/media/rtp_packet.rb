@@ -18,7 +18,7 @@ module SippyCup
           method = method.to_s.sub(/^rtp_/, '').to_sym
           @header.send method, *args
         else
-          raise NoMethodError
+          super
         end
       end
     end
