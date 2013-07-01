@@ -7,8 +7,8 @@ module SippyCup
     class RTPPayload
       attr_reader :header
 
-      def initialize(payload_id = 0, marker = false)
-        @header = RTPHeader.new marker: marker, payload_id: payload_id
+      def initialize(payload_id = 0)
+        @header = RTPHeader.new payload_id: payload_id
       end
 
       def to_bytes

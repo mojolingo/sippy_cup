@@ -1,8 +1,11 @@
 require 'ipaddr'
+require 'sippy_cup/media/pcmu_payload'
+require 'sippy_cup/media/dtmf_payload'
 
 module SippyCup
   class Media
     VALID_STEPS = %w{silence dtmf}.freeze
+    attr_accessor :sequence
     attr_reader :packets
 
     def initialize(from_addr, from_port, to_addr, to_port, generator = PCMUPayload)
@@ -33,10 +36,10 @@ module SippyCup
         when 'silence'
           # value is the duration in milliseconds
           # append that many milliseconds of silent RTP audio
-          value.to_i.times do
+          (value.to_i / @generator::PTIME).times do
             packet = new_packet
             rtp_frame = @generator.new
-            rtp_frame.rtp_timestamp = timestamp += rtp_frame.interval
+            rtp_frame.rtp_timestamp = timestamp += rtp_frame.timestamp_interval
             rtp_frame.rtp_sequence_num = sequence_number += 1
             rtp_frame.rtp_ssrc_id = ssrc_id
             packet.headers.last.body = rtp_frame.to_bytes
@@ -46,6 +49,22 @@ module SippyCup
         when 'dtmf'
           # value is the DTMF digit to send
           # append that RFC2833 digit
+          # Assume 0.5 second duration for now
+          count = 500 / DTMFPayload::PTIME
+          count.times do |i|
+            packet = new_packet
+            dtmf_frame = DTMFPayload.new value
+            dtmf_frame.rtp_marker = 1 if i == 0
+            dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
+            dtmf_frame.rtp_sequence_num = sequence_number += 1
+            dtmf_frame.rtp_ssrc_id = ssrc_id
+            dtmf_frame.end_of_event = (count == i) # Last packet?
+            packet.headers.last.body = dtmf_frame.to_bytes
+            packet.recalc
+            @packets << packet
+          end
+          # Now bump up the timestamp to cover the gap
+          timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
         else
         end
       end

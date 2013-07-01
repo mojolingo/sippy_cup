@@ -3,7 +3,7 @@ require 'packetfu'
 
 module SippyCup
   class Media
-    class RTPHeader < Struct.new(:version, :padding, :extension, :marker, :payload_id, :sequence_num, :timestamp, :ssrc_id, :csrc_ids, :body)
+    class RTPHeader < Struct.new(:version, :padding, :extension, :marker, :payload_id, :sequence_num, :timestamp, :ssrc_id, :csrc_ids)
       VERSION    = 2
 
       include StructFu
@@ -20,7 +20,6 @@ module SippyCup
           Int32.new(args[:timestamp] ? args[:timestamp] : 0),
           Int32.new(args[:ssrc_id] ? args[:ssrc_id] : 0),
           (args[:csrc_ids] ? Array(args[:csrc_ids]) : []),
-          StructFu::String.new('')
         )
       end
 
@@ -52,14 +51,14 @@ module SippyCup
       def to_s
         bytes = [
           (version << 6) + (padding << 5) + (extension << 4) + (csrc_count),
-          (marker << 7) + (payload_id)
-        ].pack 'C*'
-        bytes << sequence_num.to_s
-        bytes << timestamp.to_s
-        bytes << ssrc_id.to_s
+          (marker << 7) + (payload_id),
+          sequence_num,
+          timestamp,
+          ssrc_id
+        ].pack 'CCnNN'
 
         csrc_ids.each do |csrc_id|
-          bytes << csrc_id.to_s
+          bytes << [csrc_id].pack 'N'
         end
 
         bytes
