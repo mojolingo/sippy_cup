@@ -4,13 +4,15 @@ require 'sippy_cup/media/rtp_header'
 
 module SippyCup
   class Media
-    class RTPPacket < PacketFu::UDPPacket
+    class RTPPayload
       attr_reader :header
 
       def initialize(payload_id = 0, marker = false)
-        super({})
         @header = RTPHeader.new marker: marker, payload_id: payload_id
-        @headers << @header
+      end
+
+      def to_bytes
+        @header.to_s + media
       end
 
       def method_missing(method, *args)
