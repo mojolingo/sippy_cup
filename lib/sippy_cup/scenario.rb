@@ -161,7 +161,7 @@ module SippyCup
 
     def new_send(msg)
       send = Nokogiri::XML::Node.new 'send', @doc
-      send << Nokogiri::XML::Text.new(msg, @doc)
+      send << Nokogiri::XML::CDATA.new(@doc, msg)
       send
     end
 
