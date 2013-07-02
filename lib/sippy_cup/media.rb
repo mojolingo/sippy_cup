@@ -5,6 +5,8 @@ require 'sippy_cup/media/dtmf_payload'
 module SippyCup
   class Media
     VALID_STEPS = %w{silence dtmf}.freeze
+    USEC = 1_000_000
+    MSEC = 1_000
     attr_accessor :sequence
     attr_reader :packets
 
@@ -26,6 +28,8 @@ module SippyCup
 
     def compile!
       sequence_number = 0
+      @start_time = Time.now
+      @pcap_file = PacketFu::PcapFile.new
       timestamp = 0
       ssrc_id = rand 2147483648
 
@@ -44,7 +48,7 @@ module SippyCup
             rtp_frame.rtp_ssrc_id = ssrc_id
             packet.headers.last.body = rtp_frame.to_bytes
             packet.recalc
-            @packets << packet
+            @pcap_file.body << get_pcap_packet(timestamp, packet)
           end
         when 'dtmf'
           # value is the DTMF digit to send
@@ -55,19 +59,21 @@ module SippyCup
             packet = new_packet
             dtmf_frame = DTMFPayload.new value
             dtmf_frame.rtp_marker = 1 if i == 0
-            dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
+            #dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
+            dtmf_frame.rtp_timestamp = timestamp += dtmf_frame.timestamp_interval
             dtmf_frame.rtp_sequence_num = sequence_number += 1
             dtmf_frame.rtp_ssrc_id = ssrc_id
             dtmf_frame.end_of_event = (count == i) # Last packet?
             packet.headers.last.body = dtmf_frame.to_bytes
             packet.recalc
-            @packets << packet
+            @pcap_file.body << get_pcap_packet(timestamp, packet)
           end
           # Now bump up the timestamp to cover the gap
           timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
         else
         end
       end
+      @pcap_file
     end
   private
     def get_step(input)
@@ -75,6 +81,22 @@ module SippyCup
       raise "Invalid Sequence: #{input}" unless VALID_STEPS.include? action
 
       [action, value]
+    end
+
+
+    def get_pcap_packet(offset, packet)
+      PacketFu::PcapPacket.new :timestamp => next_ts(offset),
+                               :incl_len => packet.to_s.size,
+                               :orig_len => packet.to_s.size,
+                               :data => packet.to_s
+    end
+
+    def next_ts(offset)
+      # TODO FIXME CHEATING: Assume each packet is 20ms long.
+      distance = offset * MSEC
+      sec = @start_time.to_i + (distance / USEC)
+      usec = distance % USEC
+      PacketFu::Timestamp.new(sec: sec, usec: usec).to_s
     end
 
     def new_packet
