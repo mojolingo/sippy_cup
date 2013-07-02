@@ -28,9 +28,10 @@ module SippyCup
 
     def compile!
       sequence_number = 0
-      @start_time = Time.now
+      start_time = Time.now
       @pcap_file = PacketFu::PcapFile.new
       timestamp = 0
+      elapsed = 0
       ssrc_id = rand 2147483648
       first_audio = true
 
@@ -52,11 +53,12 @@ module SippyCup
             end
 
             rtp_frame.rtp_timestamp = timestamp += rtp_frame.timestamp_interval
+            elapsed += rtp_frame.ptime
             rtp_frame.rtp_sequence_num = sequence_number += 1
             rtp_frame.rtp_ssrc_id = ssrc_id
             packet.headers.last.body = rtp_frame.to_bytes
             packet.recalc
-            @pcap_file.body << get_pcap_packet(timestamp, packet)
+            @pcap_file.body << get_pcap_packet(packet, next_ts(start_time, elapsed))
           end
         when 'dtmf'
           # value is the DTMF digit to send
@@ -67,17 +69,17 @@ module SippyCup
             packet = new_packet
             dtmf_frame = DTMFPayload.new value
             dtmf_frame.rtp_marker = 1 if i == 0
-            #dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
-            dtmf_frame.rtp_timestamp = timestamp += dtmf_frame.timestamp_interval
+            dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
+            #dtmf_frame.rtp_timestamp = timestamp += dtmf_frame.timestamp_interval
             dtmf_frame.rtp_sequence_num = sequence_number += 1
             dtmf_frame.rtp_ssrc_id = ssrc_id
             dtmf_frame.end_of_event = (count == i) # Last packet?
             packet.headers.last.body = dtmf_frame.to_bytes
             packet.recalc
-            @pcap_file.body << get_pcap_packet(timestamp, packet)
+            @pcap_file.body << get_pcap_packet(packet, next_ts(start_time, elapsed))
           end
           # Now bump up the timestamp to cover the gap
-          #timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
+          timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
         else
         end
       end
@@ -92,17 +94,16 @@ module SippyCup
     end
 
 
-    def get_pcap_packet(offset, packet)
-      PacketFu::PcapPacket.new :timestamp => next_ts(offset),
+    def get_pcap_packet(packet, timestamp)
+      PacketFu::PcapPacket.new :timestamp => timestamp,
                                :incl_len => packet.to_s.size,
                                :orig_len => packet.to_s.size,
                                :data => packet.to_s
     end
 
-    def next_ts(offset)
-      # TODO FIXME CHEATING: Assume each packet is 20ms long.
-      distance = (offset / 8) * MSEC
-      sec = @start_time.to_i + (distance / USEC)
+    def next_ts(start_time, offset)
+      distance = offset * MSEC
+      sec = start_time.to_i + (distance / USEC)
       usec = distance % USEC
       PacketFu::Timestamp.new(sec: sec, usec: usec).to_s
     end
