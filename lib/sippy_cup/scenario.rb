@@ -120,6 +120,21 @@ module SippyCup
       end
     end
 
+    def send_bye
+      msg = <<-MSG
+
+        BYE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+        [last_Via:]
+        [last_From:]
+        [last_To:]
+        [last_Call-ID]
+        CSeq: [cseq] BYE
+        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        Content-Length: 0
+      MSG
+      @scenario << new_send(msg)
+    end
 
     def receive_bye
       @scenario.add_child new_recv response: 'BYE'
