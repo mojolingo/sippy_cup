@@ -1,7 +1,7 @@
 %w{
   scenario
   media
-}.each {|r| require r}
+}.each {|r| require "sippy_cup/#{r}"}
 
 module SippyCup
 
