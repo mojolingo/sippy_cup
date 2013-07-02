@@ -189,7 +189,9 @@ module SippyCup
 
     def new_send(msg)
       send = Nokogiri::XML::Node.new 'send', @doc
+      send << "\n"
       send << Nokogiri::XML::CDATA.new(@doc, msg)
+      send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
       send
     end
 
