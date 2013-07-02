@@ -68,17 +68,17 @@ module SippyCup
     end
 
     def receive_trying(optional = true)
-      @scenario.add_child new_recv response: 100, optional: optional
+      @scenario << new_recv(response: 100, optional: optional)
     end
     alias :receive_100 :receive_trying
       
     def receive_ringing(optional = true)
-      @scenario.add_child new_recv response: 180, optional: optional
+      @scenario << new_recv(response: 180, optional: optional)
     end
     alias :receive_180 :receive_ringing
       
     def receive_progress(optional = true)
-      @scenario.add_child new_recv response: 183, optional: optional
+      @scenario << new_recv(response: 183, optional: optional)
     end
     alias :receive_183 :receive_progress
 
@@ -86,7 +86,7 @@ module SippyCup
       recv = new_recv response: 200, optional: false
       # Record Record Set: Make the Route headers available via [route] later
       recv['rrs'] = true
-      @scenario.add_child recv
+      @scenario << recv
     end
     alias :receive_200 :receive_answer
 
@@ -114,8 +114,8 @@ module SippyCup
       nop << action
       exec = Nokogiri::XML::Node.new 'exec', @doc
       exec['play_pcap_audio'] = "#{@filename}.pcap"
-      action.add_child exec
-      @scenario.add_child nop
+      action << exec
+      @scenario << nop
     end
 
     ##
@@ -149,7 +149,7 @@ module SippyCup
     end
 
     def receive_bye
-      @scenario.add_child new_recv request: 'BYE'
+      @scenario << new_recv(request: 'BYE')
     end
 
     def ack_bye
@@ -184,7 +184,7 @@ module SippyCup
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
       pause['milliseconds'] = msec.to_i
-      @scenario.add_child pause
+      @scenario << pause
     end
 
     def new_send(msg)
