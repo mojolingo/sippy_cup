@@ -101,7 +101,7 @@ module SippyCup
 
     def next_ts(offset)
       # TODO FIXME CHEATING: Assume each packet is 20ms long.
-      distance = offset * MSEC
+      distance = (offset / 8) * MSEC
       sec = @start_time.to_i + (distance / USEC)
       usec = distance % USEC
       PacketFu::Timestamp.new(sec: sec, usec: usec).to_s
