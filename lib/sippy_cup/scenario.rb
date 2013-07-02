@@ -3,24 +3,38 @@ require 'nokogiri'
 module SippyCup
   class Scenario
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
+    MSEC = 1_000
 
-    def initialize(name, &block)
+    def initialize(name, args = {}, &block)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.scenario name: name
       end
 
+      parse_args args
+
       @doc = builder.doc
-      @media = Media.new
+      @media = Media.new @from_addr, @from_port, @to_addr, @to_port
       @scenario = @doc.xpath('//scenario').first
 
       instance_eval &block
     end
 
+    def parse_args(args)
+      raise ArgumentError, "Must include source IP:PORT" unless args.keys.include? :source
+      raise ArgumentError, "Must include destination IP:PORT" unless args.keys.include? :destination
+
+      @from_addr, @from_port = args[:source].split ':'
+      @to_addr, @to_port = args[:destination].split ':'
+    end
+
+    def compile_media
+      @media.compile!
+    end
+
     def sleep(seconds)
       # TODO play silent audio files to the server to fill the gap
-      pause = Nokogiri::XML::Node.new 'pause', @doc
-      pause['milliseconds'] = seconds
-      @scenario.add_child pause
+      pause seconds * MSEC
+      @media << "silence:#{seconds * MSEC}"
     end
 
     def invite
@@ -95,11 +109,16 @@ module SippyCup
     ##
     # Send DTMF digits
     # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
-    def send_digits(digits, delay = 250)
+    def send_digits(digits, delay = 0.250)
+      delay = 0.250 * MSEC # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
 
-        self.pause delay
+        @media << "dtmf:#{digit}"
+        @media << "silence:#{delay}"
+        pause delay * 2
+      end
+    end
 
 
     def receive_bye
@@ -134,6 +153,11 @@ module SippyCup
     end
 
   private
+    def pause(msec)
+      pause = Nokogiri::XML::Node.new 'pause', @doc
+      pause['milliseconds'] = msec.to_i
+      @scenario.add_child pause
+    end
 
     def new_send(msg)
       send = Nokogiri::XML::Node.new 'send', @doc
