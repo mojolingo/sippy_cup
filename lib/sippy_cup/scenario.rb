@@ -25,6 +25,7 @@ module SippyCup
 
     def invite
       msg = <<-INVITE
+
         INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
         From: sipp <sip:[field0]@[local_ip]>;tag=[call_number]
@@ -76,6 +77,7 @@ module SippyCup
 
     def ack_answer
       msg = <<-ACK
+
         ACK [next_url] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
         From: <sip:[field0]@[local_ip]>;tag=[call_number]
@@ -106,6 +108,7 @@ module SippyCup
 
     def ack_bye
       msg = <<-ACK
+
         SIP/2.0 200 OK
         [last_Via:]
         [last_From:]
