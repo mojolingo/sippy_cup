@@ -26,6 +26,7 @@ module SippyCup
 
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
+      @from_user = args[:from_user] || "sipp"
     end
 
     def compile_media
@@ -45,7 +46,7 @@ module SippyCup
 
         INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: sipp <sip:[field0]@[local_ip]>;tag=[call_number]
+        From: sipp <sip:#{@from_user}@[local_ip]>;tag=[call_number]
         To: <sip:[service]@[remote_ip]:[remote_port]>
         Call-ID: [call_id]
         CSeq: [cseq] INVITE
@@ -99,7 +100,7 @@ module SippyCup
 
         ACK [next_url] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:[field0]@[local_ip]>;tag=[call_number]
+        From: <sip:#{@from_user}@[local_ip]>;tag=[call_number]
         [last_To:]
         [routes]
         Call-ID: [call_id]
