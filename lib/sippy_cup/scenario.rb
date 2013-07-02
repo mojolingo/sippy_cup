@@ -149,7 +149,7 @@ module SippyCup
     end
 
     def receive_bye
-      @scenario.add_child new_recv response: 'BYE'
+      @scenario.add_child new_recv request: 'BYE'
     end
 
     def ack_bye
