@@ -32,6 +32,7 @@ module SippyCup
       @pcap_file = PacketFu::PcapFile.new
       timestamp = 0
       ssrc_id = rand 2147483648
+      first_audio = true
 
       @sequence.each do |input|
         action, value = get_step input
@@ -43,6 +44,13 @@ module SippyCup
           (value.to_i / @generator::PTIME).times do
             packet = new_packet
             rtp_frame = @generator.new
+
+            # The first RTP audio packet should have the marker bit set
+            if first_audio
+              rtp_frame.rtp_marker = 1
+              first_audio = false
+            end
+
             rtp_frame.rtp_timestamp = timestamp += rtp_frame.timestamp_interval
             rtp_frame.rtp_sequence_num = sequence_number += 1
             rtp_frame.rtp_ssrc_id = ssrc_id
