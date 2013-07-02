@@ -105,6 +105,17 @@ module SippyCup
         Content-Length: 0
       ACK
       @scenario << new_send(msg)
+      start_media
+    end
+
+    def start_media
+      nop = Nokogiri::XML::Node.new 'nop', @doc
+      action = Nokogiri::XML::Node.new 'action', @doc
+      nop << action
+      exec = Nokogiri::XML::Node.new 'exec', @doc
+      exec['play_pcap_audio'] = "#{@filename}.pcap"
+      action.add_child exec
+      @scenario.add_child nop
     end
 
     ##
