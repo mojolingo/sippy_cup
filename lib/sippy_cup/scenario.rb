@@ -50,7 +50,7 @@ module SippyCup
         To: <sip:[service]@[remote_ip]:[remote_port]>
         Call-ID: [call_id]
         CSeq: [cseq] INVITE
-        Contact: sip:[field0]@[local_ip]:[local_port]
+        Contact: sip:#{@from_user}@[local_ip]:[local_port]
         Max-Forwards: 100
         Content-Type: application/sdp
         Content-Length: [len]
@@ -105,7 +105,7 @@ module SippyCup
         [routes]
         Call-ID: [call_id]
         CSeq: [cseq] ACK
-        Contact: sip:[field0]@[local_ip]:[local_port]
+        Contact: sip:#{@from_user}@[local_ip]:[local_port]
         Max-Forwards: 100
         Content-Length: 0
       ACK
