@@ -39,6 +39,8 @@ module SippyCup
     end
 
     def invite
+      # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
+      # get this from the DTMF payload generator
       msg = <<-INVITE
 
         INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
@@ -59,6 +61,8 @@ module SippyCup
         t=0 0
         m=audio [media_port] RTP/AVP 0
         a=rtpmap:0 PCMU/8000
+        a=rtpmap:101 telephone-event/8000
+        a=fmtp:101 0-15
       INVITE
       send = new_send msg
       # FIXME: Does this need to be configurable?
