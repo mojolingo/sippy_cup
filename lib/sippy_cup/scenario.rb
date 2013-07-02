@@ -58,7 +58,7 @@ module SippyCup
         s=-
         c=IN IP[media_ip_type] [media_ip]
         t=0 0
-        m=audio [media_port] RTP/AVP 0
+        m=audio [media_port] RTP/AVP 0 101
         a=rtpmap:0 PCMU/8000
         a=rtpmap:101 telephone-event/8000
         a=fmtp:101 0-15
