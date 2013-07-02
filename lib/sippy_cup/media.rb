@@ -53,8 +53,8 @@ module SippyCup
         when 'dtmf'
           # value is the DTMF digit to send
           # append that RFC2833 digit
-          # Assume 0.5 second duration for now
-          count = 500 / DTMFPayload::PTIME
+          # Assume 0.25 second duration for now
+          count = 250 / DTMFPayload::PTIME
           count.times do |i|
             packet = new_packet
             dtmf_frame = DTMFPayload.new value
@@ -69,7 +69,7 @@ module SippyCup
             @pcap_file.body << get_pcap_packet(timestamp, packet)
           end
           # Now bump up the timestamp to cover the gap
-          timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
+          #timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL
         else
         end
       end
