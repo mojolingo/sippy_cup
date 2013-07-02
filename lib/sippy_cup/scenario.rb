@@ -12,6 +12,7 @@ module SippyCup
 
       parse_args args
 
+      @filename = name.downcase.gsub(/\W+/, '_')
       @doc = builder.doc
       @media = Media.new @from_addr, @from_port, @to_addr, @to_port
       @scenario = @doc.xpath('//scenario').first
@@ -162,9 +163,10 @@ module SippyCup
     end
 
     def compile!
-      # TODO: Write out @doc to a .xml file
-      # TODO: Write out the combined silence and DTMF audio to a .pcap file
-      raise NotImplementedError
+      xml_file = File.open "#{@filename}.xml", 'w' do |file|
+        file.write @doc.to_xml
+      end
+      compile_media.to_file filename: "#{@filename}.pcap"
     end
 
   private
