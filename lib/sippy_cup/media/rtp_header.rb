@@ -58,7 +58,7 @@ module SippyCup
         ].pack 'CCnNN'
 
         csrc_ids.each do |csrc_id|
-          bytes << [csrc_id].pack 'N'
+          bytes << [csrc_id].pack('N')
         end
 
         bytes
