@@ -39,7 +39,8 @@ module SippyCup
       @media << "silence:#{seconds * MSEC}"
     end
 
-    def invite(opts = {retrans: 500})
+    def invite(opts = {})
+      opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-INVITE
@@ -69,25 +70,29 @@ module SippyCup
       @scenario << send
     end
 
-    def receive_trying(opts = {optional: true})
+    def receive_trying(opts = {})
+      opts[:optional] ||= true
       opts.merge! response: 100
       @scenario << new_recv(opts)
     end
     alias :receive_100 :receive_trying
       
-    def receive_ringing(opts = {optional: true})
+    def receive_ringing(opts = {})
+      opts[:optional] ||= true
       opts.merge! response: 180
       @scenario << new_recv(opts)
     end
     alias :receive_180 :receive_ringing
       
-    def receive_progress(opts = {optional: true})
+    def receive_progress(opts = {})
+      opts[:optional] ||= true
       opts.merge! response: 183
       @scenario << new_recv(opts)
     end
     alias :receive_183 :receive_progress
 
-    def receive_answer(opts = {optional: false})
+    def receive_answer(opts = {})
+      opts[:optional] ||= false
       opts.merge! response: 200
       recv = new_recv opts
       # Record Record Set: Make the Route headers available via [route] later
