@@ -217,7 +217,7 @@ module SippyCup
       recv['response'] = opts.delete :response if opts.keys.include? :response
       recv['optional'] = !!opts.delete(:optional)
       opts.each do |k,v|
-        opts[k.to_s] = v
+        recv[k.to_s] = v
       end
       recv
     end
