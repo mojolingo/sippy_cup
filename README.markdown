@@ -28,6 +28,9 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.ack_bye
 end
 
+# Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
+# * sippy_cup.xml
+# * sippy_cup.pcap
 scenario.compile!
 ```
 
