@@ -28,11 +28,24 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.ack_bye
 end
 
-File.open 'sippy_cup.xml', 'w' do |file|
-  file.write scenario.to_xml
-end
-
-pcap = scenario.compile_media
-
-pcap.to_file filename: 'sippy_cup.pcap'
+scenario.compile!
 ```
+
+Customize Your Scenarios
+========================
+
+With Sippy Cup, you can add additional attributes to each step of the scenario:
+```Ruby
+
+#This limits the amount of time the server has to reply to an invite (3 seconds)
+s.receive_answer timeout: 3000
+
+#You can override the default 'optional' parameters
+s.receive_ringing optional: false
+s.receive_answer optional: true
+
+#Let's combine multiple attributes...
+s.receive_answer timeout: 3000, crlf: true
+```
+
+For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html)

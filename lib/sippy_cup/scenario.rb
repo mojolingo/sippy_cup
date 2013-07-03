@@ -39,7 +39,8 @@ module SippyCup
       @media << "silence:#{seconds * MSEC}"
     end
 
-    def invite
+    def invite(opts = {})
+      opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-INVITE
@@ -65,37 +66,41 @@ module SippyCup
         a=rtpmap:101 telephone-event/8000
         a=fmtp:101 0-15
       INVITE
-      send = new_send msg
-      # FIXME: Does this need to be configurable?
-      send['retrans'] = 500
-
+      send = new_send msg, opts
       @scenario << send
     end
 
-    def receive_trying(optional = true)
-      @scenario << new_recv(response: 100, optional: optional)
+    def receive_trying(opts = {})
+      opts[:optional] = true if opts[:optional].nil?
+      opts.merge! response: 100
+      @scenario << new_recv(opts)
     end
     alias :receive_100 :receive_trying
       
-    def receive_ringing(optional = true)
-      @scenario << new_recv(response: 180, optional: optional)
+    def receive_ringing(opts = {})
+      opts[:optional] = true if opts[:optional].nil?
+      opts.merge! response: 180
+      @scenario << new_recv(opts)
     end
     alias :receive_180 :receive_ringing
       
-    def receive_progress(optional = true)
-      @scenario << new_recv(response: 183, optional: optional)
+    def receive_progress(opts = {})
+      opts[:optional] = true if opts[:optional].nil?
+      opts.merge! response: 183
+      @scenario << new_recv(opts)
     end
     alias :receive_183 :receive_progress
 
-    def receive_answer
-      recv = new_recv response: 200, optional: false
+    def receive_answer(opts = {})
+      opts.merge! response: 200
+      recv = new_recv opts
       # Record Record Set: Make the Route headers available via [route] later
       recv['rrs'] = true
       @scenario << recv
     end
     alias :receive_200 :receive_answer
 
-    def ack_answer
+    def ack_answer(opts = {})
       msg = <<-ACK
 
         ACK [next_url] SIP/2.0
@@ -109,7 +114,7 @@ module SippyCup
         Max-Forwards: 100
         Content-Length: 0
       ACK
-      @scenario << new_send(msg)
+      @scenario << new_send(msg, opts)
       start_media
     end
 
@@ -137,7 +142,7 @@ module SippyCup
       end
     end
 
-    def send_bye
+    def send_bye(opts = {})
       msg = <<-MSG
 
         BYE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
@@ -150,14 +155,15 @@ module SippyCup
         Max-Forwards: 100
         Content-Length: 0
       MSG
-      @scenario << new_send(msg)
+      @scenario << new_send(msg, opts)
     end
 
-    def receive_bye
-      @scenario << new_recv(request: 'BYE')
+    def receive_bye(opts = {})
+      opts.merge! request: 'BYE'
+      @scenario << new_recv(opts)
     end
 
-    def ack_bye
+    def ack_bye(opts = {})
       msg = <<-ACK
 
         SIP/2.0 200 OK
@@ -171,7 +177,7 @@ module SippyCup
         Max-Forwards: 100
         Content-Length: 0
       ACK
-      @scenario << new_send(msg)
+      @scenario << new_send(msg, opts)
     end
 
     def to_xml
@@ -192,8 +198,11 @@ module SippyCup
       @scenario << pause
     end
 
-    def new_send(msg)
+    def new_send(msg, opts = {})
       send = Nokogiri::XML::Node.new 'send', @doc
+      opts.each do |k,v|
+        send[k.to_s] = v
+      end
       send << "\n"
       send << Nokogiri::XML::CDATA.new(@doc, msg)
       send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
@@ -203,9 +212,12 @@ module SippyCup
     def new_recv(opts = {})
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
       recv = Nokogiri::XML::Node.new 'recv', @doc
-      recv['request']  = opts[:request]  if opts.keys.include? :request
-      recv['response'] = opts[:response] if opts.keys.include? :response
-      recv['optional'] = !!opts[:optional]
+      recv['request']  = opts.delete :request  if opts.keys.include? :request
+      recv['response'] = opts.delete :response if opts.keys.include? :response
+      recv['optional'] = !!opts.delete(:optional)
+      opts.each do |k,v|
+        recv[k.to_s] = v
+      end
       recv
     end
   end
