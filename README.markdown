@@ -28,11 +28,5 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.ack_bye
 end
 
-File.open 'sippy_cup.xml', 'w' do |file|
-  file.write scenario.to_xml
-end
-
-pcap = scenario.compile_media
-
-pcap.to_file filename: 'sippy_cup.pcap'
+scenario.compile!
 ```
