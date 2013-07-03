@@ -30,3 +30,19 @@ end
 
 scenario.compile!
 ```
+
+Customize Your Scenarios
+========================
+
+With Sippy Cup, you can add additional attributes to each step of the scenario:
+```Ruby
+
+#This limits the amount of time the server has to reply to an invite (3 seconds)
+s.receive_answer timeout: 3000
+
+#You can override the default 'optional' parameters
+s.receive_ringing optional: false
+s.receive_answer optional: true
+```
+
+For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html)
