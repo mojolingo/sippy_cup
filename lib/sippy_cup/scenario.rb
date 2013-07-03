@@ -92,7 +92,6 @@ module SippyCup
     alias :receive_183 :receive_progress
 
     def receive_answer(opts = {})
-      opts[:optional] = false if opts[:optional].nil?
       opts.merge! response: 200
       recv = new_recv opts
       # Record Record Set: Make the Route headers available via [route] later
