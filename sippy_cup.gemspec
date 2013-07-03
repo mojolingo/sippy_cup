@@ -6,8 +6,8 @@ Gem::Specification.new do |s|
   s.name        = "sippy_cup"
   s.version     = SippyCup::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Ben Klang"]
-  s.email       = "bklang&mojolingo.com"
+  s.authors     = ["Ben Klang", "Will Drexler"]
+  s.email       = ["bklang&mojolingo.com", "wdrexler&mojolingo.com"]
   s.homepage    = "https://github.com/bklang/sippy_cup"
   s.summary     = "SIPp profile and RTP stream generator"
   s.description = "This tool makes it easier to generate SIPp load tests with DTMF interactions."
