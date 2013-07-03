@@ -43,6 +43,9 @@ s.receive_answer timeout: 3000
 #You can override the default 'optional' parameters
 s.receive_ringing optional: false
 s.receive_answer optional: true
+
+#Let's combine multiple attributes...
+s.receive_answer timeout: 3000, crlf: true
 ```
 
 For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html)
