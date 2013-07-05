@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency 'packetfu'
-  s.add_runtime_dependency 'nokogiri', ["~> 1.5.0"]
+  s.add_runtime_dependency 'nokogiri', ["~> 1.6.0"]
 
   s.add_development_dependency 'guard-rspec'
   s.add_development_dependency 'rspec', ["~> 2.11"]
