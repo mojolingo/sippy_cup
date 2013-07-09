@@ -11,8 +11,7 @@ module SippyCup
       end
 
       parse_args args
-
-      @filename = name.downcase.gsub(/\W+/, '_')
+      @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @doc = builder.doc
       @media = Media.new @from_addr, @from_port, @to_addr, @to_port
       @scenario = @doc.xpath('//scenario').first
