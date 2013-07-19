@@ -1,3 +1,5 @@
+require 'sippy_cup/runner'
+
 namespace :sippy_cup do
   desc "Compile the given scenario"
   task :compile, :scenario do |t, args|
