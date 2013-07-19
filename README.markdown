@@ -74,19 +74,19 @@ By default, sippy cup will automatically generate a YAML file with the following
 
 Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
-  <dt>`:source_port:`</dt>
+  <dt>:source_port:</dt>
   <dd>The local port from which to originate SIP traffic. This defaults to port 8836</dd>
 
-  <dt>`:stats_file:`</dt>
+  <dt>:stats_file:</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
 
-  <dt>`:stats_interval`</dt>
-  <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless `:stats_file` is also specified</dd>
+  <dt>:stats_interval</dt>
+  <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless :stats_file is also specified</dd>
 
-  <dt>`:sip_user:`</dt>
-  <dd>SIP username to use. Defaults to `1` (as in 1@127.0.0.1)</dd>
+  <dt>:sip_user:</dt>
+  <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
 
-  <dt>`:full_sipp_output:`</dt>
+  <dt>:full_sipp_output:</dt>
   <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
 </dl>
 
