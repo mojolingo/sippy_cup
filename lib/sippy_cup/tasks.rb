@@ -1,3 +1,4 @@
+require 'yaml'
 require 'sippy_cup/runner'
 
 namespace :sippy_cup do
@@ -8,6 +9,7 @@ namespace :sippy_cup do
 
   desc "Run the scenario described by the given YAML file"
   task :run, :options_file do |t, args|
-    SippyCup::Runner.new(args[:options_file]).run
+  	options = YAML.load_file args[:options_file]
+    SippyCup::Runner.new(options).run
   end
 end

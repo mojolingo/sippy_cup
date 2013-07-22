@@ -5,10 +5,7 @@ describe SippyCup::Runner do
     context "System call fails/doesn't fail" do
       let(:settings) { Hash.new }
       let(:command) { "sudo sipp -i 127.0.0.1" }
-      subject { SippyCup::Runner.new "settings.yml" }
-      before do
-        YAML.stub(:load_file).with(File.expand_path "settings.yml").and_return settings
-      end
+      subject { SippyCup::Runner.new settings }
       it 'should raise an error when the system call fails' do
         subject.stub :p
         subject.should_receive(:prepare_command).and_return command
@@ -27,10 +24,7 @@ describe SippyCup::Runner do
     context "specifying a stats file" do
       let(:settings) { { stats_file: 'stats.csv' } }
       let(:command) { "sudo sipp -i 127.0.0.1 -trace_stats -stf stats.csv" }
-      subject { SippyCup::Runner.new "settings.yml" }
-      before do
-        YAML.stub(:load_file).with(File.expand_path "settings.yml").and_return settings
-      end
+      subject { SippyCup::Runner.new settings }
       it 'should display the path to the csv file when one is specified' do
         subject.should_receive(:p).twice
         subject.should_receive(:prepare_command).and_return command
@@ -43,10 +37,7 @@ describe SippyCup::Runner do
     context "no stats file" do
       let(:settings) { Hash.new }
       let(:command) { "sudo sipp -i 127.0.0.1" }
-      subject { SippyCup::Runner.new "settings.yml" }
-      before do
-        YAML.stub(:load_file).with(File.expand_path "settings.yml").and_return settings
-      end
+      subject { SippyCup::Runner.new settings }
       it 'should not display a csv file path if none is specified' do
         subject.should_receive(:p).twice
         subject.should_receive(:prepare_command).and_return command

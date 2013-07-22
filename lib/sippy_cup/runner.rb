@@ -2,8 +2,8 @@ require 'yaml'
 
 module SippyCup
   class Runner
-    def initialize(path)
-      @options = YAML.load_file File.expand_path(path)
+    def initialize(opts = {})
+      @options = opts
     end
 
     def prepare_command
