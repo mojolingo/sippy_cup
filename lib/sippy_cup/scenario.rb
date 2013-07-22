@@ -36,9 +36,7 @@ module SippyCup
                    scenario: "#{@filename}.xml", max_concurrent: 10,
                    calls_per_second: 5, number_of_calls: 20 }
 
-      args.delete :source
-      args.delete :destination
-      args.delete :filename
+      opts = args.select {|k,v| true unless [:source, :destination, :filename].include? k}
       defaults.merge! args
     end
 
