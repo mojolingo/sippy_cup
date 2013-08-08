@@ -47,14 +47,69 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.ack_bye
 end
 
-# Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
+# Create the scenario XML, PCAP media, and YAML options. File will be named after the scenario name, in our case:
 # * sippy_cup.xml
+# * sippy_cup.yml
 # * sippy_cup.pcap
 scenario.compile!
 ```
 
+The above code can either be executed as a standalone Ruby script and run with SIPp, or it can be compiled and run using rake tasks by inserting the following code into your Rakefile:
+```Ruby
+require 'sippy_cup/tasks'
+```
+Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]`
+
+And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
+
 Customize Your Scenarios
 ------------------------
+
+### Alternate File Path
+
+Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
+
+```Ruby
+my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
+s = SippyCup::Scenario.new 'SippyCup', my_opts do
+  ...
+end
+```
+
+This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml` in the `/path/to/` directory.
+
+### Customizing the Test Run
+
+By default, sippy cup will automatically generate a YAML file with the following contents:
+```YAML
+---
+:source: 127.0.0.1
+:destination: 127.0.0.1
+:scenario: /path/to/scenario.xml
+:max_concurrent: 10
+:calls_per_second: 5
+:number_of_calls: 20
+```
+
+Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
+<dl>
+  <dt>:source_port:</dt>
+  <dd>The local port from which to originate SIP traffic. This defaults to port 8836</dd>
+
+  <dt>:stats_file:</dt>
+  <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
+
+  <dt>:stats_interval</dt>
+  <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless :stats_file is also specified</dd>
+
+  <dt>:sip_user:</dt>
+  <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
+
+  <dt>:full_sipp_output:</dt>
+  <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
+</dl>
+
+### Additional SIPp Attributes
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 ```Ruby

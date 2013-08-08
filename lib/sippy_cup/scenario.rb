@@ -1,4 +1,5 @@
 require 'nokogiri'
+require 'yaml'
 
 module SippyCup
   class Scenario
@@ -12,8 +13,10 @@ module SippyCup
 
       parse_args args
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
+      @filename = File.expand_path @filename
       @doc = builder.doc
       @media = Media.new @from_addr, @from_port, @to_addr, @to_port
+      @scenario_opts = get_scenario_opts args
       @scenario = @doc.xpath('//scenario').first
 
       instance_eval &block if block_given?
@@ -26,6 +29,15 @@ module SippyCup
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
       @from_user = args[:from_user] || "sipp"
+    end
+
+    def get_scenario_opts(args)
+      defaults = { source: "#{@from_addr}", destination: "#{@to_addr}", 
+                   scenario: "#{@filename}.xml", max_concurrent: 10,
+                   calls_per_second: 5, number_of_calls: 20 }
+
+      opts = args.select {|k,v| true unless [:source, :destination, :filename].include? k}
+      defaults.merge! args
     end
 
     def compile_media
@@ -194,8 +206,12 @@ module SippyCup
     end
 
     def compile!
-      xml_file = File.open "#{@filename}.xml", 'w' do |file|
+      File.open "#{@filename}.xml", 'w' do |file|
         file.write @doc.to_xml
+      end
+
+      File.open "#{@filename}.yml", 'w' do |file|
+        file.write @scenario_opts.to_yaml
       end
       compile_media.to_file filename: "#{@filename}.pcap"
     end
