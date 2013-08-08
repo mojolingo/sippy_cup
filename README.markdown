@@ -35,11 +35,7 @@ require 'sippy_cup'
 
 scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', destination: '10.10.0.3:19995' do |s|
   s.invite
-  s.receive_trying
-  s.receive_ringing
-  s.receive_progress
-
-  s.receive_answer
+  s.wait_for_answer
   s.ack_answer
 
   s.sleep 3
