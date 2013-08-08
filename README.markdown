@@ -1,11 +1,11 @@
 Sippy Cup
----------
+=========
 
 Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test profiles. The goal is to take an input document that describes a load test in a very simple way (call this number, wait this many seconds, send this digit, wait a few more seconds, etc).  The ideas are taken from [LoadBot](https://github.com/mojolingo/ahn-loadbot), but the goal is for a more performant load generating tool with no dependency on Asterisk.
 
 
 Requirements
-============
+------------
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
@@ -14,7 +14,7 @@ SippyCup relies on the following to generate scenarios and the associated media 
 
 
 Installation
-============
+------------
 
 If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
 
@@ -28,7 +28,7 @@ Now you can start creating scenario files like in the examples below.
 
 
 Example
-=======
+-------
 
 ```Ruby
 require 'sippy_cup'
@@ -54,7 +54,7 @@ scenario.compile!
 ```
 
 Customize Your Scenarios
-========================
+------------------------
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 ```Ruby
