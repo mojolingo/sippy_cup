@@ -16,7 +16,7 @@ module SippyCup
       @media = Media.new @from_addr, @from_port, @to_addr, @to_port
       @scenario = @doc.xpath('//scenario').first
 
-      instance_eval &block
+      instance_eval &block if block_given?
     end
 
     def parse_args(args)
