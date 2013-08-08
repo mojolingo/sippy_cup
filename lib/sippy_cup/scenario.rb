@@ -146,7 +146,7 @@ module SippyCup
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
 
         @media << "dtmf:#{digit}"
-        @media << "silence:#{delay}"
+        @media << "silence:#{delay.to_i}"
         pause delay * 2
       end
     end
