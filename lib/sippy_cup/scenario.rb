@@ -54,7 +54,7 @@ module SippyCup
         Max-Forwards: 100
         Content-Type: application/sdp
         Content-Length: [len]
-  
+
         v=0
         o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
         s=-
@@ -75,14 +75,14 @@ module SippyCup
       @scenario << new_recv(opts)
     end
     alias :receive_100 :receive_trying
-      
+
     def receive_ringing(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 180
       @scenario << new_recv(opts)
     end
     alias :receive_180 :receive_ringing
-      
+
     def receive_progress(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 183
