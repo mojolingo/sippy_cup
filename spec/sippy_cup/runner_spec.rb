@@ -39,10 +39,10 @@ describe SippyCup::Runner do
       let(:command) { "sudo sipp -i 127.0.0.1" }
       subject { SippyCup::Runner.new settings }
       it 'should not display a csv file path if none is specified' do
-        subject.should_receive(:p).twice
+        subject.should_receive(:p).ordered.with(/Preparing to run SIPp command/)
+        subject.should_receive(:p).ordered.with(/Test completed successfully/)
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:system).with(command).and_return true
-        subject.should_not_receive(:p) #A third time
         subject.run
       end
     end
