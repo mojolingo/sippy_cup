@@ -99,6 +99,16 @@ module SippyCup
     end
     alias :receive_200 :receive_answer
 
+    ##
+    # Shortcut method that tells SIPp optionally receive
+    # SIP 100, 180, and 183 messages, and require a SIP 200 message.
+    def wait_for_answer(opts = {})
+      receive_trying({optional: true}.merge opts)
+      receive_ringing({optional: true}.merge opts)
+      receive_progress({optional: true}.merge opts)
+      receive_answer opts
+    end
+
     def ack_answer(opts = {})
       msg = <<-ACK
 
