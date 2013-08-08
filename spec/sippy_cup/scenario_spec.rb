@@ -45,6 +45,28 @@ describe SippyCup::Scenario do
       xml.should =~ /recv response="183".*foo="bar"/
       xml.should =~ /recv response="200".*foo="bar"/
     end
+  end
 
+  describe 'media-dependent operations' do
+    let(:media) { mock :media }
+    let(:scenario) do
+      SippyCup::Media.should_receive(:new).once.and_return media
+      scenario = SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060'
+    end
+
+    it %q{should create the proper amount of silent audio'} do
+      media.should_receive(:<<).once.with 'silence:5000'
+      scenario.sleep 5
+    end
+
+    it %q{should create the requested DTMF string'} do
+      media.should_receive(:<<).ordered.with 'dtmf:1'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      media.should_receive(:<<).ordered.with 'dtmf:3'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      media.should_receive(:<<).ordered.with 'dtmf:6'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      scenario.send_digits '136'
+    end
   end
 end
