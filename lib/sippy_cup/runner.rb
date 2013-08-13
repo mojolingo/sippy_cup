@@ -44,10 +44,12 @@ module SippyCup
 
     def run
       command = prepare_command
-      p "Preparing to run SIPp command: #{command}"
+      p "Preparing to run SIPp command: #{command}" unless @options[:full_sipp_output]
       system command
-      p "Test completed successfully!"
-      p "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+      unless @options[:full_sipp_output]
+        p "Test completed successfully!" 
+        p "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+      end
     end
 
   end
