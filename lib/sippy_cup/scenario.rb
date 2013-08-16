@@ -109,6 +109,8 @@ module SippyCup
       recv = new_recv opts
       # Record Record Set: Make the Route headers available via [route] later
       recv['rrs'] = true
+      # Response Time Duration: Record the response time
+      recv['rtd'] = true
       @scenario << recv
     end
     alias :receive_200 :receive_answer
