@@ -2,9 +2,16 @@
 layout: default
 ---
 
-# <a name="sippy-cup" class="anchor" href="#sippy-cup"><span class="octicon octicon-link"></span></a>Sippy Cup
+# Sippy Cup
 
-### <a name="the-problem" class="anchor" href="#the-problem"><span class="octicon octicon-link"></span></a>The Problem
+* Table of Contents
+{:toc}
+
+
+## Overview {#overview}
+
+
+### The Problem {#the_problem}
 
 Load testing voice systems, and voice applications in particular, is tricky.  While several commercial tools exist, there is really only one tool in the Open Source world that is good at efficiently generating SIP load: [SIPp](http://sipp.sourceforge.net/).  While SIPp does a good job of generating load, it is somewhat clumsy to use, due to a verbose XML format for scenarios, a confusing set of command line parameters, and worst of all, a lack of tools to create media needed to interact with voice applications.
 
@@ -22,18 +29,18 @@ To test this with SIPp you need a PCAP file that contains the properly timed DTM
 
 SippyCup aims to help solve these problems.
 
-### <a name="the-solution" class="anchor" href="#the-solution"><span class="octicon octicon-link"></span></a>The Solution
+### The Solution {#the_solution}
 
 Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test profiles and the corresponding media in PCAP format. The goal is to take an input document that describes a load test in a very simple way (call this number, wait this many seconds, send this digit, wait a few more seconds, etc).  The ideas are taken from [LoadBot](https://github.com/mojolingo/ahn-loadbot), but the goal is for a more performant load generating tool with no dependency on Asterisk.
 
-## <a name="requirements" class="anchor" href="#requirements"><span class="octicon octicon-link"></span></a>Requirements
+## Requirements {#requirements}
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
 * Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28)
 * [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
 
-## <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation
+## Installation {#installation}
 
 If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
 
@@ -45,7 +52,7 @@ gem install sippy_cup
 
 Now you can start creating scenario files like in the examples below.
 
-## <a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example
+## Examples {#examples}
 
 {% highlight ruby %}
 require 'sippy_cup'
@@ -81,9 +88,9 @@ Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]`
 
 And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 
-## <a name="customize-your-scenarios" class="anchor" href="#customize-your-scenarios"><span class="octicon octicon-link"></span></a>Customize Your Scenarios
+## Customizing Scenarios {#customizing_scenarios}
 
-### <a name="alternate-file-path" class="anchor" href="#alternate-file-path"><span class="octicon octicon-link"></span></a>Alternate File Path
+### Alternate Output File Path
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
 
@@ -96,7 +103,7 @@ end
 
 This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml` in the `/path/to/` directory.
 
-### <a name="customizing-the-test-run" class="anchor" href="#customizing-the-test-run"><span class="octicon octicon-link"></span></a>Customizing the Test Run
+### Customizing the Test Run
 
 By default, sippy cup will automatically generate a YAML file with the following contents:
 
@@ -129,7 +136,7 @@ Each parameter has an impact on the test, and may either be changed once the YAM
   <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
 </dl>
 
-### <a name="additional-sipp-attributes" class="anchor" href="#additional-sipp-attributes"><span class="octicon octicon-link"></span></a>Additional SIPp Attributes
+### Additional SIPp Scenario Attributes
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 
