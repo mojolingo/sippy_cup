@@ -23,7 +23,6 @@ SippyCup aims to help solve these problems.
 
 Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test profiles and the corresponding media in PCAP format. The goal is to take an input document that describes a load test in a very simple way (call this number, wait this many seconds, send this digit, wait a few more seconds, etc).  The ideas are taken from [LoadBot](https://github.com/mojolingo/ahn-loadbot), but the goal is for a more performant load generating tool with no dependency on Asterisk.
 
-
 ## Requirements
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
@@ -31,7 +30,6 @@ SippyCup relies on the following to generate scenarios and the associated media 
 * Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28))
 * [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
 * "root" user access via sudo: needed to run SIPp so it can bind to raw network sockets
-
 
 ## Installation
 
@@ -45,7 +43,6 @@ gem install sippy_cup
 
 Now you can start creating scenario files like in the examples below.
 
-
 ## Examples
 
 ### Simple Example
@@ -54,7 +51,6 @@ Now you can start creating scenario files like in the examples below.
 ---
 source: 192.0.2.15
 destination: 192.0.2.200
-scenario: /path/to/scenario.xml
 max_concurrent: 10
 calls_per_second: 5
 number_of_calls: 20
@@ -77,6 +73,7 @@ $
 ```
 
 ### Example embedding SIPp in another Ruby process
+
 ```Ruby
 require 'sippy_cup'
 
@@ -111,9 +108,36 @@ And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 
 ## Customize Your Scenarios
 
+### Available Scenario Steps
+
+Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments.
+
+* `sleep <seconds>` Wait a specified number of seconds
+* `invite` Send a SIP INVITE to the specified target
+* `receive_trying` Expect to receive a `100 Trying` response from the target
+* `receive_ringing` Expect to receive a `180 Ringing` response from the target
+* `receive_progress` Expect to receive a `183 Progress` response from the target
+* `receive_answer` Expect to receive a `200 OK` (answering the call) response from the target
+* `wait_for_answer` Convenient shortcut for `receive_trying; receive_ringing; receive_progress; receive_answer`, with all but the `answer` marked as optional
+* `ack_answer` Send an `ACK` in response to a `200 OK`
+* `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
+* `send_bye` Send a `BYE` (hangup request)
+* `receive_bye` Expect to receive a `BYE` from the target
+* `ack_bye` Send an `ACK` in response to a `BYE`
+* `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
+
 ### Alternate Output File Path
 
-Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
+Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
+
+For the `sippy_cup` YAML specification, use `scenario`:
+
+```YAML
+---
+scenario: /path/to/scenario.xml
+```
+
+Or, in Ruby:
 
 ```Ruby
 my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
@@ -145,8 +169,8 @@ Each parameter has an impact on the test, and may either be changed once the YAM
 ### Additional SIPp Scenario Attributes
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
-```Ruby
 
+```Ruby
 #This limits the amount of time the server has to reply to an invite (3 seconds)
 s.receive_answer timeout: 3000
 
