@@ -37,7 +37,7 @@ Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test p
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
-* Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28)
+* Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28))
 * [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
 
 ## Installation {#installation}
