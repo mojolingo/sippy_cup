@@ -190,10 +190,10 @@ For more information on possible attributes, visit the [SIPp Documentation](http
 
 ## Credits
 
-Copyright (C) 2013 Mojo Lingo LLC
+Copyright (C) 2013 [Mojo Lingo LLC](https://mojolingo.com)
 
 Sippy Cup is released under the [MIT license](http://opensource.org/licenses/MIT). Please see the [LICENSE](https://github.com/bklang/sippy_cup/blob/master/LICENSE) file for details.
 
-Sippy Cup was created by [Ben Klang](https://twitter.com/bklang) and [Will Drexler](https://github.com/wdrexler) with support from Mojo Lingo and their clients.
+Sippy Cup was created by [Ben Klang](https://twitter.com/bklang) and [Will Drexler](https://github.com/wdrexler) with support from [Mojo Lingo](https://mojolingo.com) and their clients.
 
 "Sippy Cup" name suggested by [Jamey Owens](https://github.com/vindir)
