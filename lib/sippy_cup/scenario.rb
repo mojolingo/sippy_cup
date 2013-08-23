@@ -219,9 +219,6 @@ module SippyCup
         file.write @doc.to_xml
       end
 
-      File.open "#{@filename}.yml", 'w' do |file|
-        file.write @scenario_opts.to_yaml
-      end
       compile_media.to_file filename: "#{@filename}.pcap"
     end
 
