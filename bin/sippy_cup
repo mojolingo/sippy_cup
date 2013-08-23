@@ -62,10 +62,9 @@ unless @compile || @run
 end
 
 @definition = YAML.load File.read @definition_file
-@scenario_base = @definition_file.gsub /\.yml$/, ''
 
 unless @definition.has_key? :scenario
-  @definition[:scenario] = "#{@scenario_base}.xml"
+  @definition[:scenario] = @definition_file.gsub /\.yml$/, ''
 end
 unless @definition.has_key? :name
   @definition[:name] = @definition[:scenario]

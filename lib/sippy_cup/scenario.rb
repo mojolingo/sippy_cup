@@ -215,7 +215,7 @@ module SippyCup
     end
 
     def compile!
-      print "Compiling media to #{@filename}.pcap..."
+      print "Compiling media to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|
         file.write @doc.to_xml
       end
