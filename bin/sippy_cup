@@ -1,3 +1,78 @@
 #!/usr/bin/env ruby
 
 require 'sippy_cup'
+require 'getoptlong'
+
+def usage
+  puts "#{$0} [OPTS] </path/to/sippy_cup_definition.yml>"
+  puts
+  puts "--compile, -c  Compile the given scenario YAML to XML and PCAP"
+  puts "--run, -r      Run the scenario. If used without -c, must supply a previously"
+  puts "               compiled SippyCup file"
+  puts "--help, -h     Print this usage information"
+  puts "--version, -v  Print SippyCup version"
+end
+
+opts = GetoptLong.new(
+  ['--compile', '-c', GetoptLong::NO_ARGUMENT],
+  ['--run', '-r', GetoptLong::NO_ARGUMENT],
+  ['--help', '-h', GetoptLong::NO_ARGUMENT],
+  ['--version', '-V', GetoptLong::NO_ARGUMENT]
+)
+
+@compile = false
+@run = false
+opts.each do |opt, arg|
+  case opt
+  when '--compile'
+    @compile = true
+    @definition_file = arg
+  when '--run'
+    @run = true
+    @compiled_file = arg
+  when '--help'
+    usage
+    exit 0
+  when '--version'
+    puts "SippyCup version #{SippyCup::VERSION}"
+    exit 0
+  end
+end
+
+unless ARGV.count == 1
+  puts "ERROR: Must supply the SippyCup definition file"
+  puts
+  usage
+  exit 1
+end
+
+@definition_file = ARGV.shift
+
+unless File.readable? @definition_file
+  puts "ERROR: Unable to read definition file"
+  puts
+  usage
+  exit 1
+end
+
+unless @compile || @run
+  puts "No action (compile or run) specified. Exiting."
+  usage
+  exit 1
+end
+
+@definition = YAML.load File.read @definition_file
+@scenario_base = @definition_file.gsub /\.yml$/, ''
+
+unless @definition.has_key? :scenario
+  @definition[:scenario] = "#{@scenario_base}.xml"
+end
+unless @definition.has_key? :name
+  @definition[:name] = @definition[:scenario]
+end
+
+
+runner = SippyCup::Runner.new @definition
+runner.compile if @compile
+runner.run if @run
+

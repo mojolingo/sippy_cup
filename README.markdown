@@ -50,6 +50,26 @@ Now you can start creating scenario files like in the examples below.
 Example
 -------
 
+### Simple Example
+
+```YAML
+---
+source: 192.0.2.15
+destination: 192.0.2.200
+scenario: /path/to/scenario.xml
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+steps:
+  - invite
+  - wait_for_answer
+  - hangup
+```
+
+Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
+
+
+### Example embedding SIPp in another Ruby process
 ```Ruby
 require 'sippy_cup'
 
@@ -67,9 +87,8 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.ack_bye
 end
 
-# Create the scenario XML, PCAP media, and YAML options. File will be named after the scenario name, in our case:
+# Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
 # * sippy_cup.xml
-# * sippy_cup.yml
 # * sippy_cup.pcap
 scenario.compile!
 ```
@@ -100,32 +119,20 @@ This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml
 
 ### Customizing the Test Run
 
-By default, sippy cup will automatically generate a YAML file with the following contents:
-```YAML
----
-:source: 127.0.0.1
-:destination: 127.0.0.1
-:scenario: /path/to/scenario.xml
-:max_concurrent: 10
-:calls_per_second: 5
-:number_of_calls: 20
-```
 
 Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
-  <dt>:source_port:</dt>
-  <dd>The local port from which to originate SIP traffic. This defaults to port 8836</dd>
 
-  <dt>:stats_file:</dt>
+  <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
 
-  <dt>:stats_interval</dt>
+  <dt>stats_interval</dt>
   <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless :stats_file is also specified</dd>
 
-  <dt>:sip_user:</dt>
+  <dt>sip_user</dt>
   <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
 
-  <dt>:full_sipp_output:</dt>
+  <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
 </dl>
 

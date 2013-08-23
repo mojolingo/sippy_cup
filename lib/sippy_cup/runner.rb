@@ -7,9 +7,25 @@ module SippyCup
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
     end
 
+    def compile
+      raise ArgumentError, "Must provide scenario steps" unless @options[:steps]
+      scenario = SippyCup::Scenario.new @options[:name].titleize, source: @options[:source], destination: @options[:destination]
+      @options[:steps].each do |step|
+        instruction, arg = step.split ' ', 2
+        if arg && !arg.empty?
+          # Strip leading/trailing quotes if present
+          arg.gsub!(/^'|^"|'$|"$/, '')
+          scenario.send instruction.to_sym, arg
+        else
+          scenario.send instruction
+        end
+      end
+      scenario.compile!
+    end
+
     def prepare_command
       [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise "Must provide #{arg}!" unless @options[arg]
+        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
       end
       command = "sudo sipp"
       source_port = @options[:source_port] || '8836'
