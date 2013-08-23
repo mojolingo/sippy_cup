@@ -34,7 +34,7 @@ module SippyCup
       command << " -l #{@options[:max_concurrent]} -m #{@options[:number_of_calls]} -r #{@options[:calls_per_second]}"
       command << " -s #{sip_user}"
       if @options[:stats_file]
-        stats_interval = @options[:stats_interval] || 10
+        stats_interval = @options[:stats_interval] || 1
         command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
       end
       command << "#{@options[:destination]}"
