@@ -7,5 +7,5 @@
 * New shortcut command for common answer scenario: #wait_for_answer
 * Allow specifying output file name/location
 
-# [0.1.0]
+# [0.1.0](https://github.com/bklang/sippy_cup/releases/tag/v0.1.0)
 * Initial Release
