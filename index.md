@@ -47,33 +47,35 @@ Now you can start creating scenario files like in the examples below.
 
 ## <a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example
 
-<div class="highlight"><pre><span class="nb">require</span> <span class="s1">'sippy_cup'</span>
+{% highlight ruby %}
+require 'sippy_cup'
 
-<span class="n">scenario</span> <span class="o">=</span> <span class="ss">SippyCup</span><span class="p">:</span><span class="ss">:Scenario</span><span class="o">.</span><span class="n">new</span> <span class="s1">'Sippy Cup'</span><span class="p">,</span> <span class="ss">source</span><span class="p">:</span> <span class="s1">'192.168.5.5:10001'</span><span class="p">,</span> <span class="ss">destination</span><span class="p">:</span> <span class="s1">'10.10.0.3:19995'</span> <span class="k">do</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">invite</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">wait_for_answer</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">ack_answer</span>
+scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', destination: '10.10.0.3:19995' do |s|
+  s.invite
+  s.wait_for_answer
+  s.ack_answer
 
-  <span class="n">s</span><span class="o">.</span><span class="n">sleep</span> <span class="mi">3</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">send_digits</span> <span class="s1">'3125551234'</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">sleep</span> <span class="mi">5</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">send_digits</span> <span class="s1">'#'</span>
+  s.sleep 3
+  s.send_digits '3125551234'
+  s.sleep 5
+  s.send_digits '#'
 
-  <span class="n">s</span><span class="o">.</span><span class="n">receive_bye</span>
-  <span class="n">s</span><span class="o">.</span><span class="n">ack_bye</span>
-<span class="k">end</span>
+  s.receive_bye
+  s.ack_bye
+end
 
-<span class="c1"># Create the scenario XML, PCAP media, and YAML options. File will be named after the scenario name, in our case:</span>
-<span class="c1"># * sippy_cup.xml</span>
-<span class="c1"># * sippy_cup.yml</span>
-<span class="c1"># * sippy_cup.pcap</span>
-<span class="n">scenario</span><span class="o">.</span><span class="n">compile!</span>
-</pre></div>
+# Create the scenario XML, PCAP media, and YAML options. File will be named after the scenario name, in our case:
+# * sippy_cup.xml
+# * sippy_cup.yml
+# * sippy_cup.pcap
+scenario.compile!
+{% endhighlight %}
 
 The above code can either be executed as a standalone Ruby script and run with SIPp, or it can be compiled and run using rake tasks by inserting the following code into your Rakefile:
 
-<div class="highlight"><pre><span class="nb">require</span> <span class="s1">'sippy_cup/tasks'</span>
-</pre></div>
+{% highlight ruby %}
+require 'sippy_cup/tasks'
+{% endhighlight %}
 
 Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]` 
 
@@ -85,11 +87,12 @@ And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
 
-<div class="highlight"><pre><span class="n">my_opts</span> <span class="o">=</span> <span class="p">{</span> <span class="ss">source</span><span class="p">:</span> <span class="s1">'192.168.5.5:10001'</span><span class="p">,</span> <span class="ss">destination</span><span class="p">:</span> <span class="s1">'10.10.0.3:19995'</span><span class="p">,</span> <span class="ss">filename</span><span class="p">:</span> <span class="s1">'/path/to/somewhere'</span> <span class="p">}</span>
-<span class="n">s</span> <span class="o">=</span> <span class="ss">SippyCup</span><span class="p">:</span><span class="ss">:Scenario</span><span class="o">.</span><span class="n">new</span> <span class="s1">'SippyCup'</span><span class="p">,</span> <span class="n">my_opts</span> <span class="k">do</span>
-  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
-<span class="k">end</span>
-</pre></div>
+{% highlight ruby %}
+my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
+s = SippyCup::Scenario.new 'SippyCup', my_opts do
+  # scenario statements here...
+end
+{% endhighlight %}
 
 This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml` in the `/path/to/` directory.
 
@@ -97,14 +100,15 @@ This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml
 
 By default, sippy cup will automatically generate a YAML file with the following contents:
 
-<div class="highlight"><pre><span class="nn">---</span>
-<span class="l-Scalar-Plain">:source</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">127.0.0.1</span>
-<span class="l-Scalar-Plain">:destination</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">127.0.0.1</span>
-<span class="l-Scalar-Plain">:scenario</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/scenario.xml</span>
-<span class="l-Scalar-Plain">:max_concurrent</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">10</span>
-<span class="l-Scalar-Plain">:calls_per_second</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5</span>
-<span class="l-Scalar-Plain">:number_of_calls</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">20</span>
-</pre></div>
+{% highlight yaml %}
+---
+:source: 127.0.0.1
+:destination: 127.0.0.1
+:scenario: /path/to/scenario.xml
+:max_concurrent: 10
+:calls_per_second: 5
+:number_of_calls: 20
+{% endhighlight %}
 
 Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for <code>SippyCup::Scenario.new</code>. In addition to the default parameters, some additional parameters can be set:
 
