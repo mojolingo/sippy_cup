@@ -179,6 +179,14 @@ module SippyCup
       @scenario << new_send(msg, opts)
     end
 
+    ##
+    # Shortcut method that tells SIPp receive a BYE and acknowledge it
+    def wait_for_hangup(opts = {})
+      receive_bye(opts)
+      ack_bye(opts)
+    end
+
+
     def receive_bye(opts = {})
       opts.merge! request: 'BYE'
       @scenario << new_recv(opts)
