@@ -1,9 +1,10 @@
 require 'yaml'
+require 'active_support/core_ext/hash'
 
 module SippyCup
   class Runner
     def initialize(opts = {})
-      @options = opts
+      @options = ActiveSupport::HashWithIndifferentAccess.new opts
     end
 
     def prepare_command
