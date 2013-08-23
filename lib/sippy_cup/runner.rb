@@ -35,8 +35,9 @@ module SippyCup
       command << " -s #{sip_user}"
       if @options[:stats_file]
         stats_interval = @options[:stats_interval] || 10
-        command << " -trace_stats -stf #{@options[:stats_file]} -fd #{stats_interval}"
+        command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
       end
+      command << "#{@options[:destination]}"
       command << " > /dev/null 2>&1" unless @options[:full_sipp_output]
       command
     end
