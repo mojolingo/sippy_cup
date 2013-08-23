@@ -152,4 +152,4 @@ s.receive_answer optional: true
 s.receive_answer timeout: 3000, crlf: true
 {% endhighlight %}
 
-For more information on possible attributes, visit the <a href="http://sipp.sourceforge.net/doc/reference.html">SIPp Documentation</a>
+For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html).
