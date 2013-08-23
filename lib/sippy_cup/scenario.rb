@@ -15,7 +15,7 @@ module SippyCup
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename
       @doc = builder.doc
-      @media = Media.new @from_addr, @from_port, @to_addr, @to_port
+      @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
       @scenario_opts = get_scenario_opts args
       @scenario = @doc.xpath('//scenario').first
 

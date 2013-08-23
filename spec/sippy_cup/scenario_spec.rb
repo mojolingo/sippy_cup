@@ -4,8 +4,8 @@ describe SippyCup::Scenario do
   let(:default_args) { {source: '127.0.0.1:5060', destination: '10.0.0.1:5080'} }
 
   it %q{should create a media stream on initialization} do
-    SippyCup::Media.should_receive(:new).once.with('127.0.0.1', '5060', '127.0.0.2', '5061')
-    SippyCup::Scenario.new 'Test', source: '127.0.0.1:5060', destination: '127.0.0.2:5061'
+    SippyCup::Media.should_receive(:new).once
+    SippyCup::Scenario.new 'Test'
   end
 
   it %q{should take a block to generate a scenario} do
