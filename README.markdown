@@ -71,8 +71,8 @@ Next, compile and run the scenario:
 
 ```Shell
 $ sippy_cup -cr my_test_scenario.yml
-Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
-Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
+Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario.pcap...done.
+Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario.xml...done.
 "Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /Users/bklang/src/sippy_cup/my_test_scenario.xml -l 10 -m 20 -r 5 -s 1 > /dev/null 2>&1"
 $
 ```
