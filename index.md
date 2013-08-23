@@ -61,7 +61,6 @@ Now you can start creating scenario files like in the examples below.
 ---
 source: 192.0.2.15
 destination: 192.0.2.200
-scenario: /path/to/scenario.xml
 max_concurrent: 10
 calls_per_second: 5
 number_of_calls: 20
@@ -104,7 +103,6 @@ end
 
 # Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
 # * sippy_cup.xml
-# * sippy_cup.yml
 # * sippy_cup.pcap
 scenario.compile!
 {% endhighlight %}
@@ -121,9 +119,36 @@ And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 
 ## Customizing Scenarios {#customizing_scenarios}
 
+### Available Scenario Steps
+
+Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments.
+
+* `sleep <seconds>` Wait a specified number of seconds
+* `invite` Send a SIP INVITE to the specified target
+* `receive_trying` Expect to receive a `100 Trying` response from the target
+* `receive_ringing` Expect to receive a `180 Ringing` response from the target
+* `receive_progress` Expect to receive a `183 Progress` response from the target
+* `receive_answer` Expect to receive a `200 OK` (answering the call) response from the target
+* `wait_for_answer` Convenient shortcut for `receive_trying; receive_ringing; receive_progress; receive_answer`, with all but the `answer` marked as optional
+* `ack_answer` Send an `ACK` in response to a `200 OK`
+* `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
+* `send_bye` Send a `BYE` (hangup request)
+* `receive_bye` Expect to receive a `BYE` from the target
+* `ack_bye` Send an `ACK` in response to a `BYE`
+* `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
+
 ### Alternate Output File Path
 
-Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
+Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
+
+For the `sippy_cup` YAML specification, use `scenario`:
+
+{% highlight yaml %}
+---
+scenario: /path/to/scenario.xml
+{% endhighlight %}
+
+Or, in Ruby:
 
 {% highlight ruby %}
 my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
