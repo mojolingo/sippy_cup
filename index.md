@@ -129,16 +129,16 @@ Each parameter has an impact on the test, and may either be changed once the YAM
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 
-<div class="highlight"><pre>
-<span class="c1">#This limits the amount of time the server has to reply to an invite (3 seconds)</span>
-<span class="n">s</span><span class="o">.</span><span class="n">receive_answer</span> <span class="ss">timeout</span><span class="p">:</span> <span class="mi">3000</span>
+{% highlight ruby %}
+#This limits the amount of time the server has to reply to an invite (3 seconds)
+s.receive_answer timeout: 3000
 
-<span class="c1">#You can override the default 'optional' parameters</span>
-<span class="n">s</span><span class="o">.</span><span class="n">receive_ringing</span> <span class="ss">optional</span><span class="p">:</span> <span class="kp">false</span>
-<span class="n">s</span><span class="o">.</span><span class="n">receive_answer</span> <span class="ss">optional</span><span class="p">:</span> <span class="kp">true</span>
+#You can override the default 'optional' parameters
+s.receive_ringing optional: false
+s.receive_answer optional: true
 
-<span class="c1">#Let's combine multiple attributes...</span>
-<span class="n">s</span><span class="o">.</span><span class="n">receive_answer</span> <span class="ss">timeout</span><span class="p">:</span> <span class="mi">3000</span><span class="p">,</span> <span class="ss">crlf</span><span class="p">:</span> <span class="kp">true</span>
-</pre></div>
+#Let's combine multiple attributes...
+s.receive_answer timeout: 3000, crlf: true
+{% endhighlight %}
 
 For more information on possible attributes, visit the <a href="http://sipp.sourceforge.net/doc/reference.html">SIPp Documentation</a>
