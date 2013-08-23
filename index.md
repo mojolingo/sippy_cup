@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # <a name="sippy-cup" class="anchor" href="#sippy-cup"><span class="octicon octicon-link"></span></a>Sippy Cup
 
 ### <a name="the-problem" class="anchor" href="#the-problem"><span class="octicon octicon-link"></span></a>The Problem
