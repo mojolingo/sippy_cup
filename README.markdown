@@ -57,7 +57,12 @@ number_of_calls: 20
 steps:
   - invite
   - wait_for_answer
-  - hangup
+  - ack_answer
+  - sleep 3
+  - send_digits '3125551234'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_bye
 ```
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
@@ -87,8 +92,7 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.sleep 5
   s.send_digits '#'
 
-  s.receive_bye
-  s.ack_bye
+  s.wait_for_bye
 end
 
 # Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
