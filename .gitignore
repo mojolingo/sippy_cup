@@ -1,3 +1,4 @@
 .*.sw*
 .DS_Store
 *.gem
+/spec/reports/
