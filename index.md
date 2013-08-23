@@ -75,7 +75,7 @@ Both `source` and `destination` above may be optionally supplied with a port num
 
 Next, compile and run the scenario:
 
-{% highlight shell %}
+{% highlight bash %}
 $ sippy_cup -cr my_test_scenario.yml
 Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
 Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
