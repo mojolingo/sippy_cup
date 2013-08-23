@@ -169,3 +169,13 @@ s.receive_answer timeout: 3000, crlf: true
 {% endhighlight %}
 
 For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html).
+
+## Credits
+
+Copyright (C) 2013 Mojo Lingo LLC
+
+Sippy Cup is released under the [MIT license](http://opensource.org/licenses/MIT). Please see the [LICENSE](https://github.com/bklang/sippy_cup/blob/master/LICENSE) file for details.
+
+Sippy Cup was created by [Ben Klang](https://twitter.com/bklang) and [Will Drexler](https://github.com/wdrexler) with support from Mojo Lingo and their clients.
+
+"Sippy Cup" name suggested by [Jamey Owens](https://github.com/vindir)
