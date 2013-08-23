@@ -144,4 +144,4 @@ s.receive_answer optional: true
 s.receive_answer timeout: 3000, crlf: true
 ```
 
-For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html)
+For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html).
