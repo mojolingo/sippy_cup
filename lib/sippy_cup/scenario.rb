@@ -215,11 +215,15 @@ module SippyCup
     end
 
     def compile!
+      print "Compiling media to #{@filename}.pcap..."
       File.open "#{@filename}.xml", 'w' do |file|
         file.write @doc.to_xml
       end
+      puts "done."
 
+      print "Compiling scenario to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
+      puts "done."
     end
 
   private
