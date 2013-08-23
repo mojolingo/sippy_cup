@@ -28,7 +28,7 @@ Requirements
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
-* Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28)
+* Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28))
 * [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
 
 
@@ -84,14 +84,14 @@ And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 Customize Your Scenarios
 ------------------------
 
-### Alternate File Path
+### Alternate Output File Path
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem! Try:
 
 ```Ruby
 my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
 s = SippyCup::Scenario.new 'SippyCup', my_opts do
-  ...
+  # scenario definitions here...
 end
 ```
 
