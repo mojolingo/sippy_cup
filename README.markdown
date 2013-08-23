@@ -1,5 +1,6 @@
-Sippy Cup
-=========
+# Sippy Cup
+
+## Overview
 
 ### The Problem
 
@@ -23,8 +24,7 @@ SippyCup aims to help solve these problems.
 Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test profiles and the corresponding media in PCAP format. The goal is to take an input document that describes a load test in a very simple way (call this number, wait this many seconds, send this digit, wait a few more seconds, etc).  The ideas are taken from [LoadBot](https://github.com/mojolingo/ahn-loadbot), but the goal is for a more performant load generating tool with no dependency on Asterisk.
 
 
-Requirements
-------------
+## Requirements
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
@@ -33,8 +33,7 @@ SippyCup relies on the following to generate scenarios and the associated media 
 * "root" user access via sudo: needed to run SIPp so it can bind to raw network sockets
 
 
-Installation
-------------
+## Installation
 
 If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
 
@@ -47,8 +46,7 @@ gem install sippy_cup
 Now you can start creating scenario files like in the examples below.
 
 
-Example
--------
+## Examples
 
 ### Simple Example
 
@@ -68,6 +66,15 @@ steps:
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
 
+Next, compile and run the scenario:
+
+```Shell
+$ sippy_cup -cr my_test_scenario.yml
+Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
+Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario_xml.pcap...done.
+"Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /Users/bklang/src/sippy_cup/my_test_scenario.xml -l 10 -m 20 -r 5 -s 1 > /dev/null 2>&1"
+$
+```
 
 ### Example embedding SIPp in another Ruby process
 ```Ruby
@@ -97,12 +104,12 @@ The above code can either be executed as a standalone Ruby script and run with S
 ```Ruby
 require 'sippy_cup/tasks'
 ```
+
 Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]`
 
 And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
 
-Customize Your Scenarios
-------------------------
+## Customize Your Scenarios
 
 ### Alternate Output File Path
 
@@ -122,7 +129,6 @@ This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml
 
 Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
-
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
 
@@ -136,7 +142,7 @@ Each parameter has an impact on the test, and may either be changed once the YAM
   <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
 </dl>
 
-### Additional SIPp Attributes
+### Additional SIPp Scenario Attributes
 
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 ```Ruby
