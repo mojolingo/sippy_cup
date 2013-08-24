@@ -48,7 +48,7 @@ describe SippyCup::Scenario do
   end
 
   describe 'media-dependent operations' do
-    let(:media) { mock :media }
+    let(:media) { double :media }
     let(:scenario) do
       SippyCup::Media.should_receive(:new).once.and_return media
       scenario = SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060'
