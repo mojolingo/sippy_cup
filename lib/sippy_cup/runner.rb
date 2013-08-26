@@ -3,6 +3,8 @@ require 'active_support/core_ext/hash'
 
 module SippyCup
   class Runner
+    attr_accessor :sipp_pid
+
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
     end
@@ -47,8 +49,8 @@ module SippyCup
       p "Preparing to run SIPp command: #{command}" unless @options[:full_sipp_output]
 
       begin
-        pid = spawn command
-        Process.wait pid
+        @sipp_pid = spawn command
+        Process.wait @sipp_pid
       rescue Exception => e
         raise RuntimeError, "Command #{command} failed"
       end
@@ -59,5 +61,10 @@ module SippyCup
       end
     end
 
+    def stop
+      Process.kill "KILL", @sipp_pid if @sipp_pid
+    rescue Exception => e
+      raise RuntimeError, "Killing #{@sipp_pid} failed"
+    end
   end
 end

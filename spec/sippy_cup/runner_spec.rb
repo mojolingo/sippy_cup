@@ -58,4 +58,30 @@ describe SippyCup::Runner do
     end
 
   end
+
+  describe '#stop' do
+    let(:settings) { Hash.new }
+    let(:command) { "sudo sipp -i 127.0.0.1" }
+    let(:pid) { '1234' }
+
+    subject { SippyCup::Runner.new settings }
+
+    it "should try to kill the SIPp process if there is a PID" do
+      subject.sipp_pid = pid
+      Process.should_receive(:kill).with("KILL", pid)
+      subject.stop
+    end
+
+    it "should not try to kill the SIPp process if there is a PID" do
+      subject.sipp_pid = nil
+      Process.should_receive(:kill).never
+      subject.stop
+    end
+
+    it "should raise a RuntimeError if the PID does not exist" do
+      subject.sipp_pid = pid
+      Process.should_receive(:kill).with("KILL", pid).and_raise(Errno::ESRCH)
+      expect { subject.stop }.to raise_error RuntimeError
+    end
+  end
 end
