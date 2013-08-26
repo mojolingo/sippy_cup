@@ -45,8 +45,14 @@ module SippyCup
     def run
       command = prepare_command
       p "Preparing to run SIPp command: #{command}" unless @options[:full_sipp_output]
-      result = system command
-      raise RuntimeError, "Command #{command} failed" unless result
+
+      begin
+        pid = spawn command
+        Process.wait pid
+      rescue Exception => e
+        raise RuntimeError, "Command #{command} failed"
+      end
+
       unless @options[:full_sipp_output]
         p "Test completed successfully!" 
         p "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
