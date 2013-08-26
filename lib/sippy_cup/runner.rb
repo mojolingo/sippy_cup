@@ -12,6 +12,7 @@ module SippyCup
     def compile
       raise ArgumentError, "Must provide scenario steps" unless @options[:steps]
       scenario = SippyCup::Scenario.new @options[:name].titleize, source: @options[:source], destination: @options[:destination]
+      scenario.filename = @options[:filename] if @options[:filename]
       @options[:steps].each do |step|
         instruction, arg = step.split ' ', 2
         if arg && !arg.empty?
