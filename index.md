@@ -138,7 +138,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 * `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
 * `send_bye` Send a `BYE` (hangup request)
 * `receive_bye` Expect to receive a `BYE` from the target
-* `ack_bye` Send an `ACK` in response to a `BYE`
+* `ack_bye` Send a `200 OK` response to a `BYE`
 * `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
 
 ### Alternate Output File Path
