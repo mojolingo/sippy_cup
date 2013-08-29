@@ -30,7 +30,7 @@ module SippyCup
       command = "sudo sipp"
       source_port = @options[:source_port] || '8836'
       sip_user = @options[:sip_user] || '1'
-      command << " -i #{@options[:source]} -p #{source_port} -sf #{File.expand_path @options[:scenario]}"
+      command << " -i #{@options[:source]} -p #{source_port} -sf #{File.expand_path @options[:scenario]}.xml"
       command << " -l #{@options[:max_concurrent]} -m #{@options[:number_of_calls]} -r #{@options[:calls_per_second]}"
       command << " -s #{sip_user}"
       if @options[:stats_file]
