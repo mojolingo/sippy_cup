@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/bklang/sippy_cup"
   s.summary     = "SIPp profile and RTP stream generator"
   s.description = "This tool makes it easier to generate SIPp load tests with DTMF interactions."
+  s.license  = 'MIT'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
