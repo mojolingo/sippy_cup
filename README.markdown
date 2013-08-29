@@ -62,7 +62,7 @@ steps:
   - send_digits '3125551234'
   - sleep 5
   - send_digits '#'
-  - wait_for_bye
+  - wait_for_hangup
 ```
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
