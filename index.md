@@ -102,7 +102,7 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.sleep 5
   s.send_digits '#'
 
-  s.wait_for_bye
+  s.wait_for_hangup
 end
 
 # Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
