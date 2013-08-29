@@ -10,7 +10,7 @@ def usage
   puts "--run, -r      Run the scenario. If used without -c, must supply a previously"
   puts "               compiled SippyCup file"
   puts "--help, -h     Print this usage information"
-  puts "--version, -v  Print SippyCup version"
+  puts "--version, -V  Print SippyCup version"
 end
 
 opts = GetoptLong.new(
@@ -34,6 +34,7 @@ opts.each do |opt, arg|
     usage
     exit 0
   when '--version'
+    require 'sippy_cup/version'
     puts "SippyCup version #{SippyCup::VERSION}"
     exit 0
   end

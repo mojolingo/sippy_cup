@@ -62,7 +62,7 @@ steps:
   - send_digits '3125551234'
   - sleep 5
   - send_digits '#'
-  - wait_for_bye
+  - wait_for_hangup
 ```
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
@@ -92,7 +92,7 @@ scenario = SippyCup::Scenario.new 'Sippy Cup', source: '192.168.5.5:10001', dest
   s.sleep 5
   s.send_digits '#'
 
-  s.wait_for_bye
+  s.wait_for_hangup
 end
 
 # Create the scenario XML and PCAP media. File will be named after the scenario name, in our case:
@@ -127,7 +127,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 * `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
 * `send_bye` Send a `BYE` (hangup request)
 * `receive_bye` Expect to receive a `BYE` from the target
-* `ack_bye` Send an `ACK` in response to a `BYE`
+* `ack_bye` Send a `200 OK` response to a `BYE`
 * `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
 
 ### Alternate Output File Path
