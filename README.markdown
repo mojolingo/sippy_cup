@@ -35,6 +35,8 @@ SippyCup relies on the following to generate scenarios and the associated media 
 
 If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
 
+### Install via gem (production)
+
 Once Ruby is installed, install SippyCup:
 
 ```
@@ -42,6 +44,24 @@ gem install sippy_cup
 ```
 
 Now you can start creating scenario files like in the examples below.
+
+### Install from repository (development)
+
+You use `bundle` to install from the source directly. First, clone the repository into a working directory.
+
+Install `bundle` via gem:
+
+```
+gem install bundle --no-ri --no-rdoc
+```
+
+Then build the `sippy_cup` application with `bundle`.
+
+```
+bundle install
+```
+
+Using `bundle` will then install the gem dependencies and allow you to run `sippy_cup` from your working directory.
 
 ## Examples
 
