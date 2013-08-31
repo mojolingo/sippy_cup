@@ -47,12 +47,12 @@ Now you can start creating scenario files like in the examples below.
 
 ### Install from repository (development)
 
-You use `bundle` to install from the source directly. First, clone the repository into a working directory.
+You use `bundle` command (from the "[bundler](http://bundler.io/)" package) to install from the source directly. First, clone the repository into a working directory.
 
 Install `bundle` via gem:
 
 ```
-gem install bundle --no-ri --no-rdoc
+gem install bundler --no-ri --no-rdoc
 ```
 
 Then build the `sippy_cup` application with `bundle`.
