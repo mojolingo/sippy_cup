@@ -82,6 +82,26 @@ module SippyCup
       @scenario << send
     end
 
+    def register(opts = {})
+      opts[:retrans] ||= 500
+      msg = <<-REGISTER
+
+        REGISTER sip:[remote_ip] SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+        To: <sip:#{@from_user}@[remote_ip]>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Max-Forwards: 10
+        Expires: 120
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+      REGISTER
+      send = new_send msg, opts
+      @scenario << send
+    end
+
     def receive_trying(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 100
