@@ -69,4 +69,36 @@ describe SippyCup::Scenario do
       scenario.send_digits '136'
     end
   end
+
+  describe "#register" do
+    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
+
+    it %q{should raise an error if no user parameter is specified} do
+      expect { scenario.register nil }.to raise_error RuntimeError, /A user must be specified for registration/
+    end
+
+    it %q{should call #register_no_auth if only user is passed} do
+      scenario.should_receive(:register_no_auth).with 'foo@example.com'
+      scenario.register 'foo@example.com'
+    end
+
+    it %q{should call #register_auth if user and password are passed} do
+      scenario.should_receive(:register_auth).with 'sally@[remote_ip]:[remote_port]', 'seekrut'
+      scenario.register 'sally', 'seekrut'
+    end
+
+    it %q{should not modify the passed in user if a domain is given} do
+      scenario.register 'foo@example.com'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{foo@example\.com}
+    end
+
+    it %q{should interpolate the target IP if no domain is given} do
+      scenario.register 'sally'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{sally@\[remote_ip\]:\[remote_port\]}
+    end
+  end
 end

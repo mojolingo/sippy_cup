@@ -82,13 +82,19 @@ module SippyCup
       @scenario << send
     end
 
-    def register(opts = {})
+    def register(user, password = nil, opts = {})
+      raise "A user must be specified for registration!" unless user
+      user << "@[remote_ip]:[remote_port]" unless has_domain? user
+      password.nil? ? register_no_auth(user) : register_auth(user, password)
+    end
+
+    def register_no_auth(user, opts = {})
       opts[:retrans] ||= 500
       msg = <<-REGISTER
 
         REGISTER sip:[remote_ip] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+        From: <#{user}>;tag=[call_number]
         To: <sip:#{@from_user}@[remote_ip]>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
@@ -100,6 +106,9 @@ module SippyCup
       REGISTER
       send = new_send msg, opts
       @scenario << send
+    end
+
+    def register_auth
     end
 
     def receive_trying(opts = {})
@@ -247,6 +256,10 @@ module SippyCup
     end
 
   private
+    def has_domain?(user)
+      user.include? '@'
+    end
+
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
       pause['milliseconds'] = msec.to_i
