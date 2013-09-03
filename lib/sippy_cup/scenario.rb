@@ -176,6 +176,7 @@ module SippyCup
         Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
         Content-Length: 0
+        [routes]
       MSG
       @scenario << new_send(msg, opts)
     end
