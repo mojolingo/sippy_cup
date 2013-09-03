@@ -73,8 +73,9 @@ describe SippyCup::Scenario do
   describe "#register" do
     let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
-    it %q{should call #register_no_auth if only user is passed} do
-      scenario.should_receive(:register_no_auth).with 'foo@example.com'
+    it %q{should only call #register_message if only user is passed} do
+      scenario.should_receive(:register_message).with 'foo@example.com'
+      scenario.should_not_receive(:register_auth)
       scenario.register 'foo@example.com'
     end
 

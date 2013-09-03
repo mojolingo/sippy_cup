@@ -83,13 +83,16 @@ module SippyCup
     end
 
     def register(user, password = nil, opts = {})
+      opts[:retrans] ||= 500
       user << "@[remote_ip]:[remote_port]" unless has_domain? user
-      password.nil? ? register_no_auth(user) : register_auth(user, password)
+      msg = register_message user
+      msg << register_auth(user, password) if password
+      send = new_send msg, opts
+      @scenario << send
     end
 
-    def register_no_auth(user, opts = {})
-      opts[:retrans] ||= 500
-      msg = <<-REGISTER
+    def register_message(user, opts = {})
+      <<-REGISTER
 
         REGISTER sip:[remote_ip] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
@@ -103,8 +106,6 @@ module SippyCup
         User-Agent: SIPp/sippy_cup
         Content-Length: 0
       REGISTER
-      send = new_send msg, opts
-      @scenario << send
     end
 
     def register_auth
