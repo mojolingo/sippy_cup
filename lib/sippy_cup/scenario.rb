@@ -169,7 +169,7 @@ module SippyCup
 
         BYE [next_url] SIP/2.0
         [last_Via:]
-        [last_From:]
+        From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
         [last_To:]
         [last_Call-ID]
         CSeq: [cseq] BYE
