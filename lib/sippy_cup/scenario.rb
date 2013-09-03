@@ -129,12 +129,12 @@ module SippyCup
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
         From: <sip:#{@from_user}@[local_ip]>;tag=[call_number]
         [last_To:]
-        [routes]
         Call-ID: [call_id]
         CSeq: [cseq] ACK
         Contact: sip:#{@from_user}@[local_ip]:[local_port]
         Max-Forwards: 100
         Content-Length: 0
+        [routes]
       ACK
       @scenario << new_send(msg, opts)
       start_media
@@ -201,12 +201,12 @@ module SippyCup
         [last_Via:]
         [last_From:]
         [last_To:]
-        [routes]
         [last_Call-ID:]
         [last_CSeq:]
         Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
         Content-Length: 0
+        [routes]
       ACK
       @scenario << new_send(msg, opts)
     end
