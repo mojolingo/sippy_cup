@@ -167,7 +167,7 @@ module SippyCup
     def send_bye(opts = {})
       msg = <<-MSG
 
-        BYE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+        BYE [next_url] SIP/2.0
         [last_Via:]
         [last_From:]
         [last_To:]
