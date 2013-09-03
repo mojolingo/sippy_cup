@@ -83,7 +83,6 @@ module SippyCup
     end
 
     def register(user, password = nil, opts = {})
-      raise "A user must be specified for registration!" unless user
       user << "@[remote_ip]:[remote_port]" unless has_domain? user
       password.nil? ? register_no_auth(user) : register_auth(user, password)
     end

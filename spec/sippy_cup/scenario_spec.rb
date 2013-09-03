@@ -73,10 +73,6 @@ describe SippyCup::Scenario do
   describe "#register" do
     let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
-    it %q{should raise an error if no user parameter is specified} do
-      expect { scenario.register nil }.to raise_error RuntimeError, /A user must be specified for registration/
-    end
-
     it %q{should call #register_no_auth if only user is passed} do
       scenario.should_receive(:register_no_auth).with 'foo@example.com'
       scenario.register 'foo@example.com'
