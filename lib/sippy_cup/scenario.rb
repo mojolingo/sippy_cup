@@ -85,16 +85,17 @@ module SippyCup
     def register(user, password = nil, opts = {})
       opts[:retrans] ||= 500
       user << "@[remote_ip]:[remote_port]" unless has_domain? user
-      msg = register_message user
+      domain = get_domain user
+      msg = register_message user, domain: domain
       send = new_send msg, opts
       @scenario << send
-      register_auth(user, password) if password
+      register_auth(user, password, domain: domain) if password
     end
 
     def register_message(user, opts = {})
       <<-REGISTER
 
-        REGISTER sip:[remote_ip] SIP/2.0
+        REGISTER sip:#{opts[:domain]} SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
         From: <sip:#{user}>;tag=[call_number]
         To: <sip:#{user}>
@@ -113,7 +114,7 @@ module SippyCup
       @scenario << new_recv(response: '401', auth: true, optional: false)
       msg = <<-AUTH
 
-        REGISTER sip:open-ims.test SIP/2.0
+        REGISTER sip:#{opts[:domain]} SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
         From: <sip:#{user}>;tag=[call_number]
         To: <sip:#{user}>
@@ -272,6 +273,12 @@ module SippyCup
       print "Compiling scenario to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
+    end
+
+    def get_domain(user)
+      domain = user.split("@")[1] if user.include? "@"
+      domain = domain.split(":")[0] if domain.include? ":"
+      domain
     end
 
   private

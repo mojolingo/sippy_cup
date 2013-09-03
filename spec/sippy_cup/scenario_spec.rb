@@ -74,13 +74,13 @@ describe SippyCup::Scenario do
     let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
     it %q{should only call #register_message if only user is passed} do
-      scenario.should_receive(:register_message).with 'foo@example.com'
+      scenario.should_receive(:register_message).with 'foo@example.com', domain: "example.com"
       scenario.should_not_receive(:register_auth)
       scenario.register 'foo@example.com'
     end
 
     it %q{should call #register_auth if user and password are passed} do
-      scenario.should_receive(:register_auth).with 'sally@[remote_ip]:[remote_port]', 'seekrut'
+      scenario.should_receive(:register_auth).with 'sally@[remote_ip]:[remote_port]', 'seekrut', domain: "[remote_ip]"
       scenario.register 'sally', 'seekrut'
     end
 
@@ -104,6 +104,18 @@ describe SippyCup::Scenario do
       xml = scenario.to_xml
       xml.should =~ %r{recv response="401" optional="false" auth="true"}
       xml.should =~ %r{\[authentication username=foo password=seekrut\]}
+    end
+  end
+
+  describe "#get_domain" do
+    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
+
+    it %q{should return the domain in a simple user@domain address} do
+      scenario.get_domain("user@example.com").should == "example.com"
+    end
+
+    it %q{should return the domain in a user@domain:port address} do
+      scenario.get_domain("user@example.com:1337").should == "example.com"
     end
   end
 end
