@@ -97,5 +97,13 @@ describe SippyCup::Scenario do
       xml = scenario.to_xml
       xml.should =~ %r{sally@\[remote_ip\]:\[remote_port\]}
     end
+
+    it %q{should add an auth to registers which specify a password} do
+      scenario.register 'foo@example.com', 'seekrut'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{recv response="401" optional="false" auth="true"}
+      xml.should =~ %r{\[authentication username=foo password=seekrut\]}
+    end
   end
 end

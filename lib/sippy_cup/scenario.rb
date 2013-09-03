@@ -86,9 +86,9 @@ module SippyCup
       opts[:retrans] ||= 500
       user << "@[remote_ip]:[remote_port]" unless has_domain? user
       msg = register_message user
-      msg << register_auth(user, password) if password
       send = new_send msg, opts
       @scenario << send
+      register_auth(user, password) if password
     end
 
     def register_message(user, opts = {})
@@ -96,11 +96,11 @@ module SippyCup
 
         REGISTER sip:[remote_ip] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <#{user}>;tag=[call_number]
-        To: <sip:#{@from_user}@[remote_ip]>
+        From: <sip:#{user}>;tag=[call_number]
+        To: <sip:#{user}>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
-        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Contact: sip:#{user}
         Max-Forwards: 10
         Expires: 120
         User-Agent: SIPp/sippy_cup
@@ -108,7 +108,26 @@ module SippyCup
       REGISTER
     end
 
-    def register_auth
+    def register_auth(user, password, opts = {})
+      opts[:retrans] ||= 500
+      @scenario << new_recv(response: '401', auth: true, optional: false)
+      msg = <<-AUTH
+
+        REGISTER sip:open-ims.test SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{user}>;tag=[call_number]
+        To: <sip:#{user}>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: sip:#{user}
+        Max-Forwards: 20
+        Expires: 3600
+        [authentication username=#{short_username user} password=#{password}]
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+      AUTH
+      send = new_send msg, opts
+      @scenario << send
     end
 
     def receive_trying(opts = {})
@@ -256,6 +275,10 @@ module SippyCup
     end
 
   private
+    def short_username(user)
+      user.split('@')[0]
+    end
+
     def has_domain?(user)
       user.include? '@'
     end
