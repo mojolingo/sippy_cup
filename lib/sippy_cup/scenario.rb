@@ -84,8 +84,7 @@ module SippyCup
 
     def register(user, password = nil, opts = {})
       opts[:retrans] ||= 500
-      user << "@[remote_ip]:[remote_port]" unless has_domain? user
-      domain = get_domain user
+      user, domain = parse_user user
       msg = register_message user, domain: domain
       send = new_send msg, opts
       @scenario << send
@@ -97,8 +96,8 @@ module SippyCup
 
         REGISTER sip:#{opts[:domain]} SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}>;tag=[call_number]
-        To: <sip:#{user}>
+        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
+        To: <sip:#{user}@#{opts[:domain]}>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
         Contact: sip:#{user}
@@ -116,14 +115,14 @@ module SippyCup
 
         REGISTER sip:#{opts[:domain]} SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}>;tag=[call_number]
-        To: <sip:#{user}>
+        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
+        To: <sip:#{user}@#{opts[:domain]}>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
-        Contact: sip:#{user}
+        Contact: sip:#{user}@#{opts[:domain]}
         Max-Forwards: 20
         Expires: 3600
-        [authentication username=#{short_username user} password=#{password}]
+        [authentication username=#{user} password=#{password}]
         User-Agent: SIPp/sippy_cup
         Content-Length: 0
       AUTH
@@ -275,21 +274,15 @@ module SippyCup
       puts "done."
     end
 
-    def get_domain(user)
-      domain = user.split("@")[1] if user.include? "@"
-      domain = domain.split(":")[0] if domain.include? ":"
-      domain
+    def parse_user(user)
+      user.slice! 0, 4 if user =~ /sip:/
+      user = user.split(":")[0]
+      user, domain = user.split("@")
+      domain ||= "[remote_ip]"
+      [user, domain]
     end
 
   private
-    def short_username(user)
-      user.split('@')[0]
-    end
-
-    def has_domain?(user)
-      user.include? '@'
-    end
-
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
       pause['milliseconds'] = msec.to_i
