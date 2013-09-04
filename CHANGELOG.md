@@ -1,3 +1,7 @@
+# develop
+* Feature: Added support for REGISTER messages
+* Bugfix: Enable testing through proxies
+
 # [0.2.1](https://github.com/bklang/sippy_cup/compare/v0.2.0...v0.2.1)
 * Bugfix: fix the name of the compiled files
 * Bugfix: Fix SIPp arg to enable trace stats
