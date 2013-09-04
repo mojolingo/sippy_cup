@@ -3,6 +3,7 @@ require 'yaml'
 
 module SippyCup
   class Scenario
+    USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
 
@@ -63,8 +64,9 @@ module SippyCup
         To: <sip:[service]@[remote_ip]:[remote_port]>
         Call-ID: [call_id]
         CSeq: [cseq] INVITE
-        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Type: application/sdp
         Content-Length: [len]
 
@@ -78,6 +80,54 @@ module SippyCup
         a=rtpmap:101 telephone-event/8000
         a=fmtp:101 0-15
       INVITE
+      send = new_send msg, opts
+      @scenario << send
+    end
+
+    def register(user, password = nil, opts = {})
+      opts[:retrans] ||= 500
+      user, domain = parse_user user
+      msg = register_message user, domain: domain
+      send = new_send msg, opts
+      @scenario << send
+      register_auth(user, password, domain: domain) if password
+    end
+
+    def register_message(user, opts = {})
+      <<-REGISTER
+
+        REGISTER sip:#{opts[:domain]} SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
+        To: <sip:#{user}@#{opts[:domain]}>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 10
+        Expires: 120
+        User-Agent: #{USER_AGENT}
+        Content-Length: 0
+      REGISTER
+    end
+
+    def register_auth(user, password, opts = {})
+      opts[:retrans] ||= 500
+      @scenario << new_recv(response: '401', auth: true, optional: false)
+      msg = <<-AUTH
+
+        REGISTER sip:#{opts[:domain]} SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
+        To: <sip:#{user}@#{opts[:domain]}>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 20
+        Expires: 3600
+        [authentication username=#{user} password=#{password}]
+        User-Agent: #{USER_AGENT}
+        Content-Length: 0
+      AUTH
       send = new_send msg, opts
       @scenario << send
     end
@@ -132,8 +182,9 @@ module SippyCup
         [routes]
         Call-ID: [call_id]
         CSeq: [cseq] ACK
-        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       ACK
       @scenario << new_send(msg, opts)
@@ -173,8 +224,9 @@ module SippyCup
         [last_To:]
         [last_Call-ID]
         CSeq: [cseq] BYE
-        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       MSG
       @scenario << new_send(msg, opts)
@@ -203,8 +255,9 @@ module SippyCup
         [routes]
         [last_Call-ID:]
         [last_CSeq:]
-        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       ACK
       @scenario << new_send(msg, opts)
@@ -224,6 +277,15 @@ module SippyCup
       print "Compiling scenario to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
+    end
+
+    #TODO: SIPS support?
+    def parse_user(user)
+      user.slice! 0, 4 if user =~ /sip:/
+      user = user.split(":")[0]
+      user, domain = user.split("@")
+      domain ||= "[remote_ip]"
+      [user, domain]
     end
 
   private
