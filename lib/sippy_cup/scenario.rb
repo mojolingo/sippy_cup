@@ -279,6 +279,7 @@ module SippyCup
       puts "done."
     end
 
+    #TODO: SIPS support?
     def parse_user(user)
       user.slice! 0, 4 if user =~ /sip:/
       user = user.split(":")[0]
