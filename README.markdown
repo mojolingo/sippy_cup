@@ -138,7 +138,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 
 * `sleep <seconds>` Wait a specified number of seconds
 * `invite` Send a SIP INVITE to the specified target
-* `register` Send a SIP REGISTER to the specified target
+* `register <username> [password]` Register the specified user to the target with an optional password
 * `receive_trying` Expect to receive a `100 Trying` response from the target
 * `receive_ringing` Expect to receive a `180 Ringing` response from the target
 * `receive_progress` Expect to receive a `183 Progress` response from the target
