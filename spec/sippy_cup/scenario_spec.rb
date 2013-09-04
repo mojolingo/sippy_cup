@@ -69,4 +69,74 @@ describe SippyCup::Scenario do
       scenario.send_digits '136'
     end
   end
+
+  describe "#register" do
+    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
+
+    it %q{should only call #register_message if only user is passed} do
+      scenario.should_receive(:register_message).with 'foo', domain: "example.com"
+      scenario.should_not_receive(:register_auth)
+      scenario.register 'foo@example.com'
+    end
+
+    it %q{should call #register_auth if user and password are passed} do
+      scenario.should_receive(:register_auth).with 'sally', 'seekrut', domain: "[remote_ip]"
+      scenario.register 'sally', 'seekrut'
+    end
+
+    it %q{should not modify the passed in user if a domain is given} do
+      scenario.register 'foo@example.com'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{foo@example\.com}
+    end
+
+    it %q{should interpolate the target IP if no domain is given} do
+      scenario.register 'sally'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{sally@\[remote_ip\]}
+    end
+
+    it %q{should add an auth to registers which specify a password} do
+      scenario.register 'foo@example.com', 'seekrut'
+
+      xml = scenario.to_xml
+      xml.should =~ %r{recv response="401" optional="false" auth="true"}
+      xml.should =~ %r{\[authentication username=foo password=seekrut\]}
+    end
+  end
+
+  describe "#parse_user" do
+    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
+
+    context "sip: prefix" do
+
+      it %q{should return user and domain for addresses in the sip:user@domain:port format} do
+        scenario.parse_user('sip:foo@example.com:1337').should == ['foo', 'example.com']
+      end
+
+      it %q{should return user and domain for addresses in the sip:user@domain format} do
+        scenario.parse_user('sip:foo@example.com').should == ['foo', 'example.com']
+      end
+
+      it %q{should return user and [remote_ip] for addresses in the sip:user format} do
+        scenario.parse_user('sip:foo').should == ['foo', '[remote_ip]']
+      end
+    end
+
+    context "no prefix" do
+      it %q{should return user and domain for addresses in the user@domain:port format} do
+        scenario.parse_user('foo@example.com:1337').should == ['foo', 'example.com']
+      end
+
+      it %q{should return user and domain for addresses in the user@domain format} do
+        scenario.parse_user('foo@example.com').should == ['foo', 'example.com']
+      end
+
+      it %q{should return user and [remote_ip] for a standalone username} do
+        scenario.parse_user('sally').should == ['sally', '[remote_ip]']
+      end
+    end
+  end
 end
