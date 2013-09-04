@@ -3,6 +3,7 @@ require 'yaml'
 
 module SippyCup
   class Scenario
+    USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
 
@@ -65,6 +66,7 @@ module SippyCup
         CSeq: [cseq] INVITE
         Contact: sip:#{@from_user}@[local_ip]:[local_port]
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Type: application/sdp
         Content-Length: [len]
 
@@ -103,7 +105,7 @@ module SippyCup
         Contact: sip:#{user}
         Max-Forwards: 10
         Expires: 120
-        User-Agent: SIPp/sippy_cup
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       REGISTER
     end
@@ -123,7 +125,7 @@ module SippyCup
         Max-Forwards: 20
         Expires: 3600
         [authentication username=#{user} password=#{password}]
-        User-Agent: SIPp/sippy_cup
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       AUTH
       send = new_send msg, opts
@@ -182,6 +184,7 @@ module SippyCup
         CSeq: [cseq] ACK
         Contact: sip:#{@from_user}@[local_ip]:[local_port]
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       ACK
       @scenario << new_send(msg, opts)
@@ -223,6 +226,7 @@ module SippyCup
         CSeq: [cseq] BYE
         Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       MSG
       @scenario << new_send(msg, opts)
@@ -253,6 +257,7 @@ module SippyCup
         [last_CSeq:]
         Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
+        User-Agent: #{USER_AGENT}
         Content-Length: 0
       ACK
       @scenario << new_send(msg, opts)
