@@ -64,7 +64,7 @@ module SippyCup
         To: <sip:[service]@[remote_ip]:[remote_port]>
         Call-ID: [call_id]
         CSeq: [cseq] INVITE
-        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
         User-Agent: #{USER_AGENT}
         Content-Type: application/sdp
@@ -102,7 +102,7 @@ module SippyCup
         To: <sip:#{user}@#{opts[:domain]}>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
-        Contact: sip:#{user}
+        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 10
         Expires: 120
         User-Agent: #{USER_AGENT}
@@ -121,7 +121,7 @@ module SippyCup
         To: <sip:#{user}@#{opts[:domain]}>
         Call-ID: [call_id]
         CSeq: [cseq] REGISTER
-        Contact: sip:#{user}@#{opts[:domain]}
+        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 20
         Expires: 3600
         [authentication username=#{user} password=#{password}]
@@ -182,7 +182,7 @@ module SippyCup
         [routes]
         Call-ID: [call_id]
         CSeq: [cseq] ACK
-        Contact: sip:#{@from_user}@[local_ip]:[local_port]
+        Contact: <sip:[local_ip]:[local_port];transport=[transport]>
         Max-Forwards: 100
         User-Agent: #{USER_AGENT}
         Content-Length: 0
