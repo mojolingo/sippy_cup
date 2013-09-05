@@ -13,7 +13,7 @@ module SippyCup
       end
 
       parse_args args
-      @static_rtcp = !!args[:static_rtcp]
+      @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename
       @doc = builder.doc
@@ -55,7 +55,7 @@ module SippyCup
 
     def invite(opts = {})
       opts[:retrans] ||= 500
-      rtp_string = @static_rtcp ? "m=audio 6000 RTP/AVP 0 101\na=rtcp:6001\n" : "m=audio [media_port] RTP/AVP 0 101\n"
+      rtp_string = @static_rtcp ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-INVITE
