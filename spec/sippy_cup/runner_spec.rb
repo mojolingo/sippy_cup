@@ -57,6 +57,22 @@ describe SippyCup::Runner do
       end
     end
 
+    context "CSV file" do
+      let(:settings) { {inf_csv: "/path/to/csv", scenario: "/path/to/scenario", source: "127.0.0.1",
+                        destination: "127.0.0.1", max_concurrent: 5, calls_per_second: 5,
+                        number_of_calls: 5} }
+      let(:pid) { "1234" }
+
+      subject { SippyCup::Runner.new settings }
+      it 'should use CSV into the test run' do
+        subject.should_receive(:p).ordered.with(/Preparing to run SIPp command/)
+        subject.should_receive(:p).ordered.with(/Test completed successfully/)
+        subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/)
+        Process.stub :wait
+        subject.run
+      end
+    end
+
   end
 
   describe '#stop' do

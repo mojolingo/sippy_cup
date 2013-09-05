@@ -40,6 +40,7 @@ module SippyCup
         stats_interval = @options[:stats_interval] || 1
         command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
       end
+      command << " -inf #{@options[:inf_csv]}" if @options[:inf_csv]
       command << " #{@options[:destination]}"
       command << " > /dev/null 2>&1" unless @options[:full_sipp_output]
       command
