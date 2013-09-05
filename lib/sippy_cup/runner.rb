@@ -3,13 +3,18 @@ require 'active_support/core_ext/hash'
 
 module SippyCup
   class Runner
+    attr_accessor :sipp_pid
+    attr_accessor :logger
+
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
+      @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
     def compile
       raise ArgumentError, "Must provide scenario steps" unless @options[:steps]
       scenario = SippyCup::Scenario.new @options[:name].titleize, source: @options[:source], destination: @options[:destination]
+      scenario.filename = @options[:filename] if @options[:filename]
       @options[:steps].each do |step|
         instruction, arg = step.split ' ', 2
         if arg && !arg.empty?
@@ -37,6 +42,7 @@ module SippyCup
         stats_interval = @options[:stats_interval] || 1
         command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
       end
+      command << " -inf #{@options[:scenario_variables]}" if @options[:scenario_variables]
       command << " #{@options[:destination]}"
       command << " > /dev/null 2>&1" unless @options[:full_sipp_output]
       command
@@ -44,12 +50,23 @@ module SippyCup
 
     def run
       command = prepare_command
-      p "Preparing to run SIPp command: #{command}"
-      result = system command
-      raise "SIPp failed! Try running the scenario with the full_sipp_output enabled for more information" unless result
-      p "Test completed successfully!"
-      p "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+      @logger.info "Preparing to run SIPp command: #{command}"
+
+      begin
+        @sipp_pid = spawn command
+        Process.wait @sipp_pid
+      rescue Exception => e
+        raise RuntimeError, "Command #{command} failed"
+      end
+
+      @logger.info "Test completed successfully!" 
+      @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
     end
 
+    def stop
+      Process.kill "KILL", @sipp_pid if @sipp_pid
+    rescue Exception => e
+      raise RuntimeError, "Killing #{@sipp_pid} failed"
+    end
   end
 end

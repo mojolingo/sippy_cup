@@ -13,6 +13,7 @@ module SippyCup
       end
 
       parse_args args
+      @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename
       @doc = builder.doc
@@ -54,6 +55,7 @@ module SippyCup
 
     def invite(opts = {})
       opts[:retrans] ||= 500
+      rtp_string = @static_rtcp ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-INVITE
@@ -75,7 +77,7 @@ module SippyCup
         s=-
         c=IN IP[media_ip_type] [media_ip]
         t=0 0
-        m=audio [media_port] RTP/AVP 0 101
+        #{rtp_string}
         a=rtpmap:0 PCMU/8000
         a=rtpmap:101 telephone-event/8000
         a=fmtp:101 0-15
@@ -158,6 +160,8 @@ module SippyCup
       recv = new_recv opts
       # Record Record Set: Make the Route headers available via [route] later
       recv['rrs'] = true
+      # Response Time Duration: Record the response time
+      recv['rtd'] = true
       @scenario << recv
     end
     alias :receive_200 :receive_answer
