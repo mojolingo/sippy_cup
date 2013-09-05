@@ -4,9 +4,11 @@ require 'active_support/core_ext/hash'
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
+    attr_accessor :logger
 
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
+      @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
     def compile
@@ -48,7 +50,7 @@ module SippyCup
 
     def run
       command = prepare_command
-      puts "Preparing to run SIPp command: #{command}"
+      @logger.info "Preparing to run SIPp command: #{command}"
 
       begin
         @sipp_pid = spawn command
@@ -57,8 +59,8 @@ module SippyCup
         raise RuntimeError, "Command #{command} failed"
       end
 
-      puts "Test completed successfully!" 
-      puts "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+      @logger.info "Test completed successfully!" 
+      @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
     end
 
     def stop

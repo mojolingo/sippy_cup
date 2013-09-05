@@ -9,7 +9,7 @@ describe SippyCup::Runner do
 
       subject { SippyCup::Runner.new settings }
       it 'should raise an error when the system call fails' do
-        subject.stub :puts
+        subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command).and_raise(Errno::ENOENT)
         Process.stub :wait
@@ -17,7 +17,7 @@ describe SippyCup::Runner do
       end
 
       it 'should not raise an error when the system call is successful' do 
-        subject.stub :puts
+        subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command).and_return pid
         Process.stub :wait
@@ -32,11 +32,11 @@ describe SippyCup::Runner do
 
       subject { SippyCup::Runner.new settings }
       it 'should display the path to the csv file when one is specified' do
-        subject.should_receive(:puts).twice
+        subject.logger.should_receive(:info).twice
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command).and_return pid
         Process.stub :wait
-        subject.should_receive(:puts).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
+        subject.logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
         subject.run
       end
     end
@@ -48,8 +48,8 @@ describe SippyCup::Runner do
 
       subject { SippyCup::Runner.new settings }
       it 'should not display a csv file path if none is specified' do
-        subject.should_receive(:puts).ordered.with(/Preparing to run SIPp command/)
-        subject.should_receive(:puts).ordered.with(/Test completed successfully/)
+        subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
+        subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command).and_return pid
         Process.stub :wait
@@ -65,8 +65,8 @@ describe SippyCup::Runner do
 
       subject { SippyCup::Runner.new settings }
       it 'should use CSV into the test run' do
-        subject.should_receive(:puts).ordered.with(/Preparing to run SIPp command/)
-        subject.should_receive(:puts).ordered.with(/Test completed successfully/)
+        subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
+        subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
         subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/)
         Process.stub :wait
         subject.run
