@@ -50,25 +50,60 @@ module SippyCup
       command
     end
 
+    # Runs the loaded scenario using SIPp
+    #
+    # @raises Errno::ENOENT when the SIPp executable cannot be found
+    # @raises SippyCup::CallFailed if at least one call failed
+    # @raises SippyCup::ExitOnInternalCommand when SIPp exits on an internal command. Calls may have been processed
+    # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
+    # @raises SippyCup::FatalError when SIPp encounters a fatal failure
+    # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
+    #
     def run
       command = prepare_command
       @logger.info "Preparing to run SIPp command: #{command}"
 
-      begin
-        @sipp_pid = spawn command
-        Process.wait @sipp_pid
-      rescue Exception => e
-        raise RuntimeError, "Command #{command} failed"
-      end
+      @sipp_pid = spawn command
+      sipp_result = Process.wait2 @sipp_pid.to_i
 
-      @logger.info "Test completed successfully!" 
+      process_exit_status sipp_result
+
+      @logger.info "Test completed successfully!"
       @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
     end
 
+    #
+    # Tries to stop SIPp by killing the target PID
+    #
+    # @raises Errno::ESRCH when the PID does not correspond to a known process
+    # @raises Errno::EPERM when the process referenced by the PID cannot be killed
+    #
     def stop
       Process.kill "KILL", @sipp_pid if @sipp_pid
-    rescue Exception => e
-      raise RuntimeError, "Killing #{@sipp_pid} failed"
+    end
+
+    def process_exit_status(process_status)
+      exit_code = process_status[1].exitstatus
+      case exit_code
+      when 1
+        raise SippyCup::CallFailed
+      when 97
+        raise SippyCup::ExitOnInternalCommand
+      when 99
+        raise SippyCup::NoCallsProcessed
+      when -1
+        raise SippyCup::FatalError
+      when -2
+        raise SippyCup::FatalSocketBindingError
+      end
     end
   end
+
+  # The corresponding SIPp error code is listed after the exception
+  class Error < StandardError; end
+  class CallFailed < Error; end # 1
+  class ExitOnInternalCommand < Error; end # 97
+  class NoCallsProcessed < Error; end # 99
+  class FatalError < Error; end # -1
+  class FatalSocketBindingError < Error; end # -2
 end
