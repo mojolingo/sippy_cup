@@ -16,7 +16,7 @@ describe SippyCup::Runner do
         lambda {subject.run}.should raise_error RuntimeError
       end
 
-      it 'should not raise an error when the system call is successful' do 
+      it 'should not raise an error when the system call is successful' do
         subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command).and_return pid
