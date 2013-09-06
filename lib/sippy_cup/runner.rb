@@ -69,7 +69,7 @@ module SippyCup
 
       final_result = process_exit_status sipp_result
 
-      if final_result == true
+      if final_result
         @logger.info "Test completed successfully!"
       else
         @logger.info "Test completed successfully but some calls failed."
@@ -93,7 +93,7 @@ module SippyCup
       exit_code = process_status[1].exitstatus
       case exit_code
       when 1
-        return false
+        false
       when 97
         raise SippyCup::ExitOnInternalCommand
       when 99
@@ -102,8 +102,9 @@ module SippyCup
         raise SippyCup::FatalError
       when -2
         raise SippyCup::FatalSocketBindingError
+      else
+        true
       end
-      true
     end
   end
 
