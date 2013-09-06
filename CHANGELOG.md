@@ -1,6 +1,7 @@
-# develop
+# [0.2.2](https://github.com/bklang/sippy_cup/compare/v0.2.1...v0.2.2)
 * Feature: Added support for REGISTER messages
 * Bugfix: Enable testing through proxies
+* Several enhancements to the test runner, including ability to specify a data file and the RTCP port
 
 # [0.2.1](https://github.com/bklang/sippy_cup/compare/v0.2.0...v0.2.1)
 * Bugfix: fix the name of the compiled files
