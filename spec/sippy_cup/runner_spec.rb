@@ -78,6 +78,23 @@ describe SippyCup::Runner do
       end
     end
 
+    context "Evaluating SIPp exit code" do
+      let(:settings) { Hash.new }
+      let(:command) { "sudo sipp -i 127.0.0.1" }
+      let(:pid) { '1234' }
+
+      subject { SippyCup::Runner.new settings }
+
+      it 'should return false when the SIPp exit code is 1 and log appropriately' do
+        subject.logger.stub :info
+        subject.should_receive(:prepare_command).and_return command
+        subject.should_receive(:spawn).with(command).and_return pid
+        Process.should_receive(:wait2).and_return([nil, double(exitstatus: 1)])
+        subject.logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
+        subject.run.should == false
+      end
+    end
+
   end
 
   describe '#stop' do
@@ -127,8 +144,8 @@ describe SippyCup::Runner do
 
     context "with at least one call failure" do
       let(:exitstatus) { 1 }
-      it "should raise a CallFailed error if SIPp returns 1" do
-        expect {subject.process_exit_status(process_status)}.to raise_error SippyCup::CallFailed
+      it "should return false if SIPp returns 1" do
+        subject.process_exit_status(process_status).should == false
       end
     end
 

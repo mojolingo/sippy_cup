@@ -53,11 +53,12 @@ module SippyCup
     # Runs the loaded scenario using SIPp
     #
     # @raises Errno::ENOENT when the SIPp executable cannot be found
-    # @raises SippyCup::CallFailed if at least one call failed
     # @raises SippyCup::ExitOnInternalCommand when SIPp exits on an internal command. Calls may have been processed
     # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
     # @raises SippyCup::FatalError when SIPp encounters a fatal failure
     # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
+    #
+    # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
       command = prepare_command
@@ -66,10 +67,16 @@ module SippyCup
       @sipp_pid = spawn command
       sipp_result = Process.wait2 @sipp_pid.to_i
 
-      process_exit_status sipp_result
+      final_result = process_exit_status sipp_result
 
-      @logger.info "Test completed successfully!"
+      if final_result == true
+        @logger.info "Test completed successfully!"
+      else
+        @logger.info "Test completed successfully but some calls failed."
+      end
       @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+
+      final_result
     end
 
     #
@@ -86,7 +93,7 @@ module SippyCup
       exit_code = process_status[1].exitstatus
       case exit_code
       when 1
-        raise SippyCup::CallFailed
+        return false
       when 97
         raise SippyCup::ExitOnInternalCommand
       when 99
@@ -96,12 +103,12 @@ module SippyCup
       when -2
         raise SippyCup::FatalSocketBindingError
       end
+      true
     end
   end
 
   # The corresponding SIPp error code is listed after the exception
   class Error < StandardError; end
-  class CallFailed < Error; end # 1
   class ExitOnInternalCommand < Error; end # 97
   class NoCallsProcessed < Error; end # 99
   class FatalError < Error; end # -1
