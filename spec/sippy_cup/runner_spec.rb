@@ -11,7 +11,7 @@ describe SippyCup::Runner do
       it 'should raise an error when the system call fails' do
         subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command).and_raise(Errno::ENOENT)
+        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_raise(Errno::ENOENT)
         Process.stub :wait2
         subject.stub :process_exit_status
         lambda {subject.run}.should raise_error Errno::ENOENT
@@ -20,7 +20,7 @@ describe SippyCup::Runner do
       it 'should not raise an error when the system call is successful' do
         subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command).and_return pid
+        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
         lambda {subject.run}.should_not raise_error
@@ -36,7 +36,7 @@ describe SippyCup::Runner do
       it 'should display the path to the csv file when one is specified' do
         subject.logger.should_receive(:info).twice
         subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command).and_return pid
+        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
         subject.logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
@@ -54,7 +54,7 @@ describe SippyCup::Runner do
         subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
         subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
         subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command).and_return pid
+        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
         subject.run
@@ -71,7 +71,7 @@ describe SippyCup::Runner do
       it 'should use CSV into the test run' do
         subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
         subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/)
+        subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/, an_instance_of(Hash))
         Process.stub :wait2
         subject.stub :process_exit_status
         subject.run
@@ -88,10 +88,50 @@ describe SippyCup::Runner do
       it 'should return false when the SIPp exit code is 1 and log appropriately' do
         subject.logger.stub :info
         subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command).and_return pid
+        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.should_receive(:wait2).and_return([nil, double(exitstatus: 1)])
         subject.logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
         subject.run.should == false
+      end
+    end
+
+    context "capturing STDOUT/STDERR output" do
+      let (:error_string) { "Some error" }
+      let (:exit_code) { 255 }
+      let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
+      let(:settings) { Hash.new }
+      subject { SippyCup::Runner.new settings }
+
+      it "should raise a SippyCup::SippGenericError with the correct error message" do
+        quietly do
+          subject.logger.stub :info
+          subject.should_receive(:prepare_command).and_return command
+          expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
+        end
+      end
+
+      context "with :full_sipp_output enabled" do
+        let(:settings) { Hash.new full_sipp_output: true }
+
+        def capture_stderr(&block)
+          original_stderr = $stderr
+          $stderr = fake = StringIO.new
+          begin
+            yield
+          ensure
+            $stderr = original_stderr
+          end
+          fake.string
+        end
+
+        it "sends the message to stderr" do
+          subject.logger.stub :info
+          subject.should_receive(:prepare_command).and_return command
+          stderr = capture_stderr do
+            expect { subject.run }.to raise_error
+          end
+          stderr.should == error_string
+        end
       end
     end
 
@@ -179,8 +219,13 @@ describe SippyCup::Runner do
 
     context "with a generic undocumented fatal error" do
       let(:exitstatus) { 255 }
+      let(:error_message) { 'Some error occurred' }
       it "should raise a SippGenericError error if SIPp returns 255" do
         expect {subject.process_exit_status(process_status)}.to raise_error SippyCup::SippGenericError
+      end
+
+      it "should raise a SippGenericError error with the appropriate message" do
+        expect {subject.process_exit_status(process_status, error_message)}.to raise_error SippyCup::SippGenericError, error_message
       end
     end
   end

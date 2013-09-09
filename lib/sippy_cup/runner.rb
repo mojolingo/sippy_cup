@@ -47,7 +47,6 @@ module SippyCup
       end
       command << " -inf #{@options[:scenario_variables]}" if @options[:scenario_variables]
       command << " #{@options[:destination]}"
-      command << " > /dev/null 2>&1" unless @options[:full_sipp_output]
       command
     end
 
@@ -66,10 +65,31 @@ module SippyCup
       command = prepare_command
       @logger.info "Preparing to run SIPp command: #{command}"
 
-      @sipp_pid = spawn command
+      rd, wr = IO.pipe
+
+      output_options = {
+        err: wr
+      }
+
+      output_options[:out] = '/dev/null' unless @options[:full_sipp_output]
+
+      stderr_buffer = String.new
+
+      t = Thread.new do
+      wr.close
+      loop do
+        buffer = rd.readpartial(1024).strip
+        stderr_buffer += buffer
+        $stderr << buffer unless @options[:full_sipp_output]
+      end
+    end
+
+      @sipp_pid = spawn command, output_options
       sipp_result = Process.wait2 @sipp_pid.to_i
 
-      final_result = process_exit_status sipp_result
+      rd.close
+
+      final_result = process_exit_status sipp_result, stderr_buffer
 
       if final_result
         @logger.info "Test completed successfully!"
@@ -91,10 +111,11 @@ module SippyCup
       Process.kill "KILL", @sipp_pid if @sipp_pid
     end
 
-    def process_exit_status(process_status)
+    def process_exit_status(process_status, error_message = nil)
       exit_code = process_status[1].exitstatus
-      return true if exit_code == 0
       case exit_code
+      when 0
+        return true
       when 1
         false
       when 97
@@ -106,7 +127,7 @@ module SippyCup
       when -2
         raise SippyCup::FatalSocketBindingError
       else
-        raise SippyCup::SippGenericError
+        raise SippyCup::SippGenericError, error_message
       end
     end
   end
