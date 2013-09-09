@@ -76,13 +76,17 @@ module SippyCup
       stderr_buffer = String.new
 
       t = Thread.new do
-      wr.close
-      loop do
-        buffer = rd.readpartial(1024).strip
-        stderr_buffer += buffer
-        $stderr << buffer unless @options[:full_sipp_output]
+        begin
+          wr.close
+          loop do
+            buffer = rd.readpartial(1024).strip
+            stderr_buffer += buffer
+            $stderr << buffer unless @options[:full_sipp_output]
+          end
+        rescue IOError => e
+          #no-op, just breaking the loop
+        end
       end
-    end
 
       @sipp_pid = spawn command, output_options
       sipp_result = Process.wait2 @sipp_pid.to_i
@@ -119,13 +123,13 @@ module SippyCup
       when 1
         false
       when 97
-        raise SippyCup::ExitOnInternalCommand
+        raise SippyCup::ExitOnInternalCommand, error_message
       when 99
-        raise SippyCup::NoCallsProcessed
-      when -1
-        raise SippyCup::FatalError
-      when -2
-        raise SippyCup::FatalSocketBindingError
+        raise SippyCup::NoCallsProcessed, error_message
+      when 255
+        raise SippyCup::FatalError, error_message
+      when 254
+        raise SippyCup::FatalSocketBindingError, error_message
       else
         raise SippyCup::SippGenericError, error_message
       end
