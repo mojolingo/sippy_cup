@@ -58,6 +58,7 @@ module SippyCup
     # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
     # @raises SippyCup::FatalError when SIPp encounters a fatal failure
     # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
+    # @raises SippyCup::SippGenericError when SIPp encounters another type of error
     #
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
@@ -92,6 +93,7 @@ module SippyCup
 
     def process_exit_status(process_status)
       exit_code = process_status[1].exitstatus
+      return true if exit_code == 0
       case exit_code
       when 1
         false
@@ -104,7 +106,7 @@ module SippyCup
       when -2
         raise SippyCup::FatalSocketBindingError
       else
-        true
+        raise SippyCup::SippGenericError
       end
     end
   end
@@ -115,4 +117,5 @@ module SippyCup
   class NoCallsProcessed < Error; end # 99
   class FatalError < Error; end # -1
   class FatalSocketBindingError < Error; end # -2
+  class SippGenericError < Error; end # 255 and undocumented errors
 end

@@ -176,5 +176,12 @@ describe SippyCup::Runner do
         expect {subject.process_exit_status(process_status)}.to raise_error SippyCup::FatalSocketBindingError
       end
     end
+
+    context "with a generic undocumented fatal error" do
+      let(:exitstatus) { 255 }
+      it "should raise a SippGenericError error if SIPp returns 255" do
+        expect {subject.process_exit_status(process_status)}.to raise_error SippyCup::SippGenericError
+      end
+    end
   end
 end
