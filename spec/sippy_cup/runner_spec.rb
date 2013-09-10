@@ -79,8 +79,8 @@ describe SippyCup::Runner do
     end
 
     context "capturing STDOUT/STDERR output" do
-      let (:error_string) { "Some error" }
-      let (:exit_code) { 128 }
+      let(:error_string) { "Some error" }
+      let(:exit_code) { 128 }
       let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
       let(:settings) { Hash.new }
       subject { SippyCup::Runner.new settings }
@@ -154,8 +154,8 @@ describe SippyCup::Runner do
 
   describe 'SIPp exit status handling' do
     let(:settings) { Hash.new }
-    let (:error_string) { "Some error" }
-    let (:exit_code) { 255 }
+    let(:error_string) { "Some error" }
+    let(:exit_code) { 255 }
     let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
     let(:settings) { Hash.new }
 
@@ -205,7 +205,7 @@ describe SippyCup::Runner do
 
     context "with a fatal error" do
       let(:exit_code) { 255 }
-      it "should raise a FatalError error if SIPp returns -1" do
+      it "should raise a FatalError error if SIPp returns 255" do
         quietly do
           expect {subject.run}.to raise_error SippyCup::FatalError, error_string
         end
@@ -214,7 +214,7 @@ describe SippyCup::Runner do
 
     context "with a socket binding fatal error" do
       let(:exit_code) { 254 }
-      it "should raise a FatalSocketBindingError error if SIPp returns -2" do
+      it "should raise a FatalSocketBindingError error if SIPp returns 254" do
         quietly do
           expect {subject.run}.to raise_error SippyCup::FatalSocketBindingError, error_string
         end

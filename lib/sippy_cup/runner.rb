@@ -83,7 +83,7 @@ module SippyCup
             stderr_buffer += buffer
             $stderr << buffer unless @options[:full_sipp_output]
           end
-        rescue IOError => e
+        rescue IOError
           #no-op, just breaking the loop
         end
       end
