@@ -47,7 +47,6 @@ module SippyCup
       end
       command << " -inf #{@options[:scenario_variables]}" if @options[:scenario_variables]
       command << " #{@options[:destination]}"
-      command << " > /dev/null 2>&1" unless @options[:full_sipp_output]
       command
     end
 
@@ -58,6 +57,7 @@ module SippyCup
     # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
     # @raises SippyCup::FatalError when SIPp encounters a fatal failure
     # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
+    # @raises SippyCup::SippGenericError when SIPp encounters another type of error
     #
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
@@ -65,10 +65,35 @@ module SippyCup
       command = prepare_command
       @logger.info "Preparing to run SIPp command: #{command}"
 
-      @sipp_pid = spawn command
+      rd, wr = IO.pipe
+
+      output_options = {
+        err: wr
+      }
+
+      output_options[:out] = '/dev/null' unless @options[:full_sipp_output]
+
+      stderr_buffer = String.new
+
+      t = Thread.new do
+        begin
+          wr.close
+          loop do
+            buffer = rd.readpartial(1024).strip
+            stderr_buffer += buffer
+            $stderr << buffer unless @options[:full_sipp_output]
+          end
+        rescue IOError
+          #no-op, just breaking the loop
+        end
+      end
+
+      @sipp_pid = spawn command, output_options
       sipp_result = Process.wait2 @sipp_pid.to_i
 
-      final_result = process_exit_status sipp_result
+      rd.close
+
+      final_result = process_exit_status sipp_result, stderr_buffer
 
       if final_result
         @logger.info "Test completed successfully!"
@@ -90,21 +115,23 @@ module SippyCup
       Process.kill "KILL", @sipp_pid if @sipp_pid
     end
 
-    def process_exit_status(process_status)
+    def process_exit_status(process_status, error_message = nil)
       exit_code = process_status[1].exitstatus
       case exit_code
+      when 0
+        return true
       when 1
         false
       when 97
-        raise SippyCup::ExitOnInternalCommand
+        raise SippyCup::ExitOnInternalCommand, error_message
       when 99
-        raise SippyCup::NoCallsProcessed
-      when -1
-        raise SippyCup::FatalError
-      when -2
-        raise SippyCup::FatalSocketBindingError
+        raise SippyCup::NoCallsProcessed, error_message
+      when 255
+        raise SippyCup::FatalError, error_message
+      when 254
+        raise SippyCup::FatalSocketBindingError, error_message
       else
-        true
+        raise SippyCup::SippGenericError, error_message
       end
     end
   end
@@ -115,4 +142,5 @@ module SippyCup
   class NoCallsProcessed < Error; end # 99
   class FatalError < Error; end # -1
   class FatalSocketBindingError < Error; end # -2
+  class SippGenericError < Error; end # 255 and undocumented errors
 end
