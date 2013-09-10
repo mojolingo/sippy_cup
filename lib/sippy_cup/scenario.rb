@@ -55,13 +55,15 @@ module SippyCup
 
     def invite(opts = {})
       opts[:retrans] ||= 500
-      rtp_string = @static_rtcp ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
+      headers = opts.delete :headers
+      rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-INVITE
 
         INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        #{headers}
         From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
         To: <sip:[service]@[remote_ip]:[remote_port]>
         Call-ID: [call_id]

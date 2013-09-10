@@ -22,6 +22,36 @@ describe SippyCup::Scenario do
     s.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
   end
 
+  describe '#invite' do 
+    context 'no arguments' do
+      let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:1234', destination: '127.0.0.1:1234' }
+      it "create a standard invite" do
+        scenario.invite
+
+        xml = scenario.to_xml
+        xml.should =~ /retrans="500"/
+        xml.should =~ /INVITE sip:\[service\]@\[remote_ip\]/
+      end
+    end
+    context 'static RTCP port' do
+      let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:1234', destination: '127.0.0.1:1234', rtcp_port: 6000 }
+      it "should replace the standard RTP and RTCP with static ports" do
+        scenario.invite
+        xml = scenario.to_xml
+        xml.should =~ /m=audio 5999 RTP\/AVP 0 101/
+        xml.should =~ /a=rtcp:6000/
+      end
+    end
+    context 'with headers' do
+      let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:1234', destination: '127.0.0.1:1234' }
+      it "should interpolate the headers into the invite" do
+        scenario.invite headers: "Route: <sip:1@localhost>"
+        xml = scenario.to_xml
+        xml.should =~ /\n        Route: <sip:1@localhost>\n/
+      end
+    end
+  end
+
   describe '#wait_for_answer' do
     let(:scenario) { scenario = SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
