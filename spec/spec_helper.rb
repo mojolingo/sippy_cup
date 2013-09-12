@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-$testing = true
-
 %w{
   sippy_cup
 }.each { |f| require f }
