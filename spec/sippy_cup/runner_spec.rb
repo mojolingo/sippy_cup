@@ -185,6 +185,10 @@ describe SippyCup::Runner do
 
       before { subject.should_receive(:prepare_command).and_return command }
 
+      def active_thread_count
+        Thread.list.select { |t| t.status != 'aborting' }.size
+      end
+
       context "by default" do
         it "swallows stdout from SIPp" do
           capture_stdout { subject.run }.should == ''
@@ -192,6 +196,12 @@ describe SippyCup::Runner do
 
         it "swallows stderr from SIPp" do
           capture_stderr { subject.run }.should == ''
+        end
+
+        it "does not leak threads" do
+          original_thread_count = active_thread_count
+          subject.run
+          active_thread_count.should == original_thread_count
         end
       end
 
@@ -204,6 +214,12 @@ describe SippyCup::Runner do
 
         it "proxies stderr to the terminal" do
           capture_stderr { subject.run }.should == error_string
+        end
+
+        it "does not leak threads" do
+          original_thread_count = active_thread_count
+          subject.run
+          active_thread_count.should == original_thread_count
         end
       end
     end
