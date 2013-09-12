@@ -158,8 +158,7 @@ describe SippyCup::Runner do
 
     describe "SIPp stdout/stderr" do
       let(:error_string) { "Some error" }
-      let(:exit_code) { 128 }
-      let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
+      let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2'" }
 
       def capture_stderr(&block)
         original_stderr = $stderr
@@ -177,9 +176,7 @@ describe SippyCup::Runner do
 
         it "proxies stderr to the terminal" do
           subject.should_receive(:prepare_command).and_return command
-          stderr = capture_stderr do
-            expect { subject.run }.to raise_error
-          end
+          stderr = capture_stderr { subject.run }
           stderr.should == error_string
         end
       end
