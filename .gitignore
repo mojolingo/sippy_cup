@@ -4,3 +4,4 @@
 /spec/reports/
 Gemfile.lock
 .ruby-gemset
+tmp/
