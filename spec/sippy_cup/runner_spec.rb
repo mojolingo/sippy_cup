@@ -157,8 +157,22 @@ describe SippyCup::Runner do
     end
 
     describe "SIPp stdout/stderr" do
+      let(:output_string) { "Some output" }
       let(:error_string) { "Some error" }
-      let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2'" }
+      let(:command) { "sh -c 'echo \"#{output_string}\"' && sh -c 'echo \"#{error_string}\" 1>&2'" }
+
+      def capture_stdout(&block)
+        original = $stdout
+        read, write = IO.pipe
+        buffer = ""
+        Thread.new { buffer << read.readpartial(1024).strip until read.eof? }
+        $stdout = fake = write
+        yield
+        write.close
+        buffer
+      ensure
+        $stdout = original
+      end
 
       def capture_stderr(&block)
         original_stderr = $stderr
@@ -172,6 +186,10 @@ describe SippyCup::Runner do
       before { subject.should_receive(:prepare_command).and_return command }
 
       context "by default" do
+        it "swallows stdout from SIPp" do
+          capture_stdout { subject.run }.should == ''
+        end
+
         it "swallows stderr from SIPp" do
           capture_stderr { subject.run }.should == ''
         end
@@ -179,6 +197,10 @@ describe SippyCup::Runner do
 
       context "with :full_sipp_output enabled" do
         let(:settings) { { full_sipp_output: true } }
+
+        it "proxies stdout to the terminal" do
+          capture_stdout { subject.run }.should == output_string
+        end
 
         it "proxies stderr to the terminal" do
           capture_stderr { subject.run }.should == error_string
