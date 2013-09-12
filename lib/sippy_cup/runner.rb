@@ -75,7 +75,7 @@ module SippyCup
 
       stderr_buffer = String.new
 
-      t = Thread.new do
+      Thread.new do
         begin
           wr.close
           loop do
