@@ -37,7 +37,7 @@ module SippyCup
 
       @sequence.each do |input|
         action, value = get_step input
-        
+
         case action
         when 'silence'
           # value is the duration in milliseconds
@@ -85,7 +85,9 @@ module SippyCup
       end
       @pcap_file
     end
+
   private
+
     def get_step(input)
       action, value = input.split ':'
       raise "Invalid Sequence: #{input}" unless VALID_STEPS.include? action
