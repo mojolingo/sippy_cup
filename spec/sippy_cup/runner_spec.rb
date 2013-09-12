@@ -5,9 +5,11 @@ describe SippyCup::Runner do
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
-  before { subject.logger.stub :info }
+  let(:logger) { double }
 
-  subject { SippyCup::Runner.new settings }
+  before { logger.stub :info }
+
+  subject { SippyCup::Runner.new settings.merge(logger: logger) }
 
   describe '#run' do
     context "System call fails/doesn't fail" do
@@ -37,15 +39,15 @@ describe SippyCup::Runner do
         subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
-        subject.logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
+        logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
         subject.run
       end
     end
 
     context "no stats file" do
       it 'should not display a csv file path if none is specified' do
-        subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
+        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
+        logger.should_receive(:info).ordered.with(/Test completed successfully/)
         subject.should_receive(:prepare_command).and_return command
         subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
         Process.stub :wait2
@@ -60,8 +62,8 @@ describe SippyCup::Runner do
                         number_of_calls: 5} }
 
       it 'should use CSV into the test run' do
-        subject.logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        subject.logger.should_receive(:info).ordered.with(/Test completed successfully/)
+        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
+        logger.should_receive(:info).ordered.with(/Test completed successfully/)
         subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/, an_instance_of(Hash))
         Process.stub :wait2
         subject.stub :process_exit_status
@@ -93,7 +95,7 @@ describe SippyCup::Runner do
 
         it "should return false if SIPp returns 1" do
           quietly do
-            subject.logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
+            logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
             subject.run.should == false
           end
         end

@@ -5,7 +5,6 @@ require 'active_support/core_ext/hash'
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
-    attr_accessor :logger
 
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
