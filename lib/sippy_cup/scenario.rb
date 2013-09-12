@@ -34,7 +34,7 @@ module SippyCup
     end
 
     def get_scenario_opts(args)
-      defaults = { source: "#{@from_addr}", destination: "#{@to_addr}", 
+      defaults = { source: "#{@from_addr}", destination: "#{@to_addr}",
                    scenario: "#{@filename}.xml", max_concurrent: 10,
                    calls_per_second: 5, number_of_calls: 20 }
 
@@ -244,7 +244,6 @@ module SippyCup
       ack_bye(opts)
     end
 
-
     def receive_bye(opts = {})
       opts.merge! request: 'BYE'
       @scenario << new_recv(opts)
@@ -293,7 +292,8 @@ module SippyCup
       [user, domain]
     end
 
-  private
+    private
+
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
       pause['milliseconds'] = msec.to_i
@@ -323,6 +323,4 @@ module SippyCup
       recv
     end
   end
-
 end
-
