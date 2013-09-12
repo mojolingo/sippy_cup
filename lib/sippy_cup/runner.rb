@@ -74,6 +74,8 @@ module SippyCup
 
       stderr_buffer = String.new
 
+      @sipp_pid = spawn command, output_options
+
       Thread.new do
         begin
           wr.close
@@ -87,7 +89,6 @@ module SippyCup
         end
       end
 
-      @sipp_pid = spawn command, output_options
       sipp_result = Process.wait2 @sipp_pid.to_i
 
       rd.close
