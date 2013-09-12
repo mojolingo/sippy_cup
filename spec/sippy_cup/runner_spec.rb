@@ -192,12 +192,12 @@ describe SippyCup::Runner do
       end
 
       context "by default" do
-        it "swallows stdout from SIPp" do
-          capture_stdout { subject.run }.should == ''
+        it "proxies stdout to the terminal" do
+          capture_stdout { subject.run }.should == output_string
         end
 
-        it "swallows stderr from SIPp" do
-          capture_stderr { subject.run }.should == ''
+        it "proxies stderr to the terminal" do
+          capture_stderr { subject.run }.should == error_string
         end
 
         it "does not leak threads" do
@@ -207,15 +207,15 @@ describe SippyCup::Runner do
         end
       end
 
-      context "with :full_sipp_output enabled" do
-        let(:settings) { { full_sipp_output: true } }
+      context "with :full_sipp_output disabled" do
+        let(:settings) { { full_sipp_output: false } }
 
-        it "proxies stdout to the terminal" do
-          capture_stdout { subject.run }.should == output_string
+        it "swallows stdout from SIPp" do
+          capture_stdout { subject.run }.should == ''
         end
 
-        it "proxies stderr to the terminal" do
-          capture_stderr { subject.run }.should == error_string
+        it "swallows stderr from SIPp" do
+          capture_stderr { subject.run }.should == ''
         end
 
         it "does not leak threads" do

@@ -7,7 +7,8 @@ module SippyCup
     attr_accessor :sipp_pid
 
     def initialize(opts = {})
-      @options = ActiveSupport::HashWithIndifferentAccess.new opts
+      defaults = { full_sipp_output: true }
+      @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
