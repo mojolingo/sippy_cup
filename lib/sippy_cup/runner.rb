@@ -77,15 +77,11 @@ module SippyCup
       @sipp_pid = spawn command, output_options
 
       Thread.new do
-        begin
-          wr.close
-          loop do
-            buffer = rd.readpartial(1024).strip
-            stderr_buffer += buffer
-            $stderr << buffer if @options[:full_sipp_output]
-          end
-        rescue IOError
-          #no-op, just breaking the loop
+        wr.close
+        until rd.eof?
+          buffer = rd.readpartial(1024).strip
+          stderr_buffer += buffer
+          $stderr << buffer if @options[:full_sipp_output]
         end
       end
 
