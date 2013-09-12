@@ -5,7 +5,6 @@ require 'active_support/core_ext/hash'
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
-    attr_accessor :logger
 
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
@@ -68,27 +67,23 @@ module SippyCup
       rd, wr = IO.pipe
 
       output_options = {
-        err: wr
+        err: wr,
+        out: @options[:full_sipp_output] ? $stdout : '/dev/null'
       }
-
-      output_options[:out] = '/dev/null' unless @options[:full_sipp_output]
 
       stderr_buffer = String.new
 
-      t = Thread.new do
-        begin
-          wr.close
-          loop do
-            buffer = rd.readpartial(1024).strip
-            stderr_buffer += buffer
-            $stderr << buffer unless @options[:full_sipp_output]
-          end
-        rescue IOError
-          #no-op, just breaking the loop
+      @sipp_pid = spawn command, output_options
+
+      Thread.new do
+        wr.close
+        until rd.eof?
+          buffer = rd.readpartial(1024).strip
+          stderr_buffer += buffer
+          $stderr << buffer if @options[:full_sipp_output]
         end
       end
 
-      @sipp_pid = spawn command, output_options
       sipp_result = Process.wait2 @sipp_pid.to_i
 
       rd.close
