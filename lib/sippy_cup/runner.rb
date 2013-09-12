@@ -110,6 +110,8 @@ module SippyCup
       Process.kill "KILL", @sipp_pid if @sipp_pid
     end
 
+  private
+
     def process_exit_status(process_status, error_message = nil)
       exit_code = process_status[1].exitstatus
       case exit_code
