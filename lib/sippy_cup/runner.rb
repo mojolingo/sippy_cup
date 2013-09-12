@@ -68,10 +68,9 @@ module SippyCup
       rd, wr = IO.pipe
 
       output_options = {
-        err: wr
+        err: wr,
+        out: @options[:full_sipp_output] ? $stdout : '/dev/null'
       }
-
-      output_options[:out] = '/dev/null' unless @options[:full_sipp_output]
 
       stderr_buffer = String.new
 
