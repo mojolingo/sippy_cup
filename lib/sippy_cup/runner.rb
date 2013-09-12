@@ -81,7 +81,7 @@ module SippyCup
           loop do
             buffer = rd.readpartial(1024).strip
             stderr_buffer += buffer
-            $stderr << buffer unless @options[:full_sipp_output]
+            $stderr << buffer if @options[:full_sipp_output]
           end
         rescue IOError
           #no-op, just breaking the loop

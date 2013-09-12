@@ -163,21 +163,25 @@ describe SippyCup::Runner do
       def capture_stderr(&block)
         original_stderr = $stderr
         $stderr = fake = StringIO.new
-        begin
-          yield
-        ensure
-          $stderr = original_stderr
-        end
+        yield
         fake.string
+      ensure
+        $stderr = original_stderr
+      end
+
+      before { subject.should_receive(:prepare_command).and_return command }
+
+      context "by default" do
+        it "swallows stderr from SIPp" do
+          capture_stderr { subject.run }.should == ''
+        end
       end
 
       context "with :full_sipp_output enabled" do
-        let(:settings) { Hash.new full_sipp_output: true }
+        let(:settings) { { full_sipp_output: true } }
 
         it "proxies stderr to the terminal" do
-          subject.should_receive(:prepare_command).and_return command
-          stderr = capture_stderr { subject.run }
-          stderr.should == error_string
+          capture_stderr { subject.run }.should == error_string
         end
       end
     end
