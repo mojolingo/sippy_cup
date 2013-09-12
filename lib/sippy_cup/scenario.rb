@@ -292,7 +292,7 @@ module SippyCup
       [user, domain]
     end
 
-    private
+  private
 
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
