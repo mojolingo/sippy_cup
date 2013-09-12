@@ -175,7 +175,6 @@ This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml
 
 ### Customizing the Test Run
 
-
 Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
   <dt>stats_file</dt>
@@ -202,14 +201,14 @@ Each parameter has an impact on the test, and may either be changed once the YAM
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 
 ```Ruby
-#This limits the amount of time the server has to reply to an invite (3 seconds)
+# This limits the amount of time the server has to reply to an invite (3 seconds)
 s.receive_answer timeout: 3000
 
-#You can override the default 'optional' parameters
+# You can override the default 'optional' parameters
 s.receive_ringing optional: false
 s.receive_answer optional: true
 
-#Let's combine multiple attributes...
+# Let's combine multiple attributes...
 s.receive_answer timeout: 3000, crlf: true
 ```
 
