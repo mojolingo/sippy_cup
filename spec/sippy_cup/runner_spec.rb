@@ -1,7 +1,18 @@
 require 'sippy_cup/runner'
 
 describe SippyCup::Runner do
-  let(:settings) { Hash.new }
+  let(:settings) { {} }
+  let(:default_settings) do
+    {
+      logger: logger,
+      scenario: 'foobar',
+      source: 'doo@dah.com',
+      destination: 'foo@bar.com',
+      max_concurrent: 5,
+      calls_per_second: 2,
+      number_of_calls: 10
+    }
+  end
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
@@ -9,7 +20,24 @@ describe SippyCup::Runner do
 
   before { logger.stub :info }
 
-  subject { SippyCup::Runner.new settings.merge(logger: logger) }
+  subject { SippyCup::Runner.new default_settings.merge(settings) }
+
+  [
+    :scenario,
+    :source,
+    :destination,
+    :max_concurrent,
+    :calls_per_second,
+    :number_of_calls
+  ].each do |attribute|
+    context "without a " do
+      let(:settings) { { attribute => nil } }
+
+      it "should raise ArgumentError" do
+        expect { subject }.to raise_error(ArgumentError)
+      end
+    end
+  end
 
   describe '#run' do
     context "System call fails/doesn't fail" do

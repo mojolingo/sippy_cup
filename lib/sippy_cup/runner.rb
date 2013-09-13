@@ -8,6 +8,11 @@ module SippyCup
 
     def initialize(opts = {})
       @options = ActiveSupport::HashWithIndifferentAccess.new opts
+
+      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
+        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
+      end
+
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
@@ -31,9 +36,6 @@ module SippyCup
     end
 
     def prepare_command
-      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
-      end
       command = "sudo sipp"
       source_port = @options[:source_port] || '8836'
       sip_user = @options[:sip_user] || '1'
