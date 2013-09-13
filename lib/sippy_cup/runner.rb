@@ -7,7 +7,8 @@ module SippyCup
     attr_accessor :sipp_pid
 
     def initialize(opts = {})
-      @options = ActiveSupport::HashWithIndifferentAccess.new opts
+      defaults = { full_sipp_output: true }
+      @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
 
       [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
         raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
