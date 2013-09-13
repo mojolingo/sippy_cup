@@ -156,7 +156,7 @@ describe SippyCup::Runner do
 
         it "should not raise anything if SIPp returns 0" do
           quietly do
-            expect { subject.run }.to_not raise_error
+            subject.run.should be_true
           end
         end
       end
@@ -167,7 +167,7 @@ describe SippyCup::Runner do
         it "should return false if SIPp returns 1" do
           quietly do
             logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-            subject.run.should == false
+            subject.run.should be_false
           end
         end
       end
