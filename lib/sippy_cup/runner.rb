@@ -127,7 +127,7 @@ module SippyCup
       exit_code = process_status[1].exitstatus
       case exit_code
       when 0
-        return true
+        true
       when 1
         false
       when 97
