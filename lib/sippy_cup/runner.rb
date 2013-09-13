@@ -18,21 +18,10 @@ module SippyCup
     end
 
     def compile
-      raise ArgumentError, "Must provide scenario steps" unless @options[:steps]
-
       scenario_opts = {source: @options[:source], destination: @options[:destination]}
       scenario_opts[:filename] = @options[:filename] if @options[:filename]
       scenario = SippyCup::Scenario.new @options[:name].titleize, scenario_opts
-      @options[:steps].each do |step|
-        instruction, arg = step.split ' ', 2
-        if arg && !arg.empty?
-          # Strip leading/trailing quotes if present
-          arg.gsub!(/^'|^"|'$|"$/, '')
-          scenario.send instruction.to_sym, arg
-        else
-          scenario.send instruction
-        end
-      end
+      scenario.build @options[:steps]
       scenario.compile!
     end
 

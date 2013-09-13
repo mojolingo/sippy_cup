@@ -139,4 +139,38 @@ describe SippyCup::Scenario do
       end
     end
   end
+
+  describe "#build" do
+    subject { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
+    let(:valid_steps){ ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
+    let(:invalid_steps){ ["send_digits 'b'"] }
+
+    context "without raise_errors" do
+      context "with a valid steps definition" do
+        
+        it "runs each step" do
+          subject.should_receive(:invite).once
+          subject.should_receive(:wait_for_answer).once
+          subject.should_receive(:ack_answer).once
+          subject.should_receive(:wait_for_hangup).once
+          subject.build(valid_steps)
+        end
+      end
+
+      context "with an invalid steps definition" do
+        let(:steps){ ["send_digits 'b'"] }
+        it "should not raise errors" do
+          expect { subject.build(invalid_steps) }.to_not raise_error
+        end
+      end
+    end
+
+    context "with raise_errors" do
+      context "with an invalid steps definition" do
+        it "should not raise errors" do
+          expect { subject.build(invalid_steps, true) }.to raise_error ArgumentError
+        end
+      end
+    end
+  end
 end

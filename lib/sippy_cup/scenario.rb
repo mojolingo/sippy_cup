@@ -42,6 +42,26 @@ module SippyCup
       defaults.merge! args
     end
 
+    ##
+    # This method will build the scenario steps provided, and will capture errors
+    def build(steps, raise_errors = false)
+      raise ArgumentError, "Must provide scenario steps" unless steps
+      steps.each do |step|
+        begin
+          instruction, arg = step.split ' ', 2
+          if arg && !arg.empty?
+            # Strip leading/trailing quotes if present
+            arg.gsub!(/^'|^"|'$|"$/, '')
+            self.send instruction.to_sym, arg
+          else
+            self.send instruction
+          end
+        rescue => e
+          raise if raise_errors
+        end
+      end
+    end
+
     def compile_media
       @media.compile!
     end
