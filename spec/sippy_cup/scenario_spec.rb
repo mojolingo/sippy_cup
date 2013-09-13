@@ -29,7 +29,6 @@ describe SippyCup::Scenario do
         scenario.invite
 
         xml = scenario.to_xml
-        p xml
         xml.should =~ /retrans="500"/
         xml.should =~ /INVITE sip:\[service\]@\[remote_ip\]/
         xml.should_not =~ /branch=\[branch\]\n        \n/
