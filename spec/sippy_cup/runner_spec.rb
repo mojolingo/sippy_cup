@@ -85,9 +85,7 @@ describe SippyCup::Runner do
     end
 
     context "CSV file" do
-      let(:settings) { {scenario_variables: "/path/to/csv", scenario: "/path/to/scenario", source: "127.0.0.1",
-                        destination: "127.0.0.1", max_concurrent: 5, calls_per_second: 5,
-                        number_of_calls: 5} }
+      let(:settings) { { scenario_variables: "/path/to/csv" } }
 
       it 'should use CSV into the test run' do
         logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
