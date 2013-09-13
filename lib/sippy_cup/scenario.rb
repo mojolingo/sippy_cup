@@ -8,7 +8,7 @@ module SippyCup
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
 
-    attr_reader :scenario_opts
+    attr_reader :scenario_options
 
     def initialize(name, args = {}, &block)
       builder = Nokogiri::XML::Builder.new do |xml|
@@ -16,6 +16,8 @@ module SippyCup
       end
 
       parse_args args
+
+      @scenario_options = args.merge({name: name})
       @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename
