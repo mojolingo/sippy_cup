@@ -9,6 +9,11 @@ module SippyCup
     def initialize(opts = {})
       defaults = { full_sipp_output: true }
       @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
+
+      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
+        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
+      end
+
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
@@ -29,25 +34,6 @@ module SippyCup
         end
       end
       scenario.compile!
-    end
-
-    def prepare_command
-      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
-      end
-      command = "sudo sipp"
-      source_port = @options[:source_port] || '8836'
-      sip_user = @options[:sip_user] || '1'
-      command << " -i #{@options[:source]} -p #{source_port} -sf #{File.expand_path @options[:scenario]}.xml"
-      command << " -l #{@options[:max_concurrent]} -m #{@options[:number_of_calls]} -r #{@options[:calls_per_second]}"
-      command << " -s #{sip_user}"
-      if @options[:stats_file]
-        stats_interval = @options[:stats_interval] || 1
-        command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
-      end
-      command << " -inf #{@options[:scenario_variables]}" if @options[:scenario_variables]
-      command << " #{@options[:destination]}"
-      command
     end
 
     # Runs the loaded scenario using SIPp
@@ -113,11 +99,36 @@ module SippyCup
 
   private
 
+    def prepare_command
+      options = {
+        i: @options[:source],
+        p: @options[:source_port] || '8836',
+        sf: "#{File.expand_path @options[:scenario]}.xml",
+        l: @options[:max_concurrent],
+        m: @options[:number_of_calls],
+        r: @options[:calls_per_second],
+        s: @options[:sip_user] || '1'
+      }
+
+      if @options[:stats_file]
+        options[:trace_stat] = nil
+        options[:stf] = @options[:stats_file]
+        options[:fd] = @options[:stats_interval] || 1
+      end
+      options[:inf] = @options[:scenario_variables] if @options[:scenario_variables]
+
+      command = "sudo sipp"
+      options.each_pair do |key, value|
+        command << (value ? " -#{key} #{value}" : " -#{key}")
+      end
+      command << " #{@options[:destination]}"
+    end
+
     def process_exit_status(process_status, error_message = nil)
       exit_code = process_status[1].exitstatus
       case exit_code
       when 0
-        return true
+        true
       when 1
         false
       when 97

@@ -1,7 +1,18 @@
 require 'sippy_cup/runner'
 
 describe SippyCup::Runner do
-  let(:settings) { Hash.new }
+  let(:settings) { {} }
+  let(:default_settings) do
+    {
+      logger: logger,
+      scenario: 'foobar',
+      source: 'doo@dah.com',
+      destination: 'foo@bar.com',
+      max_concurrent: 5,
+      calls_per_second: 2,
+      number_of_calls: 10
+    }
+  end
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
@@ -9,64 +20,108 @@ describe SippyCup::Runner do
 
   before { logger.stub :info }
 
-  subject { SippyCup::Runner.new settings.merge(logger: logger) }
+  subject { SippyCup::Runner.new default_settings.merge(settings) }
+
+  [
+    :scenario,
+    :source,
+    :destination,
+    :max_concurrent,
+    :calls_per_second,
+    :number_of_calls
+  ].each do |attribute|
+    context "without a " do
+      let(:settings) { { attribute => nil } }
+
+      it "should raise ArgumentError" do
+        expect { subject }.to raise_error(ArgumentError)
+      end
+    end
+  end
+
+  def expect_command_execution(command = anything)
+    Process.stub :wait2
+    subject.stub :process_exit_status
+
+    subject.should_receive(:spawn).with(command, anything)
+  end
 
   describe '#run' do
+    it "should execute the correct command to invoke SIPp" do
+      full_scenario_path = File.join(Dir.pwd, 'foobar.xml')
+      expect_command_execution "sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com"
+      subject.run
+    end
+
     context "System call fails/doesn't fail" do
       it 'should raise an error when the system call fails' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_raise(Errno::ENOENT)
-        Process.stub :wait2
-        subject.stub :process_exit_status
+        expect_command_execution.and_raise(Errno::ENOENT)
         expect { subject.run }.to raise_error Errno::ENOENT
       end
 
       it 'should not raise an error when the system call is successful' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
+        expect_command_execution
         expect { subject.run }.not_to raise_error
+      end
+    end
+
+    context "specifying a source port" do
+      let(:settings) { { source_port: 1234 } }
+
+      it 'should set the -p option' do
+        expect_command_execution(/-p 1234/)
+        subject.run
+      end
+    end
+
+    context "specifying a SIP user" do
+      let(:settings) { { sip_user: 'frank' } }
+
+      it 'should set the -s option' do
+        expect_command_execution(/-s frank/)
+        subject.run
       end
     end
 
     context "specifying a stats file" do
       let(:settings) { { stats_file: 'stats.csv' } }
-      let(:command) { "sudo sipp -i 127.0.0.1 -trace_stats -stf stats.csv" }
 
-      it 'should display the path to the csv file when one is specified' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
+      it 'should turn on -trace_stats, set the -stf option to the filename provided, and set the stats interval to 1 second' do
+        expect_command_execution(/-trace_stat -stf stats.csv -fd 1/)
+        subject.run
+      end
+
+      context 'with a stats interval provided' do
+        let(:settings) { { stats_file: 'stats.csv', stats_interval: 3 } }
+
+        it "should pass the interval to the -fd option" do
+          expect_command_execution(/-fd 3/)
+          subject.run
+        end
+      end
+
+      it 'should log the path to the csv file' do
+        expect_command_execution
         logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
         subject.run
       end
     end
 
     context "no stats file" do
-      it 'should not display a csv file path if none is specified' do
-        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
+      it 'should not log a statistics file path' do
+        logger.should_receive(:info).with(/Statistics logged at/).never
+        expect_command_execution
         subject.run
       end
     end
 
-    context "CSV file" do
-      let(:settings) { {scenario_variables: "/path/to/csv", scenario: "/path/to/scenario", source: "127.0.0.1",
-                        destination: "127.0.0.1", max_concurrent: 5, calls_per_second: 5,
-                        number_of_calls: 5} }
+    context "specifying a variables file" do
+      let(:settings) { { scenario_variables: "/path/to/csv" } }
 
       it 'should use CSV into the test run' do
         logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
         logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/, an_instance_of(Hash))
-        Process.stub :wait2
-        subject.stub :process_exit_status
+        expect_command_execution(/\-inf \/path\/to\/csv/)
         subject.run
       end
     end
@@ -85,7 +140,7 @@ describe SippyCup::Runner do
 
         it "should not raise anything if SIPp returns 0" do
           quietly do
-            expect { subject.run }.to_not raise_error
+            subject.run.should be_true
           end
         end
       end
@@ -96,7 +151,7 @@ describe SippyCup::Runner do
         it "should return false if SIPp returns 1" do
           quietly do
             logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-            subject.run.should == false
+            subject.run.should be_false
           end
         end
       end
