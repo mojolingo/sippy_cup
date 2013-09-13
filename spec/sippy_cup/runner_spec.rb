@@ -40,6 +40,15 @@ describe SippyCup::Runner do
   end
 
   describe '#run' do
+    it "should execute the correct command to invoke SIPp" do
+      full_scenario_path = File.join(Dir.pwd, 'foobar.xml')
+      expected_command = "sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com"
+      subject.should_receive(:spawn).with(expected_command, anything)
+      Process.stub :wait2
+      subject.stub :process_exit_status
+      subject.run
+    end
+
     context "System call fails/doesn't fail" do
       it 'should raise an error when the system call fails' do
         subject.should_receive(:prepare_command).and_return command
@@ -58,13 +67,51 @@ describe SippyCup::Runner do
       end
     end
 
+    context "specifying a source port" do
+      let(:settings) { { source_port: 1234 } }
+
+      it 'should set the -p option' do
+        subject.should_receive(:spawn).with(/-p 1234/, anything)
+        Process.stub :wait2
+        subject.stub :process_exit_status
+        subject.run
+      end
+    end
+
+    context "specifying a SIP user" do
+      let(:settings) { { sip_user: 'frank' } }
+
+      it 'should set the -s option' do
+        subject.should_receive(:spawn).with(/-s frank/, anything)
+        Process.stub :wait2
+        subject.stub :process_exit_status
+        subject.run
+      end
+    end
+
     context "specifying a stats file" do
       let(:settings) { { stats_file: 'stats.csv' } }
-      let(:command) { "sudo sipp -i 127.0.0.1 -trace_stats -stf stats.csv" }
 
-      it 'should display the path to the csv file when one is specified' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, anything).and_return pid
+      it 'should turn on -trace_stats, set the -stf option to the filename provided, and set the stats interval to 1 second' do
+        subject.should_receive(:spawn).with(/-trace_stat -stf stats.csv -fd 1/, anything)
+        Process.stub :wait2
+        subject.stub :process_exit_status
+        subject.run
+      end
+
+      context 'with a stats interval provided' do
+        let(:settings) { { stats_file: 'stats.csv', stats_interval: 3 } }
+
+        it "should pass the interval to the -fd option" do
+          subject.should_receive(:spawn).with(/-fd 3/, anything)
+          Process.stub :wait2
+          subject.stub :process_exit_status
+          subject.run
+        end
+      end
+
+      it 'should log the path to the csv file' do
+        subject.should_receive(:spawn).with(anything, anything).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
         logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
@@ -73,18 +120,16 @@ describe SippyCup::Runner do
     end
 
     context "no stats file" do
-      it 'should not display a csv file path if none is specified' do
-        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, anything).and_return pid
+      it 'should not log a statistics file path' do
+        logger.should_receive(:info).with(/Statistics logged at/).never
+        subject.should_receive(:spawn).with(anything, anything).and_return pid
         Process.stub :wait2
         subject.stub :process_exit_status
         subject.run
       end
     end
 
-    context "CSV file" do
+    context "specifying a variables file" do
       let(:settings) { { scenario_variables: "/path/to/csv" } }
 
       it 'should use CSV into the test run' do
