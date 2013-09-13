@@ -1,11 +1,14 @@
 require 'nokogiri'
 require 'yaml'
+require 'psych'
 
 module SippyCup
   class Scenario
     USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
+
+    attr_reader :scenario_opts
 
     def initialize(name, args = {}, &block)
       builder = Nokogiri::XML::Builder.new do |xml|
@@ -43,8 +46,9 @@ module SippyCup
     end
 
     ##
-    # This method will build the scenario steps provided, and will capture errors
-    def build(steps, raise_errors = false)
+    # This method will build the scenario steps provided, and will capture errors or raise them depending on suppress_errors
+    #
+    def build(steps, suppress_errors = false)
       raise ArgumentError, "Must provide scenario steps" unless steps
       steps.each do |step|
         begin
@@ -57,9 +61,29 @@ module SippyCup
             self.send instruction
           end
         rescue => e
-          raise if raise_errors
+          raise unless suppress_errors
         end
       end
+    end
+
+    ##
+    # This method will build a scenario based on either a YAML string or a file handle
+    # All YAML configuration keys can be overridden by passing in an Hash of corresponding values
+    #
+    # @param String The YAML to be passed in
+    # @param Hash The hash with options to override
+    # @return SippyCup::Scenario instance
+    #
+    def self.from_yaml(yaml, options = {})
+      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(yaml)).symbolize_keys.merge options
+
+      name = args.delete :name
+      steps = args.delete :steps
+
+      scenario = Scenario.new name, args
+      scenario.build steps
+
+      scenario
     end
 
     def compile_media
