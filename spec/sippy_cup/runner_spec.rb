@@ -126,6 +126,15 @@ describe SippyCup::Runner do
       end
     end
 
+    context 'with a transport mode specified' do
+      let(:settings) { { transport_mode: 't1' } }
+
+      it "should pass the transport mode to the -t option" do
+        expect_command_execution(/-t t1/)
+        subject.run
+      end
+    end
+
     describe 'SIPp exit status handling' do
       let(:error_string) { "Some error" }
       let(:exit_code) { 255 }
