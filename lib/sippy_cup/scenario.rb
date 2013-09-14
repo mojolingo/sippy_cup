@@ -17,7 +17,7 @@ module SippyCup
 
       parse_args args
 
-      @scenario_options = args.merge({name: name})
+      @scenario_options = args.merge name: name
       @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename

@@ -218,28 +218,6 @@ describe SippyCup::Runner do
       let(:error_string) { "Some error" }
       let(:command) { "sh -c 'echo \"#{output_string}\"' && sh -c 'echo \"#{error_string}\" 1>&2'" }
 
-      def capture_stdout(&block)
-        original = $stdout
-        read, write = IO.pipe
-        buffer = ""
-        Thread.new { buffer << read.readpartial(1024).strip until read.eof? }
-        $stdout = fake = write
-        yield
-        write.close
-        buffer
-      ensure
-        $stdout = original
-      end
-
-      def capture_stderr(&block)
-        original_stderr = $stderr
-        $stderr = fake = StringIO.new
-        yield
-        fake.string
-      ensure
-        $stderr = original_stderr
-      end
-
       before { subject.should_receive(:prepare_command).and_return command }
 
       def active_thread_count
@@ -248,16 +226,22 @@ describe SippyCup::Runner do
 
       context "by default" do
         it "proxies stdout to the terminal" do
-          capture_stdout { subject.run }.should == output_string
+          quietly do
+            capture(:stdout){ subject.run }.strip.should == output_string
+         end
         end
 
         it "proxies stderr to the terminal" do
-          capture_stderr { subject.run }.should == error_string
+          quietly do
+            capture(:stderr){ subject.run }.strip.should == error_string
+          end
         end
 
         it "does not leak threads" do
           original_thread_count = active_thread_count
-          subject.run
+          quietly do
+            subject.run
+          end
           active_thread_count.should == original_thread_count
         end
       end
@@ -266,17 +250,19 @@ describe SippyCup::Runner do
         let(:settings) { { full_sipp_output: false } }
 
         it "swallows stdout from SIPp" do
-          capture_stdout { subject.run }.should == ''
+          capture(:stdout){ subject.run }.should == ''
         end
 
         it "swallows stderr from SIPp" do
-          capture_stderr { subject.run }.should == ''
+          capture(:stderr) { subject.run }.should == ''
         end
 
         it "does not leak threads" do
-          original_thread_count = active_thread_count
-          subject.run
-          active_thread_count.should == original_thread_count
+          quietly do
+            original_thread_count = active_thread_count
+            subject.run
+            active_thread_count.should == original_thread_count
+          end
         end
       end
     end
