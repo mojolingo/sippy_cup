@@ -115,6 +115,10 @@ module SippyCup
         options[:stf] = @options[:stats_file]
         options[:fd] = @options[:stats_interval] || 1
       end
+
+      if @options[:transport_mode]
+        options[:t] = @options[:transport_mode]
+      end
       options[:inf] = @options[:scenario_variables] if @options[:scenario_variables]
 
       command = "sudo sipp"
