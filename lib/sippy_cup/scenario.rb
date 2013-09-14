@@ -48,22 +48,18 @@ module SippyCup
     end
 
     ##
-    # This method will build the scenario steps provided, and will capture errors or raise them depending on suppress_errors
+    # This method will build the scenario steps provided
     #
-    def build(steps, suppress_errors = false)
+    def build(steps)
       raise ArgumentError, "Must provide scenario steps" unless steps
       steps.each do |step|
-        begin
-          instruction, arg = step.split ' ', 2
-          if arg && !arg.empty?
-            # Strip leading/trailing quotes if present
-            arg.gsub!(/^'|^"|'$|"$/, '')
-            self.send instruction.to_sym, arg
-          else
-            self.send instruction
-          end
-        rescue => e
-          raise unless suppress_errors
+        instruction, arg = step.split ' ', 2
+        if arg && !arg.empty?
+          # Strip leading/trailing quotes if present
+          arg.gsub!(/^'|^"|'$|"$/, '')
+          self.send instruction.to_sym, arg
+        else
+          self.send instruction
         end
       end
     end

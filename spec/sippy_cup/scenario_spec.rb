@@ -218,27 +218,17 @@ describe SippyCup::Scenario do
     END
     end
 
-    context "without suppress_errors" do
-      context "with a valid steps definition" do
-        it "runs each step" do
-          subject.build(valid_steps)
-          subject.to_xml.should == scenario_xml
-        end
-      end
-
-      context "with an invalid steps definition" do
-        let(:steps){ ["send_digits 'b'"] }
-        it "should raise errors" do
-          expect { subject.build(invalid_steps) }.to raise_error ArgumentError
-        end
+    context "with a valid steps definition" do
+      it "runs each step" do
+        subject.build(valid_steps)
+        subject.to_xml.should == scenario_xml
       end
     end
 
-    context "with suppress_errors" do
-      context "with an invalid steps definition" do
-        it "should not raise errors" do
-          expect { subject.build(invalid_steps, true) }.to_not raise_error
-        end
+    context "with an invalid steps definition" do
+      let(:steps){ ["send_digits 'b'"] }
+      it "should raise errors" do
+        expect { subject.build(invalid_steps) }.to raise_error ArgumentError
       end
     end
   end
