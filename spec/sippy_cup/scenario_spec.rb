@@ -240,7 +240,7 @@ describe SippyCup::Scenario do
   end
 
   describe "Scenario.from_yaml" do
-    let (:specs_from) { 'specs' }
+    let(:specs_from) { 'specs' }
 
     let(:scenario_yaml) do <<-END
 name: spec scenario
@@ -369,7 +369,7 @@ steps:
     end
 
     context "overriding some value" do
-      let (:specs_from) { 'other_user' }
+      let(:specs_from) { 'other_user' }
 
       it "overrides keys with values from the options hash" do
         scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
