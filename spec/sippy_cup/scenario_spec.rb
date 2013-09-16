@@ -67,6 +67,11 @@ describe SippyCup::Scenario do
       scenario.sleep 5
     end
 
+    it %q{should create the proper amount of silent audio when passed fractional seconds} do
+      media.should_receive(:<<).once.with 'silence:500'
+      scenario.sleep '0.5'
+    end
+
     it %q{should create the requested DTMF string'} do
       media.should_receive(:<<).ordered.with 'dtmf:1'
       media.should_receive(:<<).ordered.with 'silence:250'
