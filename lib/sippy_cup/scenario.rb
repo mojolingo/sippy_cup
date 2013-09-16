@@ -131,7 +131,7 @@ module SippyCup
 
     def register_auth(user, password, opts = {})
       opts[:retrans] ||= 500
-      scenario_node << new_recv(response: '401', auth: true, optional: false)
+      recv response: '401', auth: true, optional: false
       msg = <<-AUTH
 
         REGISTER sip:#{opts[:domain]} SIP/2.0
@@ -152,34 +152,26 @@ module SippyCup
     end
 
     def receive_trying(opts = {})
-      opts[:optional] = true if opts[:optional].nil?
-      opts.merge! response: 100
-      scenario_node << new_recv(opts)
+      handle_response 100, opts
     end
     alias :receive_100 :receive_trying
 
     def receive_ringing(opts = {})
-      opts[:optional] = true if opts[:optional].nil?
-      opts.merge! response: 180
-      scenario_node << new_recv(opts)
+      handle_response 180, opts
     end
     alias :receive_180 :receive_ringing
 
     def receive_progress(opts = {})
-      opts[:optional] = true if opts[:optional].nil?
-      opts.merge! response: 183
-      scenario_node << new_recv(opts)
+      handle_response 183, opts
     end
     alias :receive_183 :receive_progress
 
     def receive_answer(opts = {})
-      opts.merge! response: 200
-      recv = new_recv opts
-      # Record Record Set: Make the Route headers available via [route] later
-      recv['rrs'] = true
-      # Response Time Duration: Record the response time
-      recv['rtd'] = true
-      scenario_node << recv
+      opts.merge! response: 200,
+        rrs: true, # Record Record Set: Make the Route headers available via [route] later
+        rtd: true # Response Time Duration: Record the response time
+
+      recv opts
     end
     alias :receive_200 :receive_answer
 
@@ -263,7 +255,7 @@ module SippyCup
 
     def receive_bye(opts = {})
       opts.merge! request: 'BYE'
-      scenario_node << new_recv(opts)
+      recv opts
     end
 
     def ack_bye(opts = {})
@@ -349,7 +341,7 @@ module SippyCup
       send
     end
 
-    def new_recv(opts = {})
+    def recv(opts = {})
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
       recv = Nokogiri::XML::Node.new 'recv', doc
       recv['request']  = opts.delete :request  if opts.keys.include? :request
@@ -358,7 +350,16 @@ module SippyCup
       opts.each do |k,v|
         recv[k.to_s] = v
       end
-      recv
+      scenario_node << recv
+    end
+
+    def optional_recv(opts)
+      opts[:optional] = true if opts[:optional].nil?
+      recv opts
+    end
+
+    def handle_response(code, opts)
+      optional_recv opts.merge(response: code)
     end
   end
 end
