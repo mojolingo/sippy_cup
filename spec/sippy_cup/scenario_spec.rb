@@ -1,6 +1,14 @@
 require 'spec_helper'
+require 'fakefs/spec_helpers'
 
 describe SippyCup::Scenario do
+  include FakeFS::SpecHelpers
+
+  before do
+    Dir.mkdir "/tmp"
+    Dir.chdir "/tmp"
+  end
+
   let(:default_args) { {source: '127.0.0.1:5060', destination: '10.0.0.1:5080'} }
 
   it %q{should create a media stream on initialization} do
@@ -195,7 +203,7 @@ describe SippyCup::Scenario do
       </send>
         <nop>
           <action>
-            <exec play_pcap_audio="/Users/luca/projects/sippy_cup/test.pcap"/>
+            <exec play_pcap_audio="/tmp/test.pcap"/>
           </action>
         </nop>
         <recv request="BYE" optional="false"/>
@@ -306,7 +314,7 @@ describe SippyCup::Scenario do
       </send>
         <nop>
           <action>
-            <exec play_pcap_audio="/Users/luca/projects/sippy_cup/spec_scenario.pcap"/>
+            <exec play_pcap_audio="/tmp/spec_scenario.pcap"/>
           </action>
         </nop>
         <pause milliseconds="3000"/>

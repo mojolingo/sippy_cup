@@ -20,7 +20,7 @@ module SippyCup
       @scenario_options = args.merge name: name
       @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
-      @filename = File.expand_path @filename
+      @filename = File.expand_path @filename, Dir.pwd
       @doc = builder.doc
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
       @scenario_opts = get_scenario_opts args
