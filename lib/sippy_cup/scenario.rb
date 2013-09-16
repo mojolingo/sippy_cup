@@ -254,8 +254,7 @@ module SippyCup
     end
 
     def receive_bye(opts = {})
-      opts.merge! request: 'BYE'
-      recv opts
+      recv opts.merge request: 'BYE'
     end
 
     def ack_bye(opts = {})
@@ -344,9 +343,6 @@ module SippyCup
     def recv(opts = {})
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
       recv = Nokogiri::XML::Node.new 'recv', doc
-      recv['request']  = opts.delete :request  if opts.keys.include? :request
-      recv['response'] = opts.delete :response if opts.keys.include? :response
-      recv['optional'] = !!opts.delete(:optional)
       opts.each do |k,v|
         recv[k.to_s] = v
       end

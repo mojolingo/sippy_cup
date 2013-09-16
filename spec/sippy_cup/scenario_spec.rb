@@ -37,21 +37,21 @@ describe SippyCup::Scenario do
       scenario.wait_for_answer
 
       xml = scenario.to_xml
-      xml.should =~ /recv response="100".*optional="true"/
-      xml.should =~ /recv response="180".*optional="true"/
-      xml.should =~ /recv response="183".*optional="true"/
+      xml.should =~ /recv optional="true".*response="100"/
+      xml.should =~ /recv optional="true".*response="180"/
+      xml.should =~ /recv optional="true".*response="183"/
       xml.should =~ /recv response="200"/
-      xml.should_not =~ /recv response="200".*optional="true"/
+      xml.should_not =~ /recv optional="true".*response="200"/
     end
 
     it %q{should pass through additional options} do
       scenario.wait_for_answer foo: 'bar'
 
       xml = scenario.to_xml
-      xml.should =~ /recv response="100".*foo="bar"/
-      xml.should =~ /recv response="180".*foo="bar"/
-      xml.should =~ /recv response="183".*foo="bar"/
-      xml.should =~ /recv response="200".*foo="bar"/
+      xml.should =~ /recv .*foo="bar".*response="100"/
+      xml.should =~ /recv .*foo="bar".*response="180"/
+      xml.should =~ /recv .*foo="bar".*response="183"/
+      xml.should =~ /recv .*foo="bar".*response="200"/
     end
   end
 
@@ -110,7 +110,7 @@ describe SippyCup::Scenario do
       scenario.register 'foo@example.com', 'seekrut'
 
       xml = scenario.to_xml
-      xml.should =~ %r{recv response="401" optional="false" auth="true"}
+      xml.should =~ %r{recv response="401" auth="true"}
       xml.should =~ %r{\[authentication username=foo password=seekrut\]}
     end
   end
@@ -185,10 +185,10 @@ describe SippyCup::Scenario do
         a=fmtp:101 0-15
 ]]>
 </send>
-  <recv response="100" optional="true"/>
-  <recv response="180" optional="true"/>
-  <recv response="183" optional="true"/>
-  <recv response="200" optional="false" rrs="true" rtd="true"/>
+  <recv optional="true" response="100"/>
+  <recv optional="true" response="180"/>
+  <recv optional="true" response="183"/>
+  <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
         ACK [next_url] SIP/2.0
@@ -209,7 +209,7 @@ describe SippyCup::Scenario do
       <exec play_pcap_audio="/tmp/test.pcap"/>
     </action>
   </nop>
-  <recv request="BYE" optional="false"/>
+  <recv request="BYE"/>
   <send>
 <![CDATA[
         SIP/2.0 200 OK
@@ -291,10 +291,10 @@ steps:
         a=fmtp:101 0-15
 ]]>
 </send>
-  <recv response="100" optional="true"/>
-  <recv response="180" optional="true"/>
-  <recv response="183" optional="true"/>
-  <recv response="200" optional="false" rrs="true" rtd="true"/>
+  <recv optional="true" response="100"/>
+  <recv optional="true" response="180"/>
+  <recv optional="true" response="183"/>
+  <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
         ACK [next_url] SIP/2.0
@@ -328,7 +328,7 @@ steps:
   <pause milliseconds="500"/>
   <pause milliseconds="5000"/>
   <pause milliseconds="500"/>
-  <recv request="BYE" optional="false"/>
+  <recv request="BYE"/>
   <send>
 <![CDATA[
         SIP/2.0 200 OK
