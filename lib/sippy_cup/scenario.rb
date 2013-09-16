@@ -64,10 +64,10 @@ module SippyCup
     end
 
     def sleep(seconds)
-      seconds = seconds.to_i
+      seconds = seconds.to_f
       # TODO play silent audio files to the server to fill the gap
       pause seconds * MSEC
-      @media << "silence:#{seconds * MSEC}"
+      @media << "silence:#{(seconds * MSEC).to_i}"
     end
 
     def invite(opts = {})
