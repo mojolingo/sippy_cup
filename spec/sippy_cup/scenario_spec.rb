@@ -150,93 +150,91 @@ describe SippyCup::Scenario do
 
   describe "#build" do
     subject { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
-    let(:valid_steps){ ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
-    let(:invalid_steps){ ["send_digits 'b'"] }
-
-    let(:scenario_xml) do <<-END.gsub(/^ {6}/, '')
-      <?xml version="1.0"?>
-      <scenario name="Test">
-        <send retrans="500">
-      <![CDATA[
-              INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
-              Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-              From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-              To: <sip:[service]@[remote_ip]:[remote_port]>
-              Call-ID: [call_id]
-              CSeq: [cseq] INVITE
-              Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Type: application/sdp
-              Content-Length: [len]
-
-              v=0
-              o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
-              s=-
-              c=IN IP[media_ip_type] [media_ip]
-              t=0 0
-              m=audio [media_port] RTP/AVP 0 101
-
-              a=rtpmap:0 PCMU/8000
-              a=rtpmap:101 telephone-event/8000
-              a=fmtp:101 0-15
-      ]]>
-      </send>
-        <recv response="100" optional="true"/>
-        <recv response="180" optional="true"/>
-        <recv response="183" optional="true"/>
-        <recv response="200" optional="false" rrs="true" rtd="true"/>
-        <send>
-      <![CDATA[
-              ACK [next_url] SIP/2.0
-              Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-              From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-              [last_To:]
-              Call-ID: [call_id]
-              CSeq: [cseq] ACK
-              Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Length: 0
-              [routes]
-      ]]>
-      </send>
-        <nop>
-          <action>
-            <exec play_pcap_audio="/tmp/test.pcap"/>
-          </action>
-        </nop>
-        <recv request="BYE" optional="false"/>
-        <send>
-      <![CDATA[
-              SIP/2.0 200 OK
-              [last_Via:]
-              [last_From:]
-              [last_To:]
-              [last_Call-ID:]
-              [last_CSeq:]
-              Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Length: 0
-              [routes]
-      ]]>
-      </send>
-      </scenario>
-    END
-    end
 
     context "with a valid steps definition" do
+      let(:steps) { ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
+
       it "runs each step" do
-        subject.build(valid_steps)
-        subject.to_xml.should == scenario_xml
+        subject.build(steps)
+        subject.to_xml.should == <<-END
+<?xml version="1.0"?>
+<scenario name="Test">
+  <send retrans="500">
+<![CDATA[
+        INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+        To: <sip:[service]@[remote_ip]:[remote_port]>
+        Call-ID: [call_id]
+        CSeq: [cseq] INVITE
+        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Type: application/sdp
+        Content-Length: [len]
+
+        v=0
+        o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+        s=-
+        c=IN IP[media_ip_type] [media_ip]
+        t=0 0
+        m=audio [media_port] RTP/AVP 0 101
+
+        a=rtpmap:0 PCMU/8000
+        a=rtpmap:101 telephone-event/8000
+        a=fmtp:101 0-15
+]]>
+</send>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
+  <recv response="200" optional="false" rrs="true" rtd="true"/>
+  <send>
+<![CDATA[
+        ACK [next_url] SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+        [last_To:]
+        Call-ID: [call_id]
+        CSeq: [cseq] ACK
+        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+        [routes]
+]]>
+</send>
+  <nop>
+    <action>
+      <exec play_pcap_audio="/tmp/test.pcap"/>
+    </action>
+  </nop>
+  <recv request="BYE" optional="false"/>
+  <send>
+<![CDATA[
+        SIP/2.0 200 OK
+        [last_Via:]
+        [last_From:]
+        [last_To:]
+        [last_Call-ID:]
+        [last_CSeq:]
+        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+        [routes]
+]]>
+</send>
+</scenario>
+        END
       end
     end
 
     context "with an invalid steps definition" do
-      let(:steps){ ["send_digits 'b'"] }
+      let(:steps) { ["send_digits 'b'"] }
+
       it "should raise errors" do
-        expect { subject.build(invalid_steps) }.to raise_error ArgumentError
+        expect { subject.build(steps) }.to raise_error ArgumentError
       end
     end
   end
@@ -244,110 +242,110 @@ describe SippyCup::Scenario do
   describe "Scenario.from_yaml" do
     let (:specs_from) { 'specs' }
 
-    let(:scenario_yaml) do <<-END.gsub(/^ {6}/, '')
-      name: spec scenario
-      source: 192.0.2.15
-      destination: 192.0.2.200
-      max_concurrent: 10
-      calls_per_second: 5
-      number_of_calls: 20
-      from_user: #{specs_from}
-      steps:
-        - invite
-        - wait_for_answer
-        - ack_answer
-        - sleep 3
-        - send_digits '3125551234'
-        - sleep 5
-        - send_digits '#'
-        - wait_for_hangup
-    END
+    let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits '3125551234'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+      END
     end
 
-    let(:scenario_xml) do <<-END.gsub(/^ {6}/, '')
-      <?xml version="1.0"?>
-      <scenario name="spec scenario">
-        <send retrans="500">
-      <![CDATA[
-              INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
-              Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-              From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-              To: <sip:[service]@[remote_ip]:[remote_port]>
-              Call-ID: [call_id]
-              CSeq: [cseq] INVITE
-              Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Type: application/sdp
-              Content-Length: [len]
+    let(:scenario_xml) do <<-END
+<?xml version="1.0"?>
+<scenario name="spec scenario">
+  <send retrans="500">
+<![CDATA[
+        INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+        To: <sip:[service]@[remote_ip]:[remote_port]>
+        Call-ID: [call_id]
+        CSeq: [cseq] INVITE
+        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Type: application/sdp
+        Content-Length: [len]
 
-              v=0
-              o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
-              s=-
-              c=IN IP[media_ip_type] [media_ip]
-              t=0 0
-              m=audio [media_port] RTP/AVP 0 101
+        v=0
+        o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+        s=-
+        c=IN IP[media_ip_type] [media_ip]
+        t=0 0
+        m=audio [media_port] RTP/AVP 0 101
 
-              a=rtpmap:0 PCMU/8000
-              a=rtpmap:101 telephone-event/8000
-              a=fmtp:101 0-15
-      ]]>
-      </send>
-        <recv response="100" optional="true"/>
-        <recv response="180" optional="true"/>
-        <recv response="183" optional="true"/>
-        <recv response="200" optional="false" rrs="true" rtd="true"/>
-        <send>
-      <![CDATA[
-              ACK [next_url] SIP/2.0
-              Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-              From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-              [last_To:]
-              Call-ID: [call_id]
-              CSeq: [cseq] ACK
-              Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Length: 0
-              [routes]
-      ]]>
-      </send>
-        <nop>
-          <action>
-            <exec play_pcap_audio="/tmp/spec_scenario.pcap"/>
-          </action>
-        </nop>
-        <pause milliseconds="3000"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="500"/>
-        <pause milliseconds="5000"/>
-        <pause milliseconds="500"/>
-        <recv request="BYE" optional="false"/>
-        <send>
-      <![CDATA[
-              SIP/2.0 200 OK
-              [last_Via:]
-              [last_From:]
-              [last_To:]
-              [last_Call-ID:]
-              [last_CSeq:]
-              Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-              Max-Forwards: 100
-              User-Agent: SIPp/sippy_cup
-              Content-Length: 0
-              [routes]
-      ]]>
-      </send>
-      </scenario>
-    END
+        a=rtpmap:0 PCMU/8000
+        a=rtpmap:101 telephone-event/8000
+        a=fmtp:101 0-15
+]]>
+</send>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
+  <recv response="200" optional="false" rrs="true" rtd="true"/>
+  <send>
+<![CDATA[
+        ACK [next_url] SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+        [last_To:]
+        Call-ID: [call_id]
+        CSeq: [cseq] ACK
+        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+        [routes]
+]]>
+</send>
+  <nop>
+    <action>
+      <exec play_pcap_audio="/tmp/spec_scenario.pcap"/>
+    </action>
+  </nop>
+  <pause milliseconds="3000"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="500"/>
+  <pause milliseconds="5000"/>
+  <pause milliseconds="500"/>
+  <recv request="BYE" optional="false"/>
+  <send>
+<![CDATA[
+        SIP/2.0 200 OK
+        [last_Via:]
+        [last_From:]
+        [last_To:]
+        [last_Call-ID:]
+        [last_CSeq:]
+        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 100
+        User-Agent: SIPp/sippy_cup
+        Content-Length: 0
+        [routes]
+]]>
+</send>
+</scenario>
+      END
     end
 
     let(:override_options) { { number_of_calls: 10 } }
@@ -372,23 +370,24 @@ describe SippyCup::Scenario do
 
     context "overriding some value" do
       let (:specs_from) { 'other_user' }
+
       it "overrides keys with values from the options hash" do
         scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
         scenario.to_xml.should == scenario_xml
       end
 
       it "sets the proper options" do
-      scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
-      scenario.scenario_options.should == {
-        name: 'spec scenario',
-        source: '192.0.2.15',
-        destination: '192.0.2.200',
-        max_concurrent: 10,
-        calls_per_second: 5,
-        number_of_calls: override_options[:number_of_calls],
-        from_user: "#{specs_from}"
-      }
-    end
+        scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
+        scenario.scenario_options.should == {
+          name: 'spec scenario',
+          source: '192.0.2.15',
+          destination: '192.0.2.200',
+          max_concurrent: 10,
+          calls_per_second: 5,
+          number_of_calls: override_options[:number_of_calls],
+          from_user: "#{specs_from}"
+        }
+      end
     end
   end
 end
