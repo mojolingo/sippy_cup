@@ -9,7 +9,6 @@ matrix:
   allow_failures:
     - rvm: 2.0.0
     - rvm: jruby-19mode
-    - rvm: rbx-19mode
     - rvm: ruby-head
 notifications:
   irc: "irc.freenode.org#adhearsion"
