@@ -43,7 +43,6 @@ module SippyCup
       @filename = File.expand_path @filename, Dir.pwd
       @doc = builder.doc
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
-      @scenario_opts = get_scenario_opts args
       @scenario = @doc.xpath('//scenario').first
 
       instance_eval &block if block_given?
@@ -56,15 +55,6 @@ module SippyCup
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
       @from_user = args[:from_user] || "sipp"
-    end
-
-    def get_scenario_opts(args)
-      defaults = { source: "#{@from_addr}", destination: "#{@to_addr}",
-                   scenario: "#{@filename}.xml", max_concurrent: 10,
-                   calls_per_second: 5, number_of_calls: 20 }
-
-      opts = args.select {|k,v| true unless [:source, :destination, :filename].include? k}
-      defaults.merge! args
     end
 
     ##
