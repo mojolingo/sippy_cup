@@ -10,6 +10,8 @@ module SippyCup
       defaults = { full_sipp_output: true }
       @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
 
+      @command = @options[:command]
+
       [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
         raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
       end
@@ -37,34 +39,11 @@ module SippyCup
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
-      command = prepare_command
       @logger.info "Preparing to run SIPp command: #{command}"
 
-      rd, wr = IO.pipe
+      exit_status, stderr_buffer = execute_with_redirected_streams
 
-      output_options = {
-        err: wr,
-        out: @options[:full_sipp_output] ? $stdout : '/dev/null'
-      }
-
-      stderr_buffer = String.new
-
-      @sipp_pid = spawn command, output_options
-
-      Thread.new do
-        wr.close
-        until rd.eof?
-          buffer = rd.readpartial(1024).strip
-          stderr_buffer += buffer
-          $stderr << buffer if @options[:full_sipp_output]
-        end
-      end
-
-      sipp_result = Process.wait2 @sipp_pid.to_i
-
-      rd.close
-
-      final_result = process_exit_status sipp_result, stderr_buffer
+      final_result = process_exit_status exit_status, stderr_buffer
 
       if final_result
         @logger.info "Test completed successfully!"
@@ -88,7 +67,17 @@ module SippyCup
 
   private
 
-    def prepare_command
+    def command
+      @command ||= begin
+        command = "sudo sipp"
+        command_options.each_pair do |key, value|
+          command << (value ? " -#{key} #{value}" : " -#{key}")
+        end
+        command << " #{@options[:destination]}"
+      end
+    end
+
+    def command_options
       options = {
         i: @options[:source],
         p: @options[:source_port] || '8836',
@@ -108,13 +97,36 @@ module SippyCup
       if @options[:transport_mode]
         options[:t] = @options[:transport_mode]
       end
-      options[:inf] = @options[:scenario_variables] if @options[:scenario_variables]
 
-      command = "sudo sipp"
-      options.each_pair do |key, value|
-        command << (value ? " -#{key} #{value}" : " -#{key}")
+      if @options[:scenario_variables]
+        options[:inf] = @options[:scenario_variables]
       end
-      command << " #{@options[:destination]}"
+
+      options
+    end
+
+    def execute_with_redirected_streams
+      rd, wr = IO.pipe
+      stdout_target = @options[:full_sipp_output] ? $stdout : '/dev/null'
+
+      @sipp_pid = spawn command, err: wr, out: stdout_target
+
+      stderr_buffer = String.new
+
+      Thread.new do
+        wr.close
+        until rd.eof?
+          buffer = rd.readpartial(1024).strip
+          stderr_buffer += buffer
+          $stderr << buffer if @options[:full_sipp_output]
+        end
+      end
+
+      exit_status = Process.wait2 @sipp_pid.to_i
+
+      rd.close
+
+      [exit_status, stderr_buffer]
     end
 
     def process_exit_status(process_status, error_message = nil)

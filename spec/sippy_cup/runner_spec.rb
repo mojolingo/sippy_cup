@@ -140,9 +140,7 @@ describe SippyCup::Runner do
       let(:exit_code) { 255 }
       let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
 
-      before do
-        subject.should_receive(:prepare_command).and_return command
-      end
+      let(:settings) { { command: command } }
 
       context "with normal operation" do
         let(:exit_code) { 0 }
@@ -227,7 +225,7 @@ describe SippyCup::Runner do
       let(:error_string) { "Some error" }
       let(:command) { "sh -c 'echo \"#{output_string}\"' && sh -c 'echo \"#{error_string}\" 1>&2'" }
 
-      before { subject.should_receive(:prepare_command).and_return command }
+      let(:settings) { { command: command } }
 
       def active_thread_count
         Thread.list.select { |t| t.status != 'aborting' }.size
@@ -256,7 +254,7 @@ describe SippyCup::Runner do
       end
 
       context "with :full_sipp_output disabled" do
-        let(:settings) { { full_sipp_output: false } }
+        let(:settings) { { command: command, full_sipp_output: false } }
 
         it "swallows stdout from SIPp" do
           capture(:stdout) { subject.run }.should == ''
