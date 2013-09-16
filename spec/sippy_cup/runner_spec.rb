@@ -236,13 +236,13 @@ describe SippyCup::Runner do
       context "by default" do
         it "proxies stdout to the terminal" do
           quietly do
-            capture(:stdout){ subject.run }.strip.should == output_string
+            capture(:stdout) { subject.run }.strip.should == output_string
          end
         end
 
         it "proxies stderr to the terminal" do
           quietly do
-            capture(:stderr){ subject.run }.strip.should == error_string
+            capture(:stderr) { subject.run }.strip.should == error_string
           end
         end
 
@@ -259,7 +259,7 @@ describe SippyCup::Runner do
         let(:settings) { { full_sipp_output: false } }
 
         it "swallows stdout from SIPp" do
-          capture(:stdout){ subject.run }.should == ''
+          capture(:stdout) { subject.run }.should == ''
         end
 
         it "swallows stderr from SIPp" do
