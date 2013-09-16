@@ -1,3 +1,9 @@
+[![Gem Version](https://badge.fury.io/rb/sippy_cup.png)](https://rubygems.org/gems/sippy_cup)
+[![Build Status](https://secure.travis-ci.org/mojolingo/sippy_cup.png?branch=master)](http://travis-ci.org/mojolingo/sippy_cup)
+[![Dependency Status](https://gemnasium.com/mojolingo/sippy_cup.png?travis)](https://gemnasium.com/mojolingo/sippy_cup)
+[![Code Climate](https://codeclimate.com/github/mojolingo/sippy_cup.png)](https://codeclimate.com/github/mojolingo/sippy_cup)
+[![Coverage Status](https://coveralls.io/repos/mojolingo/sippy_cup/badge.png?branch=master)](https://coveralls.io/r/mojolingo/sippy_cup)
+
 # Sippy Cup
 
 ## Overview
