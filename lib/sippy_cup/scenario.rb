@@ -48,15 +48,6 @@ module SippyCup
       instance_eval &block if block_given?
     end
 
-    def parse_args(args)
-      raise ArgumentError, "Must include source IP:PORT" unless args.keys.include? :source
-      raise ArgumentError, "Must include destination IP:PORT" unless args.keys.include? :destination
-
-      @from_addr, @from_port = args[:source].split ':'
-      @to_addr, @to_port = args[:destination].split ':'
-      @from_user = args[:from_user] || "sipp"
-    end
-
     ##
     # This method will build the scenario steps provided
     #
@@ -325,6 +316,15 @@ module SippyCup
     end
 
   private
+
+    def parse_args(args)
+      raise ArgumentError, "Must include source IP:PORT" unless args.keys.include? :source
+      raise ArgumentError, "Must include destination IP:PORT" unless args.keys.include? :destination
+
+      @from_addr, @from_port = args[:source].split ':'
+      @to_addr, @to_port = args[:destination].split ':'
+      @from_user = args[:from_user] || "sipp"
+    end
 
     def pause(msec)
       pause = Nokogiri::XML::Node.new 'pause', @doc
