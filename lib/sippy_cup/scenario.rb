@@ -8,6 +8,26 @@ module SippyCup
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
 
+    ##
+    # This method will build a scenario based on either a YAML string or a file handle
+    # All YAML configuration keys can be overridden by passing in an Hash of corresponding values
+    #
+    # @param String The YAML to be passed in
+    # @param Hash The hash with options to override
+    # @return SippyCup::Scenario instance
+    #
+    def self.from_yaml(yaml, options = {})
+      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(yaml)).symbolize_keys.merge options
+
+      name = args.delete :name
+      steps = args.delete :steps
+
+      scenario = Scenario.new name, args
+      scenario.build steps
+
+      scenario
+    end
+
     attr_reader :scenario_options
 
     def initialize(name, args = {}, &block)
@@ -62,26 +82,6 @@ module SippyCup
           self.send instruction
         end
       end
-    end
-
-    ##
-    # This method will build a scenario based on either a YAML string or a file handle
-    # All YAML configuration keys can be overridden by passing in an Hash of corresponding values
-    #
-    # @param String The YAML to be passed in
-    # @param Hash The hash with options to override
-    # @return SippyCup::Scenario instance
-    #
-    def self.from_yaml(yaml, options = {})
-      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(yaml)).symbolize_keys.merge options
-
-      name = args.delete :name
-      steps = args.delete :steps
-
-      scenario = Scenario.new name, args
-      scenario.build steps
-
-      scenario
     end
 
     def compile_media
