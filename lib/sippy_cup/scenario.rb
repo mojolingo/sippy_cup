@@ -31,19 +31,13 @@ module SippyCup
     attr_reader :scenario_options
 
     def initialize(name, args = {}, &block)
-      builder = Nokogiri::XML::Builder.new do |xml|
-        xml.scenario name: name
-      end
-
       parse_args args
 
       @scenario_options = args.merge name: name
       @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
-      @doc = builder.doc
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
-      @scenario = @doc.xpath('//scenario').first
 
       instance_eval &block if block_given?
     end
@@ -106,7 +100,7 @@ module SippyCup
         a=fmtp:101 0-15
       INVITE
       send = new_send msg, opts
-      @scenario << send
+      scenario_node << send
     end
 
     def register(user, password = nil, opts = {})
@@ -114,7 +108,7 @@ module SippyCup
       user, domain = parse_user user
       msg = register_message user, domain: domain
       send = new_send msg, opts
-      @scenario << send
+      scenario_node << send
       register_auth(user, password, domain: domain) if password
     end
 
@@ -137,7 +131,7 @@ module SippyCup
 
     def register_auth(user, password, opts = {})
       opts[:retrans] ||= 500
-      @scenario << new_recv(response: '401', auth: true, optional: false)
+      scenario_node << new_recv(response: '401', auth: true, optional: false)
       msg = <<-AUTH
 
         REGISTER sip:#{opts[:domain]} SIP/2.0
@@ -154,27 +148,27 @@ module SippyCup
         Content-Length: 0
       AUTH
       send = new_send msg, opts
-      @scenario << send
+      scenario_node << send
     end
 
     def receive_trying(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 100
-      @scenario << new_recv(opts)
+      scenario_node << new_recv(opts)
     end
     alias :receive_100 :receive_trying
 
     def receive_ringing(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 180
-      @scenario << new_recv(opts)
+      scenario_node << new_recv(opts)
     end
     alias :receive_180 :receive_ringing
 
     def receive_progress(opts = {})
       opts[:optional] = true if opts[:optional].nil?
       opts.merge! response: 183
-      @scenario << new_recv(opts)
+      scenario_node << new_recv(opts)
     end
     alias :receive_183 :receive_progress
 
@@ -185,7 +179,7 @@ module SippyCup
       recv['rrs'] = true
       # Response Time Duration: Record the response time
       recv['rtd'] = true
-      @scenario << recv
+      scenario_node << recv
     end
     alias :receive_200 :receive_answer
 
@@ -214,18 +208,18 @@ module SippyCup
         Content-Length: 0
         [routes]
       ACK
-      @scenario << new_send(msg, opts)
+      scenario_node << new_send(msg, opts)
       start_media
     end
 
     def start_media
-      nop = Nokogiri::XML::Node.new 'nop', @doc
-      action = Nokogiri::XML::Node.new 'action', @doc
+      nop = Nokogiri::XML::Node.new 'nop', doc
+      action = Nokogiri::XML::Node.new 'action', doc
       nop << action
-      exec = Nokogiri::XML::Node.new 'exec', @doc
+      exec = Nokogiri::XML::Node.new 'exec', doc
       exec['play_pcap_audio'] = "#{@filename}.pcap"
       action << exec
-      @scenario << nop
+      scenario_node << nop
     end
 
     ##
@@ -257,7 +251,7 @@ module SippyCup
         Content-Length: 0
         [routes]
       MSG
-      @scenario << new_send(msg, opts)
+      scenario_node << new_send(msg, opts)
     end
 
     ##
@@ -269,7 +263,7 @@ module SippyCup
 
     def receive_bye(opts = {})
       opts.merge! request: 'BYE'
-      @scenario << new_recv(opts)
+      scenario_node << new_recv(opts)
     end
 
     def ack_bye(opts = {})
@@ -287,17 +281,17 @@ module SippyCup
         Content-Length: 0
         [routes]
       ACK
-      @scenario << new_send(msg, opts)
+      scenario_node << new_send(msg, opts)
     end
 
     def to_xml
-      @doc.to_xml
+      doc.to_xml
     end
 
     def compile!
       print "Compiling media to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|
-        file.write @doc.to_xml
+        file.write doc.to_xml
       end
       puts "done."
 
@@ -317,6 +311,18 @@ module SippyCup
 
   private
 
+    def doc
+      @doc ||= begin
+        Nokogiri::XML::Builder.new do |xml|
+          xml.scenario name: @scenario_options[:name]
+        end.doc
+      end
+    end
+
+    def scenario_node
+      @scenario_node = doc.xpath('//scenario').first
+    end
+
     def parse_args(args)
       raise ArgumentError, "Must include source IP:PORT" unless args.keys.include? :source
       raise ArgumentError, "Must include destination IP:PORT" unless args.keys.include? :destination
@@ -327,25 +333,25 @@ module SippyCup
     end
 
     def pause(msec)
-      pause = Nokogiri::XML::Node.new 'pause', @doc
+      pause = Nokogiri::XML::Node.new 'pause', doc
       pause['milliseconds'] = msec.to_i
-      @scenario << pause
+      scenario_node << pause
     end
 
     def new_send(msg, opts = {})
-      send = Nokogiri::XML::Node.new 'send', @doc
+      send = Nokogiri::XML::Node.new 'send', doc
       opts.each do |k,v|
         send[k.to_s] = v
       end
       send << "\n"
-      send << Nokogiri::XML::CDATA.new(@doc, msg)
+      send << Nokogiri::XML::CDATA.new(doc, msg)
       send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
       send
     end
 
     def new_recv(opts = {})
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
-      recv = Nokogiri::XML::Node.new 'recv', @doc
+      recv = Nokogiri::XML::Node.new 'recv', doc
       recv['request']  = opts.delete :request  if opts.keys.include? :request
       recv['response'] = opts.delete :response if opts.keys.include? :response
       recv['optional'] = !!opts.delete(:optional)
