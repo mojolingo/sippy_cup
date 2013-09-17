@@ -116,10 +116,6 @@ module SippyCup
       end
     end
 
-    def compile_media
-      @media.compile!
-    end
-
     def sleep(seconds)
       seconds = seconds.to_f
       # TODO play silent audio files to the server to fill the gap
@@ -261,16 +257,6 @@ module SippyCup
       start_media
     end
 
-    def start_media
-      nop = Nokogiri::XML::Node.new 'nop', doc
-      action = Nokogiri::XML::Node.new 'action', doc
-      nop << action
-      exec = Nokogiri::XML::Node.new 'exec', doc
-      exec['play_pcap_audio'] = "#{@filename}.pcap"
-      action << exec
-      scenario_node << nop
-    end
-
     ##
     # Send DTMF digits
     # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
@@ -378,6 +364,20 @@ module SippyCup
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
       @from_user = args[:from_user] || "sipp"
+    end
+
+    def compile_media
+      @media.compile!
+    end
+
+    def start_media
+      nop = Nokogiri::XML::Node.new 'nop', doc
+      action = Nokogiri::XML::Node.new 'action', doc
+      nop << action
+      exec = Nokogiri::XML::Node.new 'exec', doc
+      exec['play_pcap_audio'] = "#{@filename}.pcap"
+      action << exec
+      scenario_node << nop
     end
 
     def pause(msec)
