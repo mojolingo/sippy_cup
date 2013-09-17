@@ -385,26 +385,48 @@ describe SippyCup::Scenario do
     let(:media) { double :media }
     before do
       SippyCup::Media.should_receive(:new).once.and_return media
+      media.stub :<<
     end
 
-    it "creates the proper amount of silent audio'" do
-      media.should_receive(:<<).once.with 'silence:5000'
-      scenario.sleep 5
+    describe '#sleep' do
+      it "creates the proper amount of silent audio'" do
+        media.should_receive(:<<).once.with 'silence:5000'
+        scenario.sleep 5
+      end
+
+      it "should insert a pause into the scenario" do
+        scenario.sleep 5
+        scenario.to_xml.should match(%r{<pause milliseconds="5000"/>})
+      end
+
+      context "when passed fractional seconds" do
+        it "creates the proper amount of silent audio" do
+          media.should_receive(:<<).once.with 'silence:500'
+          scenario.sleep '0.5'
+        end
+
+        it "should insert a pause into the scenario" do
+          scenario.sleep 0.5
+          scenario.to_xml.should match(%r{<pause milliseconds="500"/>})
+        end
+      end
     end
 
-    it "creates the proper amount of silent audio when passed fractional seconds" do
-      media.should_receive(:<<).once.with 'silence:500'
-      scenario.sleep '0.5'
-    end
+    describe '#send_digits' do
+      it "creates the requested DTMF string in media, with 250ms pauses between" do
+        media.should_receive(:<<).ordered.with 'dtmf:1'
+        media.should_receive(:<<).ordered.with 'silence:250'
+        media.should_receive(:<<).ordered.with 'dtmf:3'
+        media.should_receive(:<<).ordered.with 'silence:250'
+        media.should_receive(:<<).ordered.with 'dtmf:6'
+        media.should_receive(:<<).ordered.with 'silence:250'
+        scenario.send_digits '136'
+      end
 
-    it "creates the requested DTMF string'" do
-      media.should_receive(:<<).ordered.with 'dtmf:1'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      media.should_receive(:<<).ordered.with 'dtmf:3'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      media.should_receive(:<<).ordered.with 'dtmf:6'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      scenario.send_digits '136'
+      it "should insert a pause into the scenario to cover the DTMF duration (250ms) and the pause" do
+        scenario.send_digits '136'
+        scenario.to_xml.should match(%r{<pause milliseconds="1500"/>})
+      end
     end
   end
 
@@ -577,16 +599,7 @@ steps:
     </action>
   </nop>
   <pause milliseconds="3000"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
-  <pause milliseconds="500"/>
+  <pause milliseconds="5000"/>
   <pause milliseconds="5000"/>
   <pause milliseconds="500"/>
   <recv request="BYE"/>

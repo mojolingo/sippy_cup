@@ -216,27 +216,24 @@ module SippyCup
       start_media
     end
 
-    # @todo Add spec for this
     def sleep(seconds)
-      seconds = seconds.to_f
-      # TODO play silent audio files to the server to fill the gap
-      pause seconds * MSEC
-      @media << "silence:#{(seconds * MSEC).to_i}"
+      milliseconds = (seconds.to_f * MSEC).to_i
+      pause milliseconds
+      @media << "silence:#{milliseconds}"
     end
 
     ##
     # Send DTMF digits
     # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
-    # @todo Add spec for this
-    def send_digits(digits, delay = 0.250)
-      delay = 0.250 * MSEC # FIXME: Need to pass this down to the media layer
+    def send_digits(digits)
+      delay = (0.250 * MSEC).to_i # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
 
         @media << "dtmf:#{digit}"
-        @media << "silence:#{delay.to_i}"
-        pause delay * 2
+        @media << "silence:#{delay}"
       end
+      pause delay * 2 * digits.size
     end
 
     def send_bye(opts = {})
