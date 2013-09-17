@@ -90,57 +90,6 @@ describe SippyCup::Scenario do
     end
   end
 
-  describe '#wait_for_answer' do
-    it "tells SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200" do
-      scenario.wait_for_answer
-
-      xml = scenario.to_xml
-      xml.should =~ /recv optional="true".*response="100"/
-      xml.should =~ /recv optional="true".*response="180"/
-      xml.should =~ /recv optional="true".*response="183"/
-      xml.should =~ /recv response="200"/
-      xml.should_not =~ /recv optional="true".*response="200"/
-    end
-
-    it "passes through additional options" do
-      scenario.wait_for_answer foo: 'bar'
-
-      xml = scenario.to_xml
-      xml.should =~ /recv .*foo="bar".*response="100"/
-      xml.should =~ /recv .*foo="bar".*response="180"/
-      xml.should =~ /recv .*foo="bar".*response="183"/
-      xml.should =~ /recv .*foo="bar".*response="200"/
-    end
-  end
-
-  describe 'media-dependent operations' do
-    let(:media) { double :media }
-    before do
-      SippyCup::Media.should_receive(:new).once.and_return media
-    end
-
-    it "creates the proper amount of silent audio'" do
-      media.should_receive(:<<).once.with 'silence:5000'
-      scenario.sleep 5
-    end
-
-    it "creates the proper amount of silent audio when passed fractional seconds" do
-      media.should_receive(:<<).once.with 'silence:500'
-      scenario.sleep '0.5'
-    end
-
-    it "creates the requested DTMF string'" do
-      media.should_receive(:<<).ordered.with 'dtmf:1'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      media.should_receive(:<<).ordered.with 'dtmf:3'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      media.should_receive(:<<).ordered.with 'dtmf:6'
-      media.should_receive(:<<).ordered.with 'silence:250'
-      scenario.send_digits '136'
-    end
-  end
-
-  # @todo replace with deeper tests
   describe "#register" do
     it "sends a REGISTER message" do
       subject.register 'frank'
@@ -194,6 +143,56 @@ describe SippyCup::Scenario do
         subject.register 'frank', 'abc123'
         subject.to_xml.should match(%r{\[authentication username=frank password=abc123\]})
       end
+    end
+  end
+
+  describe '#wait_for_answer' do
+    it "tells SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200" do
+      scenario.wait_for_answer
+
+      xml = scenario.to_xml
+      xml.should =~ /recv optional="true".*response="100"/
+      xml.should =~ /recv optional="true".*response="180"/
+      xml.should =~ /recv optional="true".*response="183"/
+      xml.should =~ /recv response="200"/
+      xml.should_not =~ /recv optional="true".*response="200"/
+    end
+
+    it "passes through additional options" do
+      scenario.wait_for_answer foo: 'bar'
+
+      xml = scenario.to_xml
+      xml.should =~ /recv .*foo="bar".*response="100"/
+      xml.should =~ /recv .*foo="bar".*response="180"/
+      xml.should =~ /recv .*foo="bar".*response="183"/
+      xml.should =~ /recv .*foo="bar".*response="200"/
+    end
+  end
+
+  describe 'media-dependent operations' do
+    let(:media) { double :media }
+    before do
+      SippyCup::Media.should_receive(:new).once.and_return media
+    end
+
+    it "creates the proper amount of silent audio'" do
+      media.should_receive(:<<).once.with 'silence:5000'
+      scenario.sleep 5
+    end
+
+    it "creates the proper amount of silent audio when passed fractional seconds" do
+      media.should_receive(:<<).once.with 'silence:500'
+      scenario.sleep '0.5'
+    end
+
+    it "creates the requested DTMF string'" do
+      media.should_receive(:<<).ordered.with 'dtmf:1'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      media.should_receive(:<<).ordered.with 'dtmf:3'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      media.should_receive(:<<).ordered.with 'dtmf:6'
+      media.should_receive(:<<).ordered.with 'silence:250'
+      scenario.send_digits '136'
     end
   end
 
