@@ -2,6 +2,7 @@
 
 %w{
   sippy_cup
+  fakefs/spec_helpers
 }.each { |f| require f }
 
 RSpec.configure do |config|

@@ -1,5 +1,6 @@
 require 'nokogiri'
 require 'psych'
+require 'active_support/core_ext/hash'
 
 module SippyCup
   #
@@ -382,8 +383,9 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      print "Compiling scenario to #{@filename}.xml..."
-      File.open "#{@filename}.xml", 'w' do |file|
+      scenario_filename = "#{@filename}.xml"
+      print "Compiling scenario to #{scenario_filename}..."
+      File.open scenario_filename, 'w' do |file|
         file.write doc.to_xml
       end
       puts "done."
@@ -391,6 +393,8 @@ Content-Length: 0
       print "Compiling media to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
+
+      scenario_filename
     end
 
   private

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fakefs/spec_helpers'
 
 describe SippyCup::Scenario do
   include FakeFS::SpecHelpers
@@ -455,6 +454,10 @@ describe SippyCup::Scenario do
 
         File.read("/tmp/test.pcap").should_not be_empty
       end
+
+      it "returns the path to the scenario file" do
+        scenario.compile!.should == "/tmp/test.xml"
+      end
     end
 
     context "when a filename is provided" do
@@ -474,6 +477,10 @@ describe SippyCup::Scenario do
         scenario.compile!
 
         File.read("/tmp/foobar.pcap").should_not be_empty
+      end
+
+      it "returns the path to the scenario file" do
+        scenario.compile!.should == "/tmp/foobar.xml"
       end
     end
   end

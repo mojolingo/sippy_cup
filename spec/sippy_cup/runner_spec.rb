@@ -1,18 +1,12 @@
 require 'spec_helper'
 
 describe SippyCup::Runner do
-  let(:settings) { {} }
-  let(:default_settings) do
-    {
-      logger: logger,
-      scenario: 'foobar',
-      source: 'doo@dah.com',
-      destination: 'foo@bar.com',
-      max_concurrent: 5,
-      calls_per_second: 2,
-      number_of_calls: 10
-    }
+  before do
+    Dir.chdir "/tmp"
   end
+
+  let(:settings) { {} }
+  let(:default_settings) { { logger: logger } }
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
@@ -20,24 +14,28 @@ describe SippyCup::Runner do
 
   before { logger.stub :info }
 
-  subject { SippyCup::Runner.new default_settings.merge(settings) }
-
-  [
-    :scenario,
-    :source,
-    :destination,
-    :max_concurrent,
-    :calls_per_second,
-    :number_of_calls
-  ].each do |attribute|
-    context "without a " do
-      let(:settings) { { attribute => nil } }
-
-      it "raises ArgumentError" do
-        expect { subject }.to raise_error(ArgumentError)
-      end
-    end
+  let(:manifest) do
+    <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+    MANIFEST
   end
+  let(:scenario) { SippyCup::Scenario.from_manifest manifest }
+
+  subject { SippyCup::Runner.new scenario, default_settings.merge(settings) }
 
   def expect_command_execution(command = anything)
     Process.stub :wait2
@@ -74,8 +72,27 @@ describe SippyCup::Runner do
       end
     end
 
-    context "specifying a SIP user" do
-      let(:settings) { { sip_user: 'frank' } }
+    context "specifying a from_user in the Scenario" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+from_user: frank
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'should set the -s option' do
         expect_command_execution(/-s frank/)

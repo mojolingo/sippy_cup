@@ -1,29 +1,18 @@
 require 'logger'
-require 'active_support/core_ext/hash'
 
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
 
-    def initialize(opts = {})
+    def initialize(scenario, opts = {})
+      @scenario = scenario
+      @scenario_options = @scenario.scenario_options
+
       defaults = { full_sipp_output: true }
-      @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
+      @options = defaults.merge(opts)
 
       @command = @options[:command]
-
-      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
-      end
-
       @logger = @options[:logger] || Logger.new(STDOUT)
-    end
-
-    def compile
-      scenario_opts = {source: @options[:source], destination: @options[:destination]}
-      scenario_opts[:filename] = @options[:filename] if @options[:filename]
-      scenario = SippyCup::Scenario.new @options[:name].titleize, scenario_opts
-      scenario.build @options[:steps]
-      scenario.compile!
     end
 
     # Runs the loaded scenario using SIPp
@@ -72,19 +61,21 @@ module SippyCup
         command_options.each_pair do |key, value|
           command << (value ? " -#{key} #{value}" : " -#{key}")
         end
-        command << " #{@options[:destination]}"
+        command << " #{@scenario_options[:destination]}"
       end
     end
 
     def command_options
+      filename = @scenario.compile!
+
       options = {
-        i: @options[:source],
+        i: @scenario_options[:source],
         p: @options[:source_port] || '8836',
-        sf: "#{File.expand_path @options[:scenario]}.xml",
-        l: @options[:max_concurrent],
-        m: @options[:number_of_calls],
-        r: @options[:calls_per_second],
-        s: @options[:sip_user] || '1'
+        sf: filename,
+        l: @scenario_options[:max_concurrent],
+        m: @scenario_options[:number_of_calls],
+        r: @scenario_options[:calls_per_second],
+        s: @scenario_options[:from_user] || '1'
       }
 
       options[:mp] = @options[:media_port] if @options[:media_port]
