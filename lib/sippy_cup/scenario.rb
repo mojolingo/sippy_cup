@@ -105,7 +105,7 @@ module SippyCup
           if arg && !arg.empty?
             # Strip leading/trailing quotes if present
             arg.gsub!(/^'|^"|'$|"$/, '')
-            self.send instruction.to_sym, arg
+            self.send instruction, arg
           else
             self.send instruction
           end
