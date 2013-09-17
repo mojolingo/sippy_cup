@@ -1,53 +1,29 @@
-require 'yaml'
 require 'logger'
 require 'active_support/core_ext/hash'
 
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
-    attr_accessor :logger
 
     def initialize(opts = {})
-      @options = ActiveSupport::HashWithIndifferentAccess.new opts
+      defaults = { full_sipp_output: true }
+      @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
+
+      @command = @options[:command]
+
+      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
+        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
+      end
+
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
     def compile
-      raise ArgumentError, "Must provide scenario steps" unless @options[:steps]
-
       scenario_opts = {source: @options[:source], destination: @options[:destination]}
       scenario_opts[:filename] = @options[:filename] if @options[:filename]
       scenario = SippyCup::Scenario.new @options[:name].titleize, scenario_opts
-      @options[:steps].each do |step|
-        instruction, arg = step.split ' ', 2
-        if arg && !arg.empty?
-          # Strip leading/trailing quotes if present
-          arg.gsub!(/^'|^"|'$|"$/, '')
-          scenario.send instruction.to_sym, arg
-        else
-          scenario.send instruction
-        end
-      end
+      scenario.build @options[:steps]
       scenario.compile!
-    end
-
-    def prepare_command
-      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
-      end
-      command = "sudo sipp"
-      source_port = @options[:source_port] || '8836'
-      sip_user = @options[:sip_user] || '1'
-      command << " -i #{@options[:source]} -p #{source_port} -sf #{File.expand_path @options[:scenario]}.xml"
-      command << " -l #{@options[:max_concurrent]} -m #{@options[:number_of_calls]} -r #{@options[:calls_per_second]}"
-      command << " -s #{sip_user}"
-      if @options[:stats_file]
-        stats_interval = @options[:stats_interval] || 1
-        command << " -trace_stat -stf #{@options[:stats_file]} -fd #{stats_interval}"
-      end
-      command << " -inf #{@options[:scenario_variables]}" if @options[:scenario_variables]
-      command << " #{@options[:destination]}"
-      command
     end
 
     # Runs the loaded scenario using SIPp
@@ -62,38 +38,11 @@ module SippyCup
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
-      command = prepare_command
       @logger.info "Preparing to run SIPp command: #{command}"
 
-      rd, wr = IO.pipe
+      exit_status, stderr_buffer = execute_with_redirected_streams
 
-      output_options = {
-        err: wr
-      }
-
-      output_options[:out] = '/dev/null' unless @options[:full_sipp_output]
-
-      stderr_buffer = String.new
-
-      t = Thread.new do
-        begin
-          wr.close
-          loop do
-            buffer = rd.readpartial(1024).strip
-            stderr_buffer += buffer
-            $stderr << buffer unless @options[:full_sipp_output]
-          end
-        rescue IOError
-          #no-op, just breaking the loop
-        end
-      end
-
-      @sipp_pid = spawn command, output_options
-      sipp_result = Process.wait2 @sipp_pid.to_i
-
-      rd.close
-
-      final_result = process_exit_status sipp_result, stderr_buffer
+      final_result = process_exit_status exit_status, stderr_buffer
 
       if final_result
         @logger.info "Test completed successfully!"
@@ -115,11 +64,75 @@ module SippyCup
       Process.kill "KILL", @sipp_pid if @sipp_pid
     end
 
+  private
+
+    def command
+      @command ||= begin
+        command = "sudo sipp"
+        command_options.each_pair do |key, value|
+          command << (value ? " -#{key} #{value}" : " -#{key}")
+        end
+        command << " #{@options[:destination]}"
+      end
+    end
+
+    def command_options
+      options = {
+        i: @options[:source],
+        p: @options[:source_port] || '8836',
+        sf: "#{File.expand_path @options[:scenario]}.xml",
+        l: @options[:max_concurrent],
+        m: @options[:number_of_calls],
+        r: @options[:calls_per_second],
+        s: @options[:sip_user] || '1'
+      }
+
+      if @options[:stats_file]
+        options[:trace_stat] = nil
+        options[:stf] = @options[:stats_file]
+        options[:fd] = @options[:stats_interval] || 1
+      end
+
+      if @options[:transport_mode]
+        options[:t] = @options[:transport_mode]
+      end
+
+      if @options[:scenario_variables]
+        options[:inf] = @options[:scenario_variables]
+      end
+
+      options
+    end
+
+    def execute_with_redirected_streams
+      rd, wr = IO.pipe
+      stdout_target = @options[:full_sipp_output] ? $stdout : '/dev/null'
+
+      @sipp_pid = spawn command, err: wr, out: stdout_target
+
+      stderr_buffer = String.new
+
+      Thread.new do
+        wr.close
+        until rd.eof?
+          buffer = rd.readpartial(1024).strip
+          stderr_buffer += buffer
+          $stderr << buffer if @options[:full_sipp_output]
+        end
+      end
+
+      exit_status = Process.wait2 @sipp_pid.to_i
+
+      rd.close
+
+      [exit_status, stderr_buffer]
+    end
+
     def process_exit_status(process_status, error_message = nil)
       exit_code = process_status[1].exitstatus
       case exit_code
       when 0
-        return true
+        true
       when 1
         false
       when 97

@@ -21,10 +21,11 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'packetfu'
   s.add_runtime_dependency 'nokogiri', ["~> 1.6.0"]
   s.add_runtime_dependency 'activesupport', ["> 3.0"]
+  s.add_runtime_dependency 'psych', ["~> 2.0.0"] unless RUBY_PLATFORM == 'java'
 
   s.add_development_dependency 'guard-rspec'
   s.add_development_dependency 'rspec', ["~> 2.11"]
   s.add_development_dependency 'simplecov'
   s.add_development_dependency 'simplecov-rcov'
-  s.add_development_dependency 'ci_reporter'
+  s.add_development_dependency 'fakefs'
 end

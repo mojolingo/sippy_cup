@@ -1,3 +1,6 @@
+# develop
+* Feature: added a :transport_mode option that will add the -t switch to SIPp for setting TCP or other UDP modes.
+
 # [0.2.3](https://github.com/bklang/sippy_cup/compare/v0.2.2...v0.2.3)
 * Bugfix: Handle file extensions .yaml and .yml equally (#21)
 * Bugfix: Fix missing Logger constant (#20)

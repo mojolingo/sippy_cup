@@ -1,3 +1,9 @@
+[![Gem Version](https://badge.fury.io/rb/sippy_cup.png)](https://rubygems.org/gems/sippy_cup)
+[![Build Status](https://secure.travis-ci.org/mojolingo/sippy_cup.png?branch=master)](http://travis-ci.org/mojolingo/sippy_cup)
+[![Dependency Status](https://gemnasium.com/mojolingo/sippy_cup.png?travis)](https://gemnasium.com/mojolingo/sippy_cup)
+[![Code Climate](https://codeclimate.com/github/mojolingo/sippy_cup.png)](https://codeclimate.com/github/mojolingo/sippy_cup)
+[![Coverage Status](https://coveralls.io/repos/mojolingo/sippy_cup/badge.png?branch=master)](https://coveralls.io/r/mojolingo/sippy_cup)
+
 # Sippy Cup
 
 ## Overview
@@ -155,7 +161,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
 
-For the `sippy_cup` YAML specification, use `scenario`:
+For the `sippy_cup` manifest, use `scenario`:
 
 ```YAML
 ---
@@ -165,18 +171,17 @@ scenario: /path/to/scenario.xml
 Or, in Ruby:
 
 ```Ruby
-my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
-s = SippyCup::Scenario.new 'SippyCup', my_opts do
+s = SippyCup::Scenario.new 'SippyCup', source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' do
   # scenario definitions here...
 end
+s.compile!
 ```
 
-This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml` in the `/path/to/` directory.
+This will create the files `somewhere.xml` and `somewhere.pcap` in the `/path/to/` directory.
 
 ### Customizing the Test Run
 
-
-Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
+Each parameter has an impact on the test, and may either be changed once the XML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
@@ -202,14 +207,14 @@ Each parameter has an impact on the test, and may either be changed once the YAM
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 
 ```Ruby
-#This limits the amount of time the server has to reply to an invite (3 seconds)
+# This limits the amount of time the server has to reply to an invite (3 seconds)
 s.receive_answer timeout: 3000
 
-#You can override the default 'optional' parameters
+# You can override the default 'optional' parameters
 s.receive_ringing optional: false
 s.receive_answer optional: true
 
-#Let's combine multiple attributes...
+# Let's combine multiple attributes...
 s.receive_answer timeout: 3000, crlf: true
 ```
 
