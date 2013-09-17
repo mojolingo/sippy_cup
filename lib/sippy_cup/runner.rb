@@ -1,4 +1,3 @@
-require 'yaml'
 require 'logger'
 require 'active_support/core_ext/hash'
 
