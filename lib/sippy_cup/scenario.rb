@@ -333,13 +333,13 @@ module SippyCup
 
     # @todo Add spec for this
     def compile!
-      print "Compiling media to #{@filename}.xml..."
+      print "Compiling scenario to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|
         file.write doc.to_xml
       end
       puts "done."
 
-      print "Compiling scenario to #{@filename}.pcap..."
+      print "Compiling media to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
     end
