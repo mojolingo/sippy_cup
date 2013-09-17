@@ -11,13 +11,15 @@ describe SippyCup::Scenario do
 
   let(:default_args) { {source: '127.0.0.1:5060', destination: '10.0.0.1:5080'} }
 
+  subject(:scenario) { described_class.new 'Test', default_args }
+
   it %q{should create a media stream on initialization} do
     SippyCup::Media.should_receive(:new).once
-    SippyCup::Scenario.new 'Test', source: '127.0.0.1:5060', destination: '127.0.0.2:5061'
+    subject
   end
 
   it %q{should take a block to generate a scenario} do
-    s = SippyCup::Scenario.new 'Test', default_args do
+    s = described_class.new 'Test', default_args do
       invite
     end
 
@@ -25,14 +27,11 @@ describe SippyCup::Scenario do
   end
 
   it %q{should allow creating a blank scenario with no block} do
-    s = SippyCup::Scenario.new 'Test', default_args
-    s.invite
-    s.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
+    subject.invite
+    subject.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
   end
 
   describe '#wait_for_answer' do
-    let(:scenario) { scenario = SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
-
     it %q{should tell SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200} do
       scenario.wait_for_answer
 
@@ -57,9 +56,8 @@ describe SippyCup::Scenario do
 
   describe 'media-dependent operations' do
     let(:media) { double :media }
-    let(:scenario) do
+    before do
       SippyCup::Media.should_receive(:new).once.and_return media
-      scenario = SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060'
     end
 
     it %q{should create the proper amount of silent audio'} do
@@ -85,8 +83,6 @@ describe SippyCup::Scenario do
 
   # @todo replace with deeper tests
   describe "#register" do
-    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
-
     it %q{should only call #register_message if only user is passed} do
       scenario.should_receive(:register_message).with 'foo', domain: "example.com"
       scenario.should_not_receive(:register_auth)
@@ -122,10 +118,7 @@ describe SippyCup::Scenario do
   end
 
   describe "#parse_user" do
-    let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
-
     context "sip: prefix" do
-
       it %q{should return user and domain for addresses in the sip:user@domain:port format} do
         scenario.parse_user('sip:foo@example.com:1337').should == ['foo', 'example.com']
       end
@@ -155,8 +148,6 @@ describe SippyCup::Scenario do
   end
 
   describe "#build" do
-    subject { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
-
     let(:scenario_xml) do <<-END
 <?xml version="1.0"?>
 <scenario name="Test">
@@ -231,7 +222,7 @@ describe SippyCup::Scenario do
     end
 
     context "with a valid steps definition" do
-      let(:steps){ ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
+      let(:steps) { ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
 
       it "runs each step" do
         subject.build(steps)
@@ -240,7 +231,7 @@ describe SippyCup::Scenario do
     end
 
     context "with an invalid steps definition" do
-      let(:steps){ ["send_digits 'b'"] }
+      let(:steps) { ["send_digits 'b'"] }
 
       it "should not raise errors" do
         expect { subject.build(steps) }.to_not raise_error
@@ -248,7 +239,7 @@ describe SippyCup::Scenario do
     end
   end
 
-  describe "Scenario.from_manifest" do
+  describe ".from_manifest" do
     let(:specs_from) { 'specs' }
 
     let(:scenario_yaml) do <<-END
@@ -360,12 +351,12 @@ steps:
     let(:override_options) { { number_of_calls: 10 } }
 
     it "generates the correct XML" do
-      scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
+      scenario = described_class.from_manifest(scenario_yaml)
       scenario.to_xml.should == scenario_xml
     end
 
     it "sets the proper options" do
-      scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
+      scenario = described_class.from_manifest(scenario_yaml)
       scenario.scenario_options.should == {
         name: 'spec scenario',
         source: '192.0.2.15',
@@ -381,12 +372,12 @@ steps:
       let(:specs_from) { 'other_user' }
 
       it "overrides keys with values from the options hash" do
-        scenario = SippyCup::Scenario.from_manifest(scenario_yaml, override_options)
+        scenario = described_class.from_manifest(scenario_yaml, override_options)
         scenario.to_xml.should == scenario_xml
       end
 
       it "sets the proper options" do
-        scenario = SippyCup::Scenario.from_manifest(scenario_yaml, override_options)
+        scenario = described_class.from_manifest(scenario_yaml, override_options)
         scenario.scenario_options.should == {
           name: 'spec scenario',
           source: '192.0.2.15',
@@ -421,16 +412,16 @@ steps:
       end
 
       it "does not raise errors" do
-        expect { SippyCup::Scenario.from_yaml(scenario_yaml) }.to_not raise_error
+        expect { SippyCup::Scenario.from_manifest(scenario_yaml) }.to_not raise_error
       end
 
       it "sets the validity of the scenario" do
-        scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+        scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
         scenario.should_not be_valid
       end
 
       it "sets the error messages for the scenario" do
-        scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+        scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
         scenario.errors.should == [{step: 5, message: "send_digits 'abc': Invalid DTMF digit requested: a"}]
       end
     end
