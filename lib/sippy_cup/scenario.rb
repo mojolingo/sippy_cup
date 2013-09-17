@@ -160,49 +160,11 @@ module SippyCup
     def register(user, password = nil, opts = {})
       opts[:retrans] ||= 500
       user, domain = parse_user user
-      msg = register_message user, domain: domain
-      send = new_send msg, opts
-      scenario_node << send
-      register_auth(user, password, domain: domain) if password
-    end
-
-    # @todo Make this private
-    def register_message(user, opts = {})
-      <<-BODY
-
-        REGISTER sip:#{opts[:domain]} SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
-        To: <sip:#{user}@#{opts[:domain]}>
-        Call-ID: [call_id]
-        CSeq: [cseq] REGISTER
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 10
-        Expires: 120
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
-      BODY
-    end
-
-    # @todo Make this private
-    def register_auth(user, password, opts = {})
-      opts[:retrans] ||= 500
-      recv response: '401', auth: true, optional: false
-      msg = <<-AUTH
-
-        REGISTER sip:#{opts[:domain]} SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}@#{opts[:domain]}>;tag=[call_number]
-        To: <sip:#{user}@#{opts[:domain]}>
-        Call-ID: [call_id]
-        CSeq: [cseq] REGISTER
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 20
-        Expires: 3600
-        [authentication username=#{user} password=#{password}]
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
-      AUTH
+      msg = if password
+        register_auth domain, user, password
+      else
+        register_message domain, user
+      end
       send = new_send msg, opts
       scenario_node << send
     end
@@ -344,8 +306,9 @@ module SippyCup
       puts "done."
     end
 
+  private
+
     #TODO: SIPS support?
-    # @todo make this private
     def parse_user(user)
       user.slice! 0, 4 if user =~ /sip:/
       user = user.split(":")[0]
@@ -353,8 +316,6 @@ module SippyCup
       domain ||= "[remote_ip]"
       [user, domain]
     end
-
-  private
 
     def doc
       @doc ||= begin
@@ -379,6 +340,42 @@ module SippyCup
 
     def compile_media
       @media.compile!
+    end
+
+    def register_message(domain, user, opts = {})
+      <<-BODY
+
+        REGISTER sip:#{domain} SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{user}@#{domain}>;tag=[call_number]
+        To: <sip:#{user}@#{domain}>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 10
+        Expires: 120
+        User-Agent: #{USER_AGENT}
+        Content-Length: 0
+      BODY
+    end
+
+    def register_auth(domain, user, password, opts = {})
+      recv response: '401', auth: true, optional: false
+      <<-AUTH
+
+        REGISTER sip:#{domain} SIP/2.0
+        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+        From: <sip:#{user}@#{domain}>;tag=[call_number]
+        To: <sip:#{user}@#{domain}>
+        Call-ID: [call_id]
+        CSeq: [cseq] REGISTER
+        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+        Max-Forwards: 20
+        Expires: 3600
+        [authentication username=#{user} password=#{password}]
+        User-Agent: #{USER_AGENT}
+        Content-Length: 0
+      AUTH
     end
 
     def start_media
