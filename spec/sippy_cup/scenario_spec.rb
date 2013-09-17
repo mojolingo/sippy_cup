@@ -55,6 +55,11 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<send retrans="200".*>})
     end
 
+    it "allows adding an extra header" do
+      subject.invite headers: "Foo: <bar>"
+      subject.to_xml.should match(%r{Foo: <bar>})
+    end
+
     context "when a static RTCP port is specified" do
       let(:args) { {rtcp_port: 1234} }
 
