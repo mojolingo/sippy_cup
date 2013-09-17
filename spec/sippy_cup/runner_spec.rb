@@ -235,7 +235,7 @@ describe SippyCup::Runner do
         it "proxies stdout to the terminal" do
           quietly do
             capture(:stdout) { subject.run }.strip.should == output_string
-         end
+          end
         end
 
         it "proxies stderr to the terminal" do
