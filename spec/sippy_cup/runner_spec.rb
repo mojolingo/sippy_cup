@@ -1,4 +1,4 @@
-require 'sippy_cup/runner'
+require 'spec_helper'
 
 describe SippyCup::Runner do
   let(:settings) { {} }
