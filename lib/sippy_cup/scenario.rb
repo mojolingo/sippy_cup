@@ -205,7 +205,6 @@ module SippyCup
       receive_answer opts
     end
 
-    # @todo add spec for this
     def ack_answer(opts = {})
       msg = <<-BODY
 
@@ -240,7 +239,6 @@ module SippyCup
       end
     end
 
-    # @todo Add spec for this
     def send_bye(opts = {})
       msg = <<-MSG
 
@@ -259,20 +257,10 @@ module SippyCup
       scenario_node << new_send(msg, opts)
     end
 
-    ##
-    # Shortcut method that tells SIPp receive a BYE and acknowledge it
-    # @todo Add spec for this
-    def wait_for_hangup(opts = {})
-      receive_bye(opts)
-      ack_bye(opts)
-    end
-
-    # @todo Add spec for this
     def receive_bye(opts = {})
       recv opts.merge request: 'BYE'
     end
 
-    # @todo Add spec for this
     def ack_bye(opts = {})
       msg = <<-ACK
 
@@ -289,6 +277,13 @@ module SippyCup
         [routes]
       ACK
       scenario_node << new_send(msg, opts)
+    end
+
+    ##
+    # Shortcut method that tells SIPp receive a BYE and acknowledge it
+    def wait_for_hangup(opts = {})
+      receive_bye(opts)
+      ack_bye(opts)
     end
 
     def to_xml

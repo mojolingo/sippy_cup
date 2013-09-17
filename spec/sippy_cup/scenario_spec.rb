@@ -287,6 +287,100 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe '#send_bye' do
+    it "sends a BYE message" do
+      subject.send_bye
+
+      subject.to_xml.should match(%r{<send>})
+      subject.to_xml.should match(%r{BYE})
+    end
+
+    it "allows setting options on the send instruction" do
+      subject.send_bye foo: 'bar'
+      subject.to_xml.should match(%r{<send foo="bar".*>})
+    end
+
+    context "when a from user is specified" do
+      let(:args) { {from_user: 'frank'} }
+
+      it "includes the specified user in the From and Contact headers" do
+        subject.send_bye
+        subject.to_xml.should match(%r{From: "frank" <sip:frank@})
+        subject.to_xml.should match(%r{Contact: <sip:frank@})
+      end
+    end
+
+    context "when no from user is specified" do
+      it "uses a default of 'sipp' in the From and Contact headers" do
+        subject.send_bye
+        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@})
+        subject.to_xml.should match(%r{Contact: <sip:sipp@})
+      end
+    end
+  end
+
+  describe '#receive_bye' do
+    it "expects a BYE" do
+      subject.receive_bye
+
+      scenario.to_xml.should match(%q{<recv request="BYE"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_bye foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
+    end
+  end
+
+  describe '#ack_bye' do
+    it "sends a 200 OK" do
+      subject.ack_bye
+
+      subject.to_xml.should match(%r{<send>})
+      subject.to_xml.should match(%r{SIP/2.0 200 OK})
+    end
+
+    it "allows setting options on the send instruction" do
+      subject.ack_bye foo: 'bar'
+      subject.to_xml.should match(%r{<send foo="bar".*>})
+    end
+
+    context "when a from user is specified" do
+      let(:args) { {from_user: 'frank'} }
+
+      it "includes the specified user in the Contact header" do
+        subject.ack_bye
+        subject.to_xml.should match(%r{Contact: <sip:frank@})
+      end
+    end
+
+    context "when no from user is specified" do
+      it "uses a default of 'sipp' in the Contact header" do
+        subject.ack_bye
+        subject.to_xml.should match(%r{Contact: <sip:sipp@})
+      end
+    end
+  end
+
+  describe '#wait_for_hangup' do
+    it "expects a BYE and acks it" do
+      subject.receive_bye foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
+      scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
+    end
+  end
+
+  describe '#ack_bye' do
+    it "sends a 200 OK" do
+      subject.ack_bye
+
+      subject.to_xml.should match(%r{<send>})
+      subject.to_xml.should match(%r{SIP/2.0 200 OK})
+    end
+  end
+
   describe 'media-dependent operations' do
     let(:media) { double :media }
     before do
