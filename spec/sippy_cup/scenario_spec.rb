@@ -10,8 +10,9 @@ describe SippyCup::Scenario do
   end
 
   let(:default_args) { {source: '127.0.0.1:5060', destination: '10.0.0.1:5080'} }
+  let(:args) { {} }
 
-  subject(:scenario) { described_class.new 'Test', default_args }
+  subject(:scenario) { described_class.new 'Test', default_args.merge(args) }
 
   it "creates a media stream on initialization" do
     SippyCup::Media.should_receive(:new).once
@@ -28,6 +29,65 @@ describe SippyCup::Scenario do
 
   it "allows creating a blank scenario with no block" do
     subject.to_xml.should =~ %r{<scenario name="Test"/>}
+  end
+
+  describe '#invite' do
+    it "sends an INVITE message" do
+      subject.invite
+
+      subject.to_xml.should match(%r{<send .*>})
+      subject.to_xml.should match(%r{INVITE})
+    end
+
+    it "allows setting options on the send instruction" do
+      subject.invite foo: 'bar'
+
+      subject.to_xml.should match(%r{<send foo="bar".*>})
+    end
+
+    it "defaults to retrans of 500" do
+      subject.invite
+      subject.to_xml.should match(%r{<send retrans="500".*>})
+    end
+
+    it "allows setting retrans" do
+      subject.invite retrans: 200
+      subject.to_xml.should match(%r{<send retrans="200".*>})
+    end
+
+    context "when a static RTCP port is specified" do
+      let(:args) { {rtcp_port: 1234} }
+
+      it "includes the specified static RTCP port in the SDP" do
+        subject.invite
+        subject.to_xml.should match(%r{m=audio 1233 RTP/AVP 0 101\na=rtcp:1234})
+      end
+    end
+
+    context "when no RTCP port is specified" do
+      it "uses a dynamic RTCP port in the SDP" do
+        subject.invite
+        subject.to_xml.should match(%r{m=audio \[media_port\] RTP/AVP 0 101})
+      end
+    end
+
+    context "when a from user is specified" do
+      let(:args) { {from_user: 'frank'} }
+
+      it "includes the specified user in the From and Contact headers" do
+        subject.invite
+        subject.to_xml.should match(%r{From: "frank" <sip:frank@})
+        subject.to_xml.should match(%r{Contact: <sip:frank@})
+      end
+    end
+
+    context "when no from user is specified" do
+      it "uses a default of 'sipp' in the From and Contact headers" do
+        subject.invite
+        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@})
+        subject.to_xml.should match(%r{Contact: <sip:sipp@})
+      end
+    end
   end
 
   describe '#wait_for_answer' do
