@@ -6,7 +6,7 @@ require 'getoptlong'
 def usage
   puts "#{$0} [OPTS] </path/to/sippy_cup_definition.yml>"
   puts
-  puts "--compile, -c  Compile the given scenario YAML to XML and PCAP"
+  puts "--compile, -c  Compile the given scenario manifest to XML and PCAP"
   puts "--run, -r      Run the scenario. If used without -c, must supply a previously"
   puts "               compiled SippyCup file"
   puts "--help, -h     Print this usage information"

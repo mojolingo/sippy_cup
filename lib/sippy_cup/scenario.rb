@@ -15,8 +15,8 @@ module SippyCup
     # @param Hash The hash with options to override
     # @return SippyCup::Scenario instance
     #
-    def self.from_yaml(yaml, options = {})
-      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(yaml)).symbolize_keys.merge options
+    def self.from_manifest(manifest, options = {})
+      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).symbolize_keys.merge options
 
       name = args.delete :name
       steps = args.delete :steps

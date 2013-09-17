@@ -161,7 +161,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
 
-For the `sippy_cup` YAML specification, use `scenario`:
+For the `sippy_cup` manifest, use `scenario`:
 
 ```YAML
 ---

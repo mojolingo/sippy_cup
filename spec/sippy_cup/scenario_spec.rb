@@ -247,7 +247,7 @@ describe SippyCup::Scenario do
     end
   end
 
-  describe "Scenario.from_yaml" do
+  describe "Scenario.from_manifest" do
     let(:specs_from) { 'specs' }
 
     let(:scenario_yaml) do <<-END
@@ -359,12 +359,12 @@ steps:
     let(:override_options) { { number_of_calls: 10 } }
 
     it "generates the correct XML" do
-      scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+      scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
       scenario.to_xml.should == scenario_xml
     end
 
     it "sets the proper options" do
-      scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+      scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
       scenario.scenario_options.should == {
         name: 'spec scenario',
         source: '192.0.2.15',
@@ -380,12 +380,12 @@ steps:
       let(:specs_from) { 'other_user' }
 
       it "overrides keys with values from the options hash" do
-        scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
+        scenario = SippyCup::Scenario.from_manifest(scenario_yaml, override_options)
         scenario.to_xml.should == scenario_xml
       end
 
       it "sets the proper options" do
-        scenario = SippyCup::Scenario.from_yaml(scenario_yaml, override_options)
+        scenario = SippyCup::Scenario.from_manifest(scenario_yaml, override_options)
         scenario.scenario_options.should == {
           name: 'spec scenario',
           source: '192.0.2.15',
