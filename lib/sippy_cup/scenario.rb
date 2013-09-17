@@ -185,11 +185,13 @@ module SippyCup
     alias :receive_183 :receive_progress
 
     def receive_answer(opts = {})
-      opts.merge! response: 200,
+      options = {
+        response: 200,
         rrs: true, # Record Record Set: Make the Route headers available via [route] later
         rtd: true # Response Time Duration: Record the response time
+      }
 
-      recv opts
+      recv options.merge(opts)
     end
     alias :receive_200 :receive_answer
 

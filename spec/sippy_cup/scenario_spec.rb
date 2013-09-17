@@ -146,6 +146,124 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe '#receive_trying' do
+    it "expects an optional 100" do
+      subject.receive_trying
+
+      scenario.to_xml.should match(%q{<recv response="100" optional="true"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_trying foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv foo="bar" response="100" optional="true"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_trying optional: false
+
+      scenario.to_xml.should match(%q{<recv optional="false" response="100"/>})
+    end
+  end
+
+  describe '#receive_ringing' do
+    it "expects an optional 180" do
+      subject.receive_ringing
+
+      scenario.to_xml.should match(%q{<recv response="180" optional="true"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_ringing foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv foo="bar" response="180" optional="true"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_ringing optional: false
+
+      scenario.to_xml.should match(%q{<recv optional="false" response="180"/>})
+    end
+  end
+
+  describe '#receive_progress' do
+    it "expects an optional 183" do
+      subject.receive_progress
+
+      scenario.to_xml.should match(%q{<recv response="183" optional="true"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_progress foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv foo="bar" response="183" optional="true"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_progress optional: false
+
+      scenario.to_xml.should match(%q{<recv optional="false" response="183"/>})
+    end
+  end
+
+  describe '#receive_answer' do
+    it "expects a 200 with rrs and rtd true" do
+      subject.receive_answer
+
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_answer foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true" foo="bar"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_answer rtd: false
+
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="false"/>})
+    end
+  end
+
+  describe '#ack_answer' do
+    it "sends an ACK message" do
+      subject.ack_answer
+
+      subject.to_xml.should match(%r{<send>})
+      subject.to_xml.should match(%r{ACK})
+    end
+
+    it "allows setting options on the send instruction" do
+      subject.ack_answer foo: 'bar'
+      subject.to_xml.should match(%r{<send foo="bar".*>})
+    end
+
+    it "starts the PCAP media" do
+      subject.ack_answer
+
+      subject.to_xml.should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/tmp/test.pcap"/>\n.*</action>\n.*</nop>})
+    end
+
+    context "when a from user is specified" do
+      let(:args) { {from_user: 'frank'} }
+
+      it "includes the specified user in the From and Contact headers" do
+        subject.ack_answer
+        subject.to_xml.should match(%r{From: "frank" <sip:frank@})
+        subject.to_xml.should match(%r{Contact: <sip:frank@})
+      end
+    end
+
+    context "when no from user is specified" do
+      it "uses a default of 'sipp' in the From and Contact headers" do
+        subject.ack_answer
+        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@})
+        subject.to_xml.should match(%r{Contact: <sip:sipp@})
+      end
+    end
+  end
+
   describe '#wait_for_answer' do
     it "tells SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200" do
       scenario.wait_for_answer
@@ -165,7 +283,7 @@ describe SippyCup::Scenario do
       xml.should =~ /recv .*foo="bar".*response="100"/
       xml.should =~ /recv .*foo="bar".*response="180"/
       xml.should =~ /recv .*foo="bar".*response="183"/
-      xml.should =~ /recv .*foo="bar".*response="200"/
+      xml.should =~ /recv .*response="200" .*foo="bar"/
     end
   end
 
