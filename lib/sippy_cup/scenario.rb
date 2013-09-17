@@ -116,6 +116,7 @@ module SippyCup
       end
     end
 
+    # @todo Add spec for this
     def sleep(seconds)
       seconds = seconds.to_f
       # TODO play silent audio files to the server to fill the gap
@@ -165,6 +166,7 @@ module SippyCup
       register_auth(user, password, domain: domain) if password
     end
 
+    # @todo Make this private
     def register_message(user, opts = {})
       <<-REGISTER
 
@@ -182,6 +184,7 @@ module SippyCup
       REGISTER
     end
 
+    # @todo Make this private
     def register_auth(user, password, opts = {})
       opts[:retrans] ||= 500
       recv response: '401', auth: true, optional: false
@@ -238,6 +241,7 @@ module SippyCup
       receive_answer opts
     end
 
+    # @todo add spec for this
     def ack_answer(opts = {})
       msg = <<-ACK
 
@@ -260,6 +264,7 @@ module SippyCup
     ##
     # Send DTMF digits
     # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
+    # @todo Add spec for this
     def send_digits(digits, delay = 0.250)
       delay = 0.250 * MSEC # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
@@ -271,6 +276,7 @@ module SippyCup
       end
     end
 
+    # @todo Add spec for this
     def send_bye(opts = {})
       msg = <<-MSG
 
@@ -291,15 +297,18 @@ module SippyCup
 
     ##
     # Shortcut method that tells SIPp receive a BYE and acknowledge it
+    # @todo Add spec for this
     def wait_for_hangup(opts = {})
       receive_bye(opts)
       ack_bye(opts)
     end
 
+    # @todo Add spec for this
     def receive_bye(opts = {})
       recv opts.merge request: 'BYE'
     end
 
+    # @todo Add spec for this
     def ack_bye(opts = {})
       msg = <<-ACK
 
@@ -322,6 +331,7 @@ module SippyCup
       doc.to_xml
     end
 
+    # @todo Add spec for this
     def compile!
       print "Compiling media to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|
@@ -335,6 +345,7 @@ module SippyCup
     end
 
     #TODO: SIPS support?
+    # @todo make this private
     def parse_user(user)
       user.slice! 0, 4 if user =~ /sip:/
       user = user.split(":")[0]

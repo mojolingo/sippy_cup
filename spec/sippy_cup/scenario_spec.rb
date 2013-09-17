@@ -83,6 +83,7 @@ describe SippyCup::Scenario do
     end
   end
 
+  # @todo replace with deeper tests
   describe "#register" do
     let(:scenario) { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
