@@ -78,14 +78,13 @@ module SippyCup
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
-      @valid = true
       @errors = []
 
       instance_eval &block if block_given?
     end
 
     def valid?
-      @valid
+      @errors.size.zero?
     end
 
     def errors
@@ -110,7 +109,6 @@ module SippyCup
             self.send instruction
           end
         rescue => e
-          @valid = false
           @errors << {step: index + 1, message: "#{step}: #{e.message}"}
         end
       end
