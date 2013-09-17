@@ -2,18 +2,43 @@ require 'nokogiri'
 require 'psych'
 
 module SippyCup
+  #
+  # A representation of a SippyCup scenario from a manifest or created in code. Allows building a scenario from a set of basic primitives, and then exporting to SIPp scenario files, including the XML scenario and PCAP audio.
+  #
   class Scenario
     USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
 
-    ##
-    # This method will build a scenario based on either a YAML string or a file handle
-    # All YAML configuration keys can be overridden by passing in an Hash of corresponding values
     #
-    # @param String The YAML to be passed in
-    # @param Hash The hash with options to override
-    # @return SippyCup::Scenario instance
+    # Build a scenario based on either a manifest string or a file handle. Manifests are supplied in YAML format.
+    # All manifest keys can be overridden by passing in a Hash of corresponding values.
+    #
+    # @param [String, File] manifest The YAML manifest
+    # @param [Hash] options Options to override (see #initialize)
+    #
+    # @return [SippyCup::Scenario]
+    #
+    # @example Parse a manifest string
+    #   manifest = <<-MANIFEST
+    #     source: 192.168.1.1
+    #     destination: 192.168.1.2
+    #     steps:
+    #       - invite
+    #       - wait_for_answer
+    #       - ack_answer
+    #       - sleep 3
+    #       - wait_for_hangup
+    #     MANIFEST
+    #   Scenario.from_manifest(manifest)
+    #
+    # @example Parse a manifest file by path
+    #   File.open("/my/manifest.yml") { |f| Scenario.from_manifest(f) }
+    #   # or
+    #   Scenario.from_manifest(File.read("/my/manifest.yml"))
+    #
+    # @example Override keys from the manifest
+    #   Scenario.from_manifest(manifest, source: '192.168.12.1')
     #
     def self.from_manifest(manifest, options = {})
       args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).symbolize_keys.merge options
@@ -27,8 +52,24 @@ module SippyCup
       scenario
     end
 
+    # @return [Hash] The options the scenario was created with, either from a manifest or passed as overrides
     attr_reader :scenario_options
 
+    #
+    # Create a scenario instance
+    #
+    # @param [String] name The scenario's name
+    # @param [Hash] args options to customise the scenario
+    # @option options [String] :filename The name of the files to be saved to disk
+    # @option options [String] :source The source IP/hostname with which to invoke SIPp
+    # @option options [String] :destination The target system at which to direct traffic
+    # @option options [String] :from_user The SIP user from which traffic should appear
+    # @option options [Integer] :rtcp_port The RTCP (media) port to bind to locally
+    # @option options [Array<String>] :steps A collection of steps
+    #
+    # @yield [scenario] Builder block to construct scenario
+    # @yieldparam [Scenario] scenario the initialized scenario instance
+    #
     def initialize(name, args = {}, &block)
       parse_args args
 
@@ -51,8 +92,10 @@ module SippyCup
       @errors
     end
 
-    ##
-    # This method will build the scenario steps provided, and will capture errors
+    #
+    # Build the scenario steps provided
+    #
+    # @param [Array<String>] steps A collection of steps to build the scenario
     #
     def build(steps)
       raise ArgumentError, "Must provide scenario steps" unless steps
