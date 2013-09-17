@@ -121,7 +121,7 @@ module SippyCup
     #
     # @param [Hash] opts A set of options to modify the message
     # @option opts [Integer] :retrans
-    #
+    # @option opts [String] :headers Extra headers to place into the INVITE
     def invite(opts = {})
       opts[:retrans] ||= 500
       rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
