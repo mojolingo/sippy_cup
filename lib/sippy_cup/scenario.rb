@@ -38,23 +38,38 @@ module SippyCup
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
+      @valid = true
+      @errors = []
 
       instance_eval &block if block_given?
     end
 
+    def valid?
+      @valid
+    end
+
+    def errors
+      @errors
+    end
+
     ##
-    # This method will build the scenario steps provided
+    # This method will build the scenario steps provided, and will capture errors
     #
     def build(steps)
       raise ArgumentError, "Must provide scenario steps" unless steps
-      steps.each do |step|
-        instruction, arg = step.split ' ', 2
-        if arg && !arg.empty?
-          # Strip leading/trailing quotes if present
-          arg.gsub!(/^'|^"|'$|"$/, '')
-          self.send instruction.to_sym, arg
-        else
-          self.send instruction
+      steps.each_with_index do |step, index|
+        begin
+          instruction, arg = step.split ' ', 2
+          if arg && !arg.empty?
+            # Strip leading/trailing quotes if present
+            arg.gsub!(/^'|^"|'$|"$/, '')
+            self.send instruction.to_sym, arg
+          else
+            self.send instruction
+          end
+        rescue => e
+          @valid = false
+          @errors << {step: index + 1, message: "#{step}: #{e.message}"}
         end
       end
     end

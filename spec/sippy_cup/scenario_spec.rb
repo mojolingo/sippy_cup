@@ -156,12 +156,7 @@ describe SippyCup::Scenario do
   describe "#build" do
     subject { SippyCup::Scenario.new 'Test', source: '127.0.0.1:5061', destination: '127.0.0.1:5060' }
 
-    context "with a valid steps definition" do
-      let(:steps) { ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
-
-      it "runs each step" do
-        subject.build(steps)
-        subject.to_xml.should == <<-END
+    let(:scenario_xml) do <<-END
 <?xml version="1.0"?>
 <scenario name="Test">
   <send retrans="500">
@@ -231,15 +226,23 @@ describe SippyCup::Scenario do
 ]]>
 </send>
 </scenario>
-        END
+    END
+    end
+
+    context "with a valid steps definition" do
+      let(:steps){ ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
+
+      it "runs each step" do
+        subject.build(steps)
+        subject.to_xml.should == scenario_xml
       end
     end
 
     context "with an invalid steps definition" do
-      let(:steps) { ["send_digits 'b'"] }
+      let(:steps){ ["send_digits 'b'"] }
 
-      it "should raise errors" do
-        expect { subject.build(steps) }.to raise_error ArgumentError
+      it "should not raise errors" do
+        expect { subject.build(steps) }.to_not raise_error
       end
     end
   end
@@ -392,6 +395,42 @@ steps:
           number_of_calls: override_options[:number_of_calls],
           from_user: "#{specs_from}"
         }
+      end
+    end
+
+    context "with an invalid scenario" do
+      let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+      END
+      end
+
+      it "does not raise errors" do
+        expect { SippyCup::Scenario.from_yaml(scenario_yaml) }.to_not raise_error
+      end
+
+      it "sets the validity of the scenario" do
+        scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+        scenario.should_not be_valid
+      end
+
+      it "sets the error messages for the scenario" do
+        scenario = SippyCup::Scenario.from_yaml(scenario_yaml)
+        scenario.errors.should == [{step: 5, message: "send_digits 'abc': Invalid DTMF digit requested: a"}]
       end
     end
   end
