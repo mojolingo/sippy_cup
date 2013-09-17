@@ -249,6 +249,7 @@ describe SippyCup::Runner do
           quietly do
             subject.run
           end
+          sleep 0.1
           active_thread_count.should == original_thread_count
         end
       end
@@ -268,6 +269,7 @@ describe SippyCup::Runner do
           quietly do
             original_thread_count = active_thread_count
             subject.run
+            sleep 0.1
             active_thread_count.should == original_thread_count
           end
         end
