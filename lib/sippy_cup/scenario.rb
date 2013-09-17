@@ -1,5 +1,4 @@
 require 'nokogiri'
-require 'yaml'
 require 'psych'
 
 module SippyCup
