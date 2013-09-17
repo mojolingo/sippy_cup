@@ -13,12 +13,12 @@ describe SippyCup::Scenario do
 
   subject(:scenario) { described_class.new 'Test', default_args }
 
-  it %q{should create a media stream on initialization} do
+  it "should create a media stream on initialization" do
     SippyCup::Media.should_receive(:new).once
     subject
   end
 
-  it %q{should take a block to generate a scenario} do
+  it "should take a block to generate a scenario" do
     s = described_class.new 'Test', default_args do
       invite
     end
@@ -26,13 +26,13 @@ describe SippyCup::Scenario do
     s.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
   end
 
-  it %q{should allow creating a blank scenario with no block} do
+  it "should allow creating a blank scenario with no block" do
     subject.invite
     subject.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
   end
 
   describe '#wait_for_answer' do
-    it %q{should tell SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200} do
+    it "should tell SIPp to optionally receive a SIP 100, 180 and 183 by default, while requiring a 200" do
       scenario.wait_for_answer
 
       xml = scenario.to_xml
@@ -43,7 +43,7 @@ describe SippyCup::Scenario do
       xml.should_not =~ /recv optional="true".*response="200"/
     end
 
-    it %q{should pass through additional options} do
+    it "should pass through additional options" do
       scenario.wait_for_answer foo: 'bar'
 
       xml = scenario.to_xml
@@ -60,17 +60,17 @@ describe SippyCup::Scenario do
       SippyCup::Media.should_receive(:new).once.and_return media
     end
 
-    it %q{should create the proper amount of silent audio'} do
+    it "should create the proper amount of silent audio'" do
       media.should_receive(:<<).once.with 'silence:5000'
       scenario.sleep 5
     end
 
-    it %q{should create the proper amount of silent audio when passed fractional seconds} do
+    it "should create the proper amount of silent audio when passed fractional seconds" do
       media.should_receive(:<<).once.with 'silence:500'
       scenario.sleep '0.5'
     end
 
-    it %q{should create the requested DTMF string'} do
+    it "should create the requested DTMF string'" do
       media.should_receive(:<<).ordered.with 'dtmf:1'
       media.should_receive(:<<).ordered.with 'silence:250'
       media.should_receive(:<<).ordered.with 'dtmf:3'
@@ -83,32 +83,32 @@ describe SippyCup::Scenario do
 
   # @todo replace with deeper tests
   describe "#register" do
-    it %q{should only call #register_message if only user is passed} do
+    it "should only call #register_message if only user is passed" do
       scenario.should_receive(:register_message).with 'foo', domain: "example.com"
       scenario.should_not_receive(:register_auth)
       scenario.register 'foo@example.com'
     end
 
-    it %q{should call #register_auth if user and password are passed} do
+    it "should call #register_auth if user and password are passed" do
       scenario.should_receive(:register_auth).with 'sally', 'seekrut', domain: "[remote_ip]"
       scenario.register 'sally', 'seekrut'
     end
 
-    it %q{should not modify the passed in user if a domain is given} do
+    it "should not modify the passed in user if a domain is given" do
       scenario.register 'foo@example.com'
 
       xml = scenario.to_xml
       xml.should =~ %r{foo@example\.com}
     end
 
-    it %q{should interpolate the target IP if no domain is given} do
+    it "should interpolate the target IP if no domain is given" do
       scenario.register 'sally'
 
       xml = scenario.to_xml
       xml.should =~ %r{sally@\[remote_ip\]}
     end
 
-    it %q{should add an auth to registers which specify a password} do
+    it "should add an auth to registers which specify a password" do
       scenario.register 'foo@example.com', 'seekrut'
 
       xml = scenario.to_xml
@@ -119,29 +119,29 @@ describe SippyCup::Scenario do
 
   describe "#parse_user" do
     context "sip: prefix" do
-      it %q{should return user and domain for addresses in the sip:user@domain:port format} do
+      it "should return user and domain for addresses in the sip:user@domain:port format" do
         scenario.parse_user('sip:foo@example.com:1337').should == ['foo', 'example.com']
       end
 
-      it %q{should return user and domain for addresses in the sip:user@domain format} do
+      it "should return user and domain for addresses in the sip:user@domain format" do
         scenario.parse_user('sip:foo@example.com').should == ['foo', 'example.com']
       end
 
-      it %q{should return user and [remote_ip] for addresses in the sip:user format} do
+      it "should return user and [remote_ip] for addresses in the sip:user format" do
         scenario.parse_user('sip:foo').should == ['foo', '[remote_ip]']
       end
     end
 
     context "no prefix" do
-      it %q{should return user and domain for addresses in the user@domain:port format} do
+      it "should return user and domain for addresses in the user@domain:port format" do
         scenario.parse_user('foo@example.com:1337').should == ['foo', 'example.com']
       end
 
-      it %q{should return user and domain for addresses in the user@domain format} do
+      it "should return user and domain for addresses in the user@domain format" do
         scenario.parse_user('foo@example.com').should == ['foo', 'example.com']
       end
 
-      it %q{should return user and [remote_ip] for a standalone username} do
+      it "should return user and [remote_ip] for a standalone username" do
         scenario.parse_user('sally').should == ['sally', '[remote_ip]']
       end
     end
