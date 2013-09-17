@@ -287,7 +287,6 @@ module SippyCup
       doc.to_xml
     end
 
-    # @todo Add spec for this
     def compile!
       print "Compiling scenario to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|

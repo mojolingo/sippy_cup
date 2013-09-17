@@ -430,6 +430,46 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe "#compile!" do
+    context "when a filename is not provided" do
+      it "writes the scenario XML to disk at name.xml" do
+        scenario.invite
+
+        scenario.compile!
+
+        File.read("/tmp/test.xml").should == scenario.to_xml
+      end
+
+      it "writes the PCAP media to disk at name.pcap" do
+        scenario.send_digits '123'
+
+        scenario.compile!
+
+        File.read("/tmp/test.pcap").should_not be_empty
+      end
+    end
+
+    context "when a filename is provided" do
+      let(:args) { {filename: 'foobar'} }
+
+      it "writes the scenario XML to disk at filename.xml" do
+        scenario.invite
+
+        scenario.compile!
+
+        File.read("/tmp/foobar.xml").should == scenario.to_xml
+      end
+
+      it "writes the PCAP media to disk at filename.pcap" do
+        scenario.send_digits '123'
+
+        scenario.compile!
+
+        File.read("/tmp/foobar.pcap").should_not be_empty
+      end
+    end
+  end
+
   describe "#build" do
     let(:scenario_xml) do <<-END
 <?xml version="1.0"?>
