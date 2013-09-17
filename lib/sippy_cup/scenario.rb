@@ -55,6 +55,9 @@ module SippyCup
     # @return [Hash] The options the scenario was created with, either from a manifest or passed as overrides
     attr_reader :scenario_options
 
+    # @return [Array<Hash>] a collection of errors encountered while building the scenario.
+    attr_reader :errors
+
     #
     # Create a scenario instance
     #
@@ -83,12 +86,9 @@ module SippyCup
       instance_eval &block if block_given?
     end
 
+    # @return [true, false] the validity of the scenario. Will be false if errors were encountered while building the scenario from a manifest
     def valid?
       @errors.size.zero?
-    end
-
-    def errors
-      @errors
     end
 
     #
@@ -114,6 +114,14 @@ module SippyCup
       end
     end
 
+    #
+    # Send an invite message
+    #
+    # Uses the :rtcp_port option the Scenario was created with to specify RTCP ports in SDP, or defaults to dynamic binding
+    #
+    # @param [Hash] opts A set of options to modify the message
+    # @option opts [Integer] :retrans
+    #
     def invite(opts = {})
       opts[:retrans] ||= 500
       rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
@@ -146,6 +154,19 @@ module SippyCup
       send msg, opts
     end
 
+    #
+    # Send a REGISTER message with the specified credentials
+    #
+    # @param [String] user the user to register as. May be given as a full SIP URI (sip:user@domain.com), in email-address format (user@domain.com) or as a simple username ('user'). If no domain is supplied, the source IP from SIPp will be used.
+    # @param [optional, String, nil] password the password to authenticate with.
+    # @param [Hash] opts A set of options to modify the message
+    #
+    # @example Register with authentication
+    #   s.register 'frank@there.com', 'abc123'
+    #
+    # @example Register without authentication or a domain
+    #   s.register 'frank'
+    #
     def register(user, password = nil, opts = {})
       opts[:retrans] ||= 500
       user, domain = parse_user user
@@ -157,21 +178,45 @@ module SippyCup
       send msg, opts
     end
 
+    #
+    # Sets an expectation for a SIP 100 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    #
     def receive_trying(opts = {})
       handle_response 100, opts
     end
     alias :receive_100 :receive_trying
 
+    #
+    # Sets an expectation for a SIP 180 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    #
     def receive_ringing(opts = {})
       handle_response 180, opts
     end
     alias :receive_180 :receive_ringing
 
+    #
+    # Sets an expectation for a SIP 183 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    #
     def receive_progress(opts = {})
       handle_response 183, opts
     end
     alias :receive_183 :receive_progress
 
+    #
+    # Sets an expectation for a SIP 200 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    #
     def receive_answer(opts = {})
       options = {
         response: 200,
@@ -183,9 +228,11 @@ module SippyCup
     end
     alias :receive_200 :receive_answer
 
-    ##
-    # Shortcut method that tells SIPp optionally receive
-    # SIP 100, 180, and 183 messages, and require a SIP 200 message.
+    #
+    # Shortcut that sets expectations for optional SIP 100, 180 and 183, followed by a required 200.
+    #
+    # @param [Hash] opts A set of options to modify the expectations
+    #
     def wait_for_answer(opts = {})
       receive_trying({optional: true}.merge opts)
       receive_ringing({optional: true}.merge opts)
@@ -193,6 +240,11 @@ module SippyCup
       receive_answer opts
     end
 
+    #
+    # Acknowledge a received answer message (SIP 200) and start media playback
+    #
+    # @param [Hash] opts A set of options to modify the message parameters
+    #
     def ack_answer(opts = {})
       msg = <<-BODY
 
@@ -212,15 +264,28 @@ module SippyCup
       start_media
     end
 
+    #
+    # Insert a pause into the scenario and its media of the specified duration
+    #
+    # @param [Numeric] seconds The duration of the pause in seconds
+    #
     def sleep(seconds)
       milliseconds = (seconds.to_f * MSEC).to_i
       pause milliseconds
       @media << "silence:#{milliseconds}"
     end
 
-    ##
+    #
     # Send DTMF digits
-    # @param[String] DTMF digits to send. Must be 0-9, *, # or A-D
+    #
+    # @param [String] DTMF digits to send. Must be 0-9, *, # or A-D
+    #
+    # @example Send a single DTMF digit
+    #   send_digits '1'
+    #
+    # @example Enter a pin number
+    #   send_digits '1234'
+    #
     def send_digits(digits)
       delay = (0.250 * MSEC).to_i # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
@@ -232,6 +297,11 @@ module SippyCup
       pause delay * 2 * digits.size
     end
 
+    #
+    # Send a BYE message
+    #
+    # @param [Hash] opts A set of options to modify the message parameters
+    #
     def send_bye(opts = {})
       msg = <<-MSG
 
@@ -250,10 +320,20 @@ module SippyCup
       send msg, opts
     end
 
+    #
+    # Expect to receive a BYE message
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    #
     def receive_bye(opts = {})
       recv opts.merge request: 'BYE'
     end
 
+    #
+    # Acknowledge a received BYE message
+    #
+    # @param [Hash] opts A set of options to modify the message parameters
+    #
     def ack_bye(opts = {})
       msg = <<-ACK
 
@@ -272,17 +352,38 @@ module SippyCup
       send msg, opts
     end
 
-    ##
-    # Shortcut method that tells SIPp receive a BYE and acknowledge it
+    #
+    # Shortcut to set an expectation for a BYE and acknowledge it when received
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    #
     def wait_for_hangup(opts = {})
       receive_bye(opts)
       ack_bye(opts)
     end
 
+    #
+    # Dump the scenario to a SIPp XML string
+    #
+    # @return [String] the SIPp XML scenario
     def to_xml
       doc.to_xml
     end
 
+    #
+    # Compile the scenario and its media to disk
+    #
+    # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap.
+    # {filename} is taken from the :filename option when creating the scenario, or falls back to a down-snake-cased version of the scenario name.
+    #
+    # @example Export a scenario to a specified filename
+    #   scenario = Scenario.new 'Test Scenario', filename: 'my_scenario'
+    #   scenario.compile! # Leaves files at my_scenario.xml and my_scenario.pcap
+    #
+    # @example Export a scenario to a calculated filename
+    #   scenario = Scenario.new 'Test Scenario'
+    #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
+    #
     def compile!
       print "Compiling scenario to #{@filename}.xml..."
       File.open "#{@filename}.xml", 'w' do |file|
