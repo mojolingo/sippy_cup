@@ -104,9 +104,9 @@ module SippyCup
           if arg && !arg.empty?
             # Strip leading/trailing quotes if present
             arg.gsub!(/^'|^"|'$|"$/, '')
-            self.send instruction, arg
+            self.__send__ instruction, arg
           else
-            self.send instruction
+            self.__send__ instruction
           end
         rescue => e
           @errors << {step: index + 1, message: "#{step}: #{e.message}"}
@@ -143,8 +143,7 @@ module SippyCup
         a=rtpmap:101 telephone-event/8000
         a=fmtp:101 0-15
       INVITE
-      send = new_send msg, opts
-      scenario_node << send
+      send msg, opts
     end
 
     def register(user, password = nil, opts = {})
@@ -155,8 +154,7 @@ module SippyCup
       else
         register_message domain, user
       end
-      send = new_send msg, opts
-      scenario_node << send
+      send msg, opts
     end
 
     def receive_trying(opts = {})
@@ -210,7 +208,7 @@ module SippyCup
         Content-Length: 0
         [routes]
       BODY
-      scenario_node << new_send(msg, opts)
+      send msg, opts
       start_media
     end
 
@@ -249,7 +247,7 @@ module SippyCup
         Content-Length: 0
         [routes]
       MSG
-      scenario_node << new_send(msg, opts)
+      send msg, opts
     end
 
     def receive_bye(opts = {})
@@ -271,7 +269,7 @@ module SippyCup
         Content-Length: 0
         [routes]
       ACK
-      scenario_node << new_send(msg, opts)
+      send msg, opts
     end
 
     ##
@@ -385,7 +383,7 @@ module SippyCup
       scenario_node << pause
     end
 
-    def new_send(msg, opts = {})
+    def send(msg, opts = {})
       send = Nokogiri::XML::Node.new 'send', doc
       opts.each do |k,v|
         send[k.to_s] = v
@@ -393,7 +391,7 @@ module SippyCup
       send << "\n"
       send << Nokogiri::XML::CDATA.new(doc, msg)
       send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
-      send
+      scenario_node << send
     end
 
     def recv(opts = {})
