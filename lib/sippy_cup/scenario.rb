@@ -168,7 +168,7 @@ module SippyCup
 
     # @todo Make this private
     def register_message(user, opts = {})
-      <<-REGISTER
+      <<-BODY
 
         REGISTER sip:#{opts[:domain]} SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
@@ -181,7 +181,7 @@ module SippyCup
         Expires: 120
         User-Agent: #{USER_AGENT}
         Content-Length: 0
-      REGISTER
+      BODY
     end
 
     # @todo Make this private
@@ -243,7 +243,7 @@ module SippyCup
 
     # @todo add spec for this
     def ack_answer(opts = {})
-      msg = <<-ACK
+      msg = <<-BODY
 
         ACK [next_url] SIP/2.0
         Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
@@ -256,7 +256,7 @@ module SippyCup
         User-Agent: #{USER_AGENT}
         Content-Length: 0
         [routes]
-      ACK
+      BODY
       scenario_node << new_send(msg, opts)
       start_media
     end
