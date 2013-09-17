@@ -116,14 +116,6 @@ module SippyCup
       end
     end
 
-    # @todo Add spec for this
-    def sleep(seconds)
-      seconds = seconds.to_f
-      # TODO play silent audio files to the server to fill the gap
-      pause seconds * MSEC
-      @media << "silence:#{(seconds * MSEC).to_i}"
-    end
-
     def invite(opts = {})
       opts[:retrans] ||= 500
       rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
@@ -222,6 +214,14 @@ module SippyCup
       BODY
       scenario_node << new_send(msg, opts)
       start_media
+    end
+
+    # @todo Add spec for this
+    def sleep(seconds)
+      seconds = seconds.to_f
+      # TODO play silent audio files to the server to fill the gap
+      pause seconds * MSEC
+      @media << "silence:#{(seconds * MSEC).to_i}"
     end
 
     ##
