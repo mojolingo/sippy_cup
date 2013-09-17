@@ -142,66 +142,57 @@ describe SippyCup::Scenario do
 
   # @todo replace with deeper tests
   describe "#register" do
-    it "only calls #register_message if only user is passed" do
-      scenario.should_receive(:register_message).with 'foo', domain: "example.com"
-      scenario.should_not_receive(:register_auth)
-      scenario.register 'foo@example.com'
+    it "sends a REGISTER message" do
+      subject.register 'frank'
+
+      subject.to_xml.should match(%r{<send .*>})
+      subject.to_xml.should match(%r{REGISTER})
     end
 
-    it "calls #register_auth if user and password are passed" do
-      scenario.should_receive(:register_auth).with 'sally', 'seekrut', domain: "[remote_ip]"
-      scenario.register 'sally', 'seekrut'
+    it "allows setting options on the send instruction" do
+      subject.register 'frank', nil, foo: 'bar'
+      subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
-    it "doesn't modify the passed in user if a domain is given" do
-      scenario.register 'foo@example.com'
-
-      xml = scenario.to_xml
-      xml.should =~ %r{foo@example\.com}
+    it "defaults to retrans of 500" do
+      subject.register 'frank'
+      subject.to_xml.should match(%r{<send retrans="500".*>})
     end
 
-    it "interpolates the target IP if no domain is given" do
-      scenario.register 'sally'
-
-      xml = scenario.to_xml
-      xml.should =~ %r{sally@\[remote_ip\]}
+    it "allows setting retrans" do
+      subject.register 'frank', nil, retrans: 200
+      subject.to_xml.should match(%r{<send retrans="200".*>})
     end
 
-    it "adds an auth to registers which specify a password" do
-      scenario.register 'foo@example.com', 'seekrut'
-
-      xml = scenario.to_xml
-      xml.should =~ %r{recv response="401" auth="true"}
-      xml.should =~ %r{\[authentication username=foo password=seekrut\]}
-    end
-  end
-
-  describe "#parse_user" do
-    context "sip: prefix" do
-      it "returns user and domain for addresses in the sip:user@domain:port format" do
-        scenario.parse_user('sip:foo@example.com:1337').should == ['foo', 'example.com']
-      end
-
-      it "returns user and domain for addresses in the sip:user@domain format" do
-        scenario.parse_user('sip:foo@example.com').should == ['foo', 'example.com']
-      end
-
-      it "returns user and [remote_ip] for addresses in the sip:user format" do
-        scenario.parse_user('sip:foo').should == ['foo', '[remote_ip]']
+    context "when a domain is provided" do
+      it "uses the specified user and domain" do
+        subject.register 'frank@foobar.com'
+        subject.to_xml.should match(%r{REGISTER sip:foobar.com})
+        subject.to_xml.should match(%r{From: <sip:frank@foobar.com})
+        subject.to_xml.should match(%r{To: <sip:frank@foobar.com})
+        subject.to_xml.should match(%r{Contact: <sip:sipp@\[local_ip\]})
       end
     end
 
-    context "no prefix" do
-      it "returns user and domain for addresses in the user@domain:port format" do
-        scenario.parse_user('foo@example.com:1337').should == ['foo', 'example.com']
+    context "when a domain is not provided" do
+      it "uses the remote IP" do
+        subject.register 'frank'
+        subject.to_xml.should match(%r{REGISTER sip:\[remote_ip\]})
+        subject.to_xml.should match(%r{From: <sip:frank@\[remote_ip\]})
+        subject.to_xml.should match(%r{To: <sip:frank@\[remote_ip\]})
+        subject.to_xml.should match(%r{Contact: <sip:sipp@\[local_ip\]})
+      end
+    end
+
+    context "when a password is provided" do
+      it "expects a 401 response" do
+        subject.register 'frank', 'abc123'
+        subject.to_xml.should match(%r{<recv response="401" auth="true" optional="false"/>})
       end
 
-      it "returns user and domain for addresses in the user@domain format" do
-        scenario.parse_user('foo@example.com').should == ['foo', 'example.com']
-      end
-
-      it "returns user and [remote_ip] for a standalone username" do
-        scenario.parse_user('sally').should == ['sally', '[remote_ip]']
+      it "adds authentication data to the REGISTER message" do
+        subject.register 'frank', 'abc123'
+        subject.to_xml.should match(%r{\[authentication username=frank password=abc123\]})
       end
     end
   end
