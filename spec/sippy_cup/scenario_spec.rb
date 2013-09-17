@@ -27,8 +27,7 @@ describe SippyCup::Scenario do
   end
 
   it "allows creating a blank scenario with no block" do
-    subject.invite
-    subject.to_xml.should =~ %r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\] SIP/2.0}
+    subject.to_xml.should =~ %r{<scenario name="Test"/>}
   end
 
   describe '#wait_for_answer' do
