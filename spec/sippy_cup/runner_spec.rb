@@ -46,8 +46,8 @@ steps:
 
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
-      full_scenario_path = File.join(Dir.pwd, 'foobar.xml')
-      expect_command_execution "sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com"
+      full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
+      expect_command_execution %r{sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com}
       subject.run
     end
 

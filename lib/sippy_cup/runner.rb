@@ -27,6 +27,8 @@ module SippyCup
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
+      @input_files = @scenario.to_tmpfiles
+
       @logger.info "Preparing to run SIPp command: #{command}"
 
       exit_status, stderr_buffer = execute_with_redirected_streams
@@ -66,12 +68,10 @@ module SippyCup
     end
 
     def command_options
-      filename = @scenario.compile!
-
       options = {
         i: @scenario_options[:source],
         p: @options[:source_port] || '8836',
-        sf: filename,
+        sf: @input_files[:scenario].path,
         l: @scenario_options[:max_concurrent],
         m: @scenario_options[:number_of_calls],
         r: @scenario_options[:calls_per_second],
