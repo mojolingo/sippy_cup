@@ -492,7 +492,6 @@ describe SippyCup::Scenario do
         User-Agent: SIPp/sippy_cup
         Content-Type: application/sdp
         Content-Length: [len]
-        
 
         v=0
         o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
@@ -607,7 +606,6 @@ steps:
         User-Agent: SIPp/sippy_cup
         Content-Type: application/sdp
         Content-Length: [len]
-        
 
         v=0
         o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
