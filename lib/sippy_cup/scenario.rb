@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'psych'
 require 'active_support/core_ext/hash'
+require 'tempfile'
 
 module SippyCup
   #
@@ -395,6 +396,27 @@ Content-Length: 0
       puts "done."
 
       scenario_filename
+    end
+
+    #
+    # Write compiled Scenario XML and PCAP media to tempfiles.
+    #
+    # These will automatically be closed and deleted once they have gone out of scope, and can be used to execute the scenario without leaving stuff behind.
+    #
+    # @return [Hash<Symbol => Tempfile>] handles to created Tempfiles at :scenario and :media
+    #
+    # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
+    #
+    def to_tmpfiles
+      scenario_file = Tempfile.new 'scenario'
+      scenario_file.write to_xml
+      scenario_file.rewind
+
+      media_file = Tempfile.new 'media'
+      media_file.write compile_media.to_s
+      media_file.rewind
+
+      {scenario: scenario_file, media: media_file}
     end
 
   private

@@ -485,6 +485,36 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe "#to_tmpfiles" do
+    before { scenario.invite }
+
+    it "writes the scenario XML to a Tempfile and returns it" do
+      files = scenario.to_tmpfiles
+      files[:scenario].read.should eql(scenario.to_xml)
+    end
+
+    it "allows the scenario XML to be read from disk independently" do
+      files = scenario.to_tmpfiles
+      File.read(files[:scenario].path).should eql(scenario.to_xml)
+    end
+
+    it "writes the PCAP media to a Tempfile and returns it" do
+      files = scenario.to_tmpfiles
+      files[:media].read.should_not be_empty
+    end
+
+    it "allows the PCAP media to be read from disk independently" do
+      files = scenario.to_tmpfiles
+      File.read(files[:media].path).should_not be_empty
+    end
+
+    it "removes the created files from disk when the return value goes out of scope" do
+      scenario.to_tmpfiles
+      GC.start
+      Dir.entries("/tmp").should eql(['.', '..'])
+    end
+  end
+
   describe "#build" do
     let(:scenario_xml) do <<-END
 <?xml version="1.0"?>
