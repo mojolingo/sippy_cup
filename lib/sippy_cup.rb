@@ -1,5 +1,6 @@
 %w{
   scenario
+  xml_scenario
   media
   runner
 }.each {|r| require "sippy_cup/#{r}"}
