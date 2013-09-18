@@ -55,9 +55,23 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<send retrans="200".*>})
     end
 
-    it "allows adding an extra header" do
-      subject.invite headers: "Foo: <bar>"
-      subject.to_xml.should match(%r{Foo: <bar>})
+    context "with extra headers specified" do
+      it "adds the headers to the end of the message" do
+        subject.invite headers: "Foo: <bar>\nBar: <baz>"
+        subject.to_xml.should match(%r{Foo: <bar>\nBar: <baz>})
+      end
+
+      it "only has one blank line between headers and SDP" do
+        subject.invite headers: "Foo: <bar>\n\n\n"
+        subject.to_xml.should match(%r{Foo: <bar>\n\nv=0})
+      end
+    end
+
+    context "with no extra headers" do
+      it "only has one blank line between headers and SDP" do
+        subject.invite
+        subject.to_xml.should match(%r{Content-Length: \[len\]\n\nv=0})
+      end
     end
 
     context "when a static RTCP port is specified" do
@@ -481,28 +495,27 @@ describe SippyCup::Scenario do
 <scenario name="Test">
   <send retrans="500">
 <![CDATA[
-        INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-        To: <sip:[service]@[remote_ip]:[remote_port]>
-        Call-ID: [call_id]
-        CSeq: [cseq] INVITE
-        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Type: application/sdp
-        Content-Length: [len]
+INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+To: <sip:[service]@[remote_ip]:[remote_port]>
+Call-ID: [call_id]
+CSeq: [cseq] INVITE
+Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Type: application/sdp
+Content-Length: [len]
 
-        v=0
-        o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
-        s=-
-        c=IN IP[media_ip_type] [media_ip]
-        t=0 0
-        m=audio [media_port] RTP/AVP 0 101
-
-        a=rtpmap:0 PCMU/8000
-        a=rtpmap:101 telephone-event/8000
-        a=fmtp:101 0-15
+v=0
+o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+s=-
+c=IN IP[media_ip_type] [media_ip]
+t=0 0
+m=audio [media_port] RTP/AVP 0 101
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-15
 ]]>
 </send>
   <recv optional="true" response="100"/>
@@ -511,17 +524,17 @@ describe SippyCup::Scenario do
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
-        ACK [next_url] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-        [last_To:]
-        Call-ID: [call_id]
-        CSeq: [cseq] ACK
-        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Length: 0
-        [routes]
+ACK [next_url] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+[last_To:]
+Call-ID: [call_id]
+CSeq: [cseq] ACK
+Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Length: 0
+[routes]
 ]]>
 </send>
   <nop>
@@ -532,17 +545,17 @@ describe SippyCup::Scenario do
   <recv request="BYE"/>
   <send>
 <![CDATA[
-        SIP/2.0 200 OK
-        [last_Via:]
-        [last_From:]
-        [last_To:]
-        [last_Call-ID:]
-        [last_CSeq:]
-        Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Length: 0
-        [routes]
+SIP/2.0 200 OK
+[last_Via:]
+[last_From:]
+[last_To:]
+[last_Call-ID:]
+[last_CSeq:]
+Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Length: 0
+[routes]
 ]]>
 </send>
 </scenario>
@@ -595,28 +608,27 @@ steps:
 <scenario name="spec scenario">
   <send retrans="500">
 <![CDATA[
-        INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-        To: <sip:[service]@[remote_ip]:[remote_port]>
-        Call-ID: [call_id]
-        CSeq: [cseq] INVITE
-        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Type: application/sdp
-        Content-Length: [len]
+INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+To: <sip:[service]@[remote_ip]:[remote_port]>
+Call-ID: [call_id]
+CSeq: [cseq] INVITE
+Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Type: application/sdp
+Content-Length: [len]
 
-        v=0
-        o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
-        s=-
-        c=IN IP[media_ip_type] [media_ip]
-        t=0 0
-        m=audio [media_port] RTP/AVP 0 101
-
-        a=rtpmap:0 PCMU/8000
-        a=rtpmap:101 telephone-event/8000
-        a=fmtp:101 0-15
+v=0
+o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+s=-
+c=IN IP[media_ip_type] [media_ip]
+t=0 0
+m=audio [media_port] RTP/AVP 0 101
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-15
 ]]>
 </send>
   <recv optional="true" response="100"/>
@@ -625,17 +637,17 @@ steps:
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
-        ACK [next_url] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-        [last_To:]
-        Call-ID: [call_id]
-        CSeq: [cseq] ACK
-        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Length: 0
-        [routes]
+ACK [next_url] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+[last_To:]
+Call-ID: [call_id]
+CSeq: [cseq] ACK
+Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Length: 0
+[routes]
 ]]>
 </send>
   <nop>
@@ -650,17 +662,17 @@ steps:
   <recv request="BYE"/>
   <send>
 <![CDATA[
-        SIP/2.0 200 OK
-        [last_Via:]
-        [last_From:]
-        [last_To:]
-        [last_Call-ID:]
-        [last_CSeq:]
-        Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: SIPp/sippy_cup
-        Content-Length: 0
-        [routes]
+SIP/2.0 200 OK
+[last_Via:]
+[last_From:]
+[last_To:]
+[last_Call-ID:]
+[last_CSeq:]
+Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: SIPp/sippy_cup
+Content-Length: 0
+[routes]
 ]]>
 </send>
 </scenario>

@@ -125,35 +125,33 @@ module SippyCup
     #
     def invite(opts = {})
       opts[:retrans] ||= 500
-      rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}\n" : "m=audio [media_port] RTP/AVP 0 101\n"
-      headers = opts.delete :headers
+      rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}" : "m=audio [media_port] RTP/AVP 0 101"
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
-      msg = <<-INVITE
+      msg = <<-MSG
 
-        INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-        To: <sip:[service]@[remote_ip]:[remote_port]>
-        Call-ID: [call_id]
-        CSeq: [cseq] INVITE
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: #{USER_AGENT}
-        Content-Type: application/sdp
-        Content-Length: [len]
-        #{headers}
-
-        v=0
-        o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
-        s=-
-        c=IN IP[media_ip_type] [media_ip]
-        t=0 0
-        #{rtp_string}
-        a=rtpmap:0 PCMU/8000
-        a=rtpmap:101 telephone-event/8000
-        a=fmtp:101 0-15
-      INVITE
+INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+To: <sip:[service]@[remote_ip]:[remote_port]>
+Call-ID: [call_id]
+CSeq: [cseq] INVITE
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+Content-Type: application/sdp
+Content-Length: [len]
+#{opts.has_key?(:headers) ? opts.delete(:headers).sub(/\n*\Z/, "\n") : ''}
+v=0
+o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+s=-
+c=IN IP[media_ip_type] [media_ip]
+t=0 0
+#{rtp_string}
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-15
+      MSG
       send msg, opts
     end
 
@@ -251,17 +249,17 @@ module SippyCup
     def ack_answer(opts = {})
       msg = <<-BODY
 
-        ACK [next_url] SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-        [last_To:]
-        Call-ID: [call_id]
-        CSeq: [cseq] ACK
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
-        [routes]
+ACK [next_url] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+[last_To:]
+Call-ID: [call_id]
+CSeq: [cseq] ACK
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+Content-Length: 0
+[routes]
       BODY
       send msg, opts
       start_media
@@ -308,17 +306,17 @@ module SippyCup
     def send_bye(opts = {})
       msg = <<-MSG
 
-        BYE [next_url] SIP/2.0
-        [last_Via:]
-        From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-        [last_To:]
-        [last_Call-ID]
-        CSeq: [cseq] BYE
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
-        [routes]
+BYE [next_url] SIP/2.0
+[last_Via:]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+[last_To:]
+[last_Call-ID]
+CSeq: [cseq] BYE
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+Content-Length: 0
+[routes]
       MSG
       send msg, opts
     end
@@ -340,17 +338,17 @@ module SippyCup
     def ack_bye(opts = {})
       msg = <<-ACK
 
-        SIP/2.0 200 OK
-        [last_Via:]
-        [last_From:]
-        [last_To:]
-        [last_Call-ID:]
-        [last_CSeq:]
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 100
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
-        [routes]
+SIP/2.0 200 OK
+[last_Via:]
+[last_From:]
+[last_To:]
+[last_Call-ID:]
+[last_CSeq:]
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+Content-Length: 0
+[routes]
       ACK
       send msg, opts
     end
@@ -438,17 +436,17 @@ module SippyCup
     def register_message(domain, user, opts = {})
       <<-BODY
 
-        REGISTER sip:#{domain} SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}@#{domain}>;tag=[call_number]
-        To: <sip:#{user}@#{domain}>
-        Call-ID: [call_id]
-        CSeq: [cseq] REGISTER
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 10
-        Expires: 120
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
+REGISTER sip:#{domain} SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: <sip:#{user}@#{domain}>;tag=[call_number]
+To: <sip:#{user}@#{domain}>
+Call-ID: [call_id]
+CSeq: [cseq] REGISTER
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 10
+Expires: 120
+User-Agent: #{USER_AGENT}
+Content-Length: 0
       BODY
     end
 
@@ -456,18 +454,18 @@ module SippyCup
       recv response: '401', auth: true, optional: false
       <<-AUTH
 
-        REGISTER sip:#{domain} SIP/2.0
-        Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-        From: <sip:#{user}@#{domain}>;tag=[call_number]
-        To: <sip:#{user}@#{domain}>
-        Call-ID: [call_id]
-        CSeq: [cseq] REGISTER
-        Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
-        Max-Forwards: 20
-        Expires: 3600
-        [authentication username=#{user} password=#{password}]
-        User-Agent: #{USER_AGENT}
-        Content-Length: 0
+REGISTER sip:#{domain} SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: <sip:#{user}@#{domain}>;tag=[call_number]
+To: <sip:#{user}@#{domain}>
+Call-ID: [call_id]
+CSeq: [cseq] REGISTER
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 20
+Expires: 3600
+[authentication username=#{user} password=#{password}]
+User-Agent: #{USER_AGENT}
+Content-Length: 0
       AUTH
     end
 
