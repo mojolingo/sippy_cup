@@ -43,6 +43,8 @@ module SippyCup
       @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
 
       final_result
+    ensure
+      cleanup_input_files
     end
 
     #
@@ -138,6 +140,13 @@ module SippyCup
         raise SippyCup::FatalSocketBindingError, error_message
       else
         raise SippyCup::SippGenericError, error_message
+      end
+    end
+
+    def cleanup_input_files
+      @input_files.each_pair do |key, value|
+        value.close
+        value.unlink
       end
     end
   end

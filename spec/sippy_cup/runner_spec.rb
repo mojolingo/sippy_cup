@@ -51,6 +51,15 @@ steps:
       subject.run
     end
 
+    it "ensures that input files are not left on the filesystem" do
+      FakeFS do
+        Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
+        expect_command_execution.and_raise
+        expect { subject.run }.to raise_error
+        Dir.entries(Dir.tmpdir).should eql(['.', '..'])
+      end
+    end
+
     context "System call fails/doesn't fail" do
       it 'raises an error when the system call fails' do
         expect_command_execution.and_raise(Errno::ENOENT)

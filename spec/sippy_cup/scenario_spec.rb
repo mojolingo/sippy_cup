@@ -4,7 +4,7 @@ describe SippyCup::Scenario do
   include FakeFS::SpecHelpers
 
   before do
-    Dir.mkdir "/tmp"
+    Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
     Dir.chdir "/tmp"
   end
 
@@ -490,6 +490,7 @@ describe SippyCup::Scenario do
 
     it "writes the scenario XML to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
+      files[:scenario].should be_a(Tempfile)
       files[:scenario].read.should eql(scenario.to_xml)
     end
 
@@ -500,18 +501,13 @@ describe SippyCup::Scenario do
 
     it "writes the PCAP media to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
+      files[:media].should be_a(Tempfile)
       files[:media].read.should_not be_empty
     end
 
     it "allows the PCAP media to be read from disk independently" do
       files = scenario.to_tmpfiles
       File.read(files[:media].path).should_not be_empty
-    end
-
-    it "removes the created files from disk when the return value goes out of scope" do
-      scenario.to_tmpfiles
-      GC.start
-      Dir.entries("/tmp").should eql(['.', '..'])
     end
   end
 
