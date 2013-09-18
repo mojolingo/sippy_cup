@@ -41,7 +41,7 @@ module SippyCup
     #   Scenario.from_manifest(manifest, source: '192.168.12.1')
     #
     def self.from_manifest(manifest, options = {})
-      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).symbolize_keys.merge options
+      args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).merge options
 
       name = args.delete :name
       steps = args.delete :steps
@@ -421,8 +421,8 @@ Content-Length: 0
     end
 
     def parse_args(args)
-      raise ArgumentError, "Must include source IP:PORT" unless args.keys.include? :source
-      raise ArgumentError, "Must include destination IP:PORT" unless args.keys.include? :destination
+      raise ArgumentError, "Must include source IP:PORT" unless args.has_key? :source
+      raise ArgumentError, "Must include destination IP:PORT" unless args.has_key? :destination
 
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'

@@ -1,4 +1,4 @@
-require 'sippy_cup/runner'
+require 'spec_helper'
 
 describe SippyCup::Runner do
   let(:settings) { {} }
@@ -235,7 +235,7 @@ describe SippyCup::Runner do
         it "proxies stdout to the terminal" do
           quietly do
             capture(:stdout) { subject.run }.strip.should == output_string
-         end
+          end
         end
 
         it "proxies stderr to the terminal" do
@@ -249,6 +249,7 @@ describe SippyCup::Runner do
           quietly do
             subject.run
           end
+          sleep 0.1
           active_thread_count.should == original_thread_count
         end
       end
@@ -268,6 +269,7 @@ describe SippyCup::Runner do
           quietly do
             original_thread_count = active_thread_count
             subject.run
+            sleep 0.1
             active_thread_count.should == original_thread_count
           end
         end

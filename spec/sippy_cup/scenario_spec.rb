@@ -689,13 +689,13 @@ Content-Length: 0
     it "sets the proper options" do
       scenario = described_class.from_manifest(scenario_yaml)
       scenario.scenario_options.should == {
-        name: 'spec scenario',
-        source: '192.0.2.15',
-        destination: '192.0.2.200',
-        max_concurrent: 10,
-        calls_per_second: 5,
-        number_of_calls: 20,
-        from_user: "#{specs_from}"
+        'name' => 'spec scenario',
+        'source' => '192.0.2.15',
+        'destination' => '192.0.2.200',
+        'max_concurrent' => 10,
+        'calls_per_second' => 5,
+        'number_of_calls' => 20,
+        'from_user' => "#{specs_from}"
       }
     end
 
@@ -710,13 +710,13 @@ Content-Length: 0
       it "sets the proper options" do
         scenario = described_class.from_manifest(scenario_yaml, override_options)
         scenario.scenario_options.should == {
-          name: 'spec scenario',
-          source: '192.0.2.15',
-          destination: '192.0.2.200',
-          max_concurrent: 10,
-          calls_per_second: 5,
-          number_of_calls: override_options[:number_of_calls],
-          from_user: "#{specs_from}"
+          'name' => 'spec scenario',
+          'source' => '192.0.2.15',
+          'destination' => '192.0.2.200',
+          'max_concurrent' => 10,
+          'calls_per_second' => 5,
+          'number_of_calls' => override_options[:number_of_calls],
+          'from_user' => "#{specs_from}"
         }
       end
     end
