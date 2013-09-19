@@ -14,10 +14,7 @@ module SippyCup
     # @param [String] name The scenario's name
     # @param [String] xml The XML document representing the scenario
     # @param [String] media The media to be invoked by the scenario in PCAP format
-    # @param [Hash] args options to customise the scenario
-    # @option options [String] :filename The name of the files to be saved to disk
-    # @option options [String] :source The source IP/hostname with which to invoke SIPp
-    # @option options [String] :destination The target system at which to direct traffic
+    # @param [Hash] args options to customise the scenario. @see Scenario#initialize.
     #
     def initialize(name, xml, media, args = {})
       @xml, @media = xml, media

@@ -65,10 +65,19 @@ module SippyCup
     #
     # @param [String] name The scenario's name
     # @param [Hash] args options to customise the scenario
-    # @option options [String] :filename The name of the files to be saved to disk
-    # @option options [String] :source The source IP/hostname with which to invoke SIPp
-    # @option options [String] :destination The target system at which to direct traffic
-    # @option options [String] :from_user The SIP user from which traffic should appear
+    # @option options [String] :filename The name of the files to be saved to disk.
+    # @option options [String] :source The source IP/hostname with which to invoke SIPp.
+    # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
+    # @option options [String] :destination The target system at which to direct traffic.
+    # @option options [String] :from_user The SIP user from which traffic should appear.
+    # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
+    # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
+    # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
+    # @option options [String, Numeric] :calls_per_second The rate at which to initiate calls.
+    # @option options [String] :stats_file The path at which to dump statistics.
+    # @option options [String, Numeric] :stats_interval The interval (in seconds) at which to dump statistics (defaults to 1s).
+    # @option options [String] :transport_mode The transport mode over which to direct SIP traffic.
+    # @option options [String] :scenario_variables A path to a CSV file of variables to be interpolated with the scenario at runtime.
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario
