@@ -384,6 +384,8 @@ Content-Length: 0
     # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap.
     # {filename} is taken from the :filename option when creating the scenario, or falls back to a down-snake-cased version of the scenario name.
     #
+    # @return [String] the path to the resulting scenario file
+    #
     # @example Export a scenario to a specified filename
     #   scenario = Scenario.new 'Test Scenario', filename: 'my_scenario'
     #   scenario.compile! # Leaves files at my_scenario.xml and my_scenario.pcap
