@@ -83,6 +83,15 @@ describe SippyCup::Runner do
       end
     end
 
+    context "specifying a media port" do
+      let(:settings) { { media_port: 6000 } }
+
+      it 'should set the -mp option' do
+        expect_command_execution(/-mp 6000/)
+        subject.run
+      end
+    end
+
     context "specifying a stats file" do
       let(:settings) { { stats_file: 'stats.csv' } }
 
