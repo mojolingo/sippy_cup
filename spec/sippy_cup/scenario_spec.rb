@@ -751,6 +751,41 @@ steps:
       end
     end
 
+    context "with an input filename specified" do
+      context "and a name in the manifest" do
+        it "uses the name from the manifest" do
+          scenario = described_class.from_manifest(scenario_yaml, input_filename: '/tmp/foobar.yml')
+          scenario.scenario_options[:name].should == 'spec scenario'
+        end
+      end
+
+      context "and no name in the manifest" do
+        let(:scenario_yaml) do <<-END
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits '3125551234'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+          END
+        end
+
+        it "uses the input filename" do
+          scenario = described_class.from_manifest(scenario_yaml, input_filename: '/tmp/foobar.yml')
+          scenario.scenario_options[:name].should == 'foobar'
+        end
+      end
+    end
+
     context "overriding some value" do
       let(:specs_from) { 'other_user' }
 

@@ -18,6 +18,7 @@ module SippyCup
     #
     # @param [String, File] manifest The YAML manifest
     # @param [Hash] options Options to override (see #initialize)
+    # @option options [String] :input_filename The name of the input file if there is one. Used as a preferable fallback if no name is included in the manifest.
     #
     # @return [SippyCup::Scenario]
     #
@@ -45,7 +46,8 @@ module SippyCup
     def self.from_manifest(manifest, options = {})
       args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).merge options
 
-      name = args.delete(:name) || 'My Scenario'
+      input_name = options.has_key?(:input_filename) ? File.basename(options[:input_filename]).gsub(/\.ya?ml/, '') : nil
+      name = args.delete(:name) || input_name || 'My Scenario'
       steps = args.delete :steps
 
       scenario = Scenario.new name, args

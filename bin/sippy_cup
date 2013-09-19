@@ -59,7 +59,7 @@ unless compile || run
   exit 1
 end
 
-scenario = SippyCup::Scenario.from_manifest File.read(manifest_path)
+scenario = SippyCup::Scenario.from_manifest File.read(manifest_path), input_filename: manifest_path
 scenario.compile! if compile
 
 if run
