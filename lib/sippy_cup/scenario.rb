@@ -45,7 +45,7 @@ module SippyCup
     def self.from_manifest(manifest, options = {})
       args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).merge options
 
-      name = args.delete :name
+      name = args.delete(:name) || 'My Scenario'
       steps = args.delete :steps
 
       scenario = Scenario.new name, args
@@ -65,6 +65,7 @@ module SippyCup
     #
     # @param [String] name The scenario's name
     # @param [Hash] args options to customise the scenario
+    # @option options [String] :name The name of the scenario, used for the XML scenario and for determining the compiled filenames. Defaults to 'My Scenario'.
     # @option options [String] :filename The name of the files to be saved to disk.
     # @option options [String] :source The source IP/hostname with which to invoke SIPp.
     # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
