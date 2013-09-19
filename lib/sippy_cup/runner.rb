@@ -87,6 +87,8 @@ module SippyCup
         s: @options[:sip_user] || '1'
       }
 
+      options[:mp] = @options[:media_port] if @options[:media_port]
+      
       if @options[:stats_file]
         options[:trace_stat] = nil
         options[:stf] = @options[:stats_file]

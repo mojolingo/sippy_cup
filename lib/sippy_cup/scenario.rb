@@ -67,7 +67,6 @@ module SippyCup
     # @option options [String] :source The source IP/hostname with which to invoke SIPp
     # @option options [String] :destination The target system at which to direct traffic
     # @option options [String] :from_user The SIP user from which traffic should appear
-    # @option options [Integer] :rtcp_port The RTCP (media) port to bind to locally
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario
@@ -77,7 +76,6 @@ module SippyCup
       parse_args args
 
       @scenario_options = args.merge name: name
-      @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
@@ -117,15 +115,12 @@ module SippyCup
     #
     # Send an invite message
     #
-    # Uses the :rtcp_port option the Scenario was created with to specify RTCP ports in SDP, or defaults to dynamic binding
-    #
     # @param [Hash] opts A set of options to modify the message
     # @option opts [Integer] :retrans
     # @option opts [String] :headers Extra headers to place into the INVITE
     #
     def invite(opts = {})
       opts[:retrans] ||= 500
-      rtp_string = @rtcp_port ? "m=audio #{@rtcp_port.to_i - 1} RTP/AVP 0 101\na=rtcp:#{@rtcp_port}" : "m=audio [media_port] RTP/AVP 0 101"
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       msg = <<-MSG
@@ -147,7 +142,8 @@ o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
-#{rtp_string}
+m=audio [media_port] RTP/AVPF 0 101
+a=rtcp:[media_port+1]
 a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15

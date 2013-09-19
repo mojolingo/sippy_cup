@@ -74,20 +74,9 @@ describe SippyCup::Scenario do
       end
     end
 
-    context "when a static RTCP port is specified" do
-      let(:args) { {rtcp_port: 1234} }
-
-      it "includes the specified static RTCP port in the SDP" do
-        subject.invite
-        subject.to_xml.should match(%r{m=audio 1233 RTP/AVP 0 101\na=rtcp:1234})
-      end
-    end
-
-    context "when no RTCP port is specified" do
-      it "uses a dynamic RTCP port in the SDP" do
-        subject.invite
-        subject.to_xml.should match(%r{m=audio \[media_port\] RTP/AVP 0 101})
-      end
+    it "uses [media_port+1] as the RTCP port in the SDP" do
+      subject.invite
+      subject.to_xml.should match(%r{m=audio \[media_port\] RTP/AVPF 0 101\na=rtcp:\[media_port\+1\]})
     end
 
     context "when a from user is specified" do
@@ -512,7 +501,8 @@ o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
-m=audio [media_port] RTP/AVP 0 101
+m=audio [media_port] RTP/AVPF 0 101
+a=rtcp:[media_port+1]
 a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
@@ -625,7 +615,8 @@ o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
-m=audio [media_port] RTP/AVP 0 101
+m=audio [media_port] RTP/AVPF 0 101
+a=rtcp:[media_port+1]
 a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
