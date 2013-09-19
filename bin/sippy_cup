@@ -7,7 +7,7 @@ def usage
   puts "#{$0} [OPTS] </path/to/sippy_cup_definition.yml>"
   puts
   puts "--compile, -c  Compile the given scenario manifest to XML and PCAP"
-  puts "--run, -r      Run the scenario."
+  puts "--run, -r      Run the scenario"
   puts "--help, -h     Print this usage information"
   puts "--version, -V  Print SippyCup version"
 end
