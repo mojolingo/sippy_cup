@@ -724,8 +724,7 @@ Content-Length: 0
     end
 
     context "without a name specified" do
-      context "from a string" do
-        let(:scenario_yaml) do <<-END
+      let(:scenario_yaml) do <<-END
 source: 192.0.2.15
 destination: 192.0.2.200
 max_concurrent: 10
@@ -733,21 +732,20 @@ calls_per_second: 5
 number_of_calls: 20
 from_user: #{specs_from}
 steps:
-  - invite
-  - wait_for_answer
-  - ack_answer
-  - sleep 3
-  - send_digits '3125551234'
-  - sleep 5
-  - send_digits '#'
-  - wait_for_hangup
-          END
-        end
+- invite
+- wait_for_answer
+- ack_answer
+- sleep 3
+- send_digits '3125551234'
+- sleep 5
+- send_digits '#'
+- wait_for_hangup
+        END
+      end
 
-        it "should default to 'My Scenario'" do
-          scenario = described_class.from_manifest(scenario_yaml)
-          scenario.scenario_options[:name].should == 'My Scenario'
-        end
+      it "should default to 'My Scenario'" do
+        scenario = described_class.from_manifest(scenario_yaml)
+        scenario.scenario_options[:name].should == 'My Scenario'
       end
     end
 
