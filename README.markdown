@@ -195,8 +195,8 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
 
-  <dt>rtcp_port</dt>
-  <dd>By default, SIPp assigns RTCP ports dynamically. However, if there is a need for a static RTCP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
+  <dt>media_port</dt>
+  <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
 
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
