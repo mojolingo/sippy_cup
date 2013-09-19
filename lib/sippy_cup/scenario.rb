@@ -67,7 +67,6 @@ module SippyCup
     # @option options [String] :source The source IP/hostname with which to invoke SIPp
     # @option options [String] :destination The target system at which to direct traffic
     # @option options [String] :from_user The SIP user from which traffic should appear
-    # @option options [Integer] :rtcp_port The RTCP (media) port to bind to locally
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario
@@ -77,7 +76,6 @@ module SippyCup
       parse_args args
 
       @scenario_options = args.merge name: name
-      @rtcp_port = args[:rtcp_port]
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
