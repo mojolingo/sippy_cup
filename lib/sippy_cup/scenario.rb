@@ -121,6 +121,8 @@ module SippyCup
     #
     def invite(opts = {})
       opts[:retrans] ||= 500
+      # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
+      # get this from the DTMF payload generator
       msg = <<-MSG
 
 INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
