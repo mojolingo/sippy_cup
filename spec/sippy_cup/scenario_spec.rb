@@ -723,6 +723,54 @@ Content-Length: 0
       }
     end
 
+    context "when the :scenario key is provided in the manifest" do
+      let(:scenario_path) { File.expand_path('scenario.xml', File.join(File.dirname(__FILE__), '..', 'fixtures')) }
+      let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+scenario: #{scenario_path}
+        END
+      end
+
+      before { FakeFS.deactivate! }
+
+      it "creates an XMLScenario with the scenario XML and nil media" do
+        scenario = described_class.from_manifest(scenario_yaml)
+        scenario.should be_a(SippyCup::XMLScenario)
+        scenario.to_xml.should == File.read(scenario_path)
+      end
+
+      context "and the :media key is provided" do
+        let(:media_path) { File.expand_path('dtmf_2833_1.pcap', File.join(File.dirname(__FILE__), '..', 'fixtures')) }
+        let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+scenario: #{scenario_path}
+media: #{media_path}
+          END
+        end
+
+        it "creates an XMLScenario with the scenario XML and media from the filesystem" do
+          scenario = described_class.from_manifest(scenario_yaml)
+
+          media = File.read(media_path, mode: 'rb')
+
+          files = scenario.to_tmpfiles
+          files[:media].read.should eql(media)
+        end
+      end
+    end
+
     context "without a name specified" do
       let(:scenario_yaml) do <<-END
 source: 192.0.2.15

@@ -48,10 +48,16 @@ module SippyCup
 
       input_name = options.has_key?(:input_filename) ? File.basename(options[:input_filename]).gsub(/\.ya?ml/, '') : nil
       name = args.delete(:name) || input_name || 'My Scenario'
-      steps = args.delete :steps
 
-      scenario = Scenario.new name, args
-      scenario.build steps
+      scenario = if args[:scenario]
+        media = args.has_key?(:media) ? File.read(args[:media], mode: 'rb') : nil
+        SippyCup::XMLScenario.new name, File.read(args[:scenario]), media, args
+      else
+        steps = args.delete :steps
+        scenario = Scenario.new name, args
+        scenario.build steps
+        scenario
+      end
 
       scenario
     end

@@ -35,11 +35,23 @@ module SippyCup
       scenario_file.write @xml
       scenario_file.rewind
 
-      media_file = Tempfile.new 'media'
-      media_file.write @media
-      media_file.rewind
+      if @media
+        media_file = Tempfile.new 'media'
+        media_file.write @media
+        media_file.rewind
+      else
+        media_file = nil
+      end
 
       {scenario: scenario_file, media: media_file}
+    end
+
+    #
+    # Dump the scenario to a SIPp XML string
+    #
+    # @return [String] the SIPp XML scenario
+    def to_xml
+      @xml
     end
   end
 end

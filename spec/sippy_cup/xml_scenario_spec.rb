@@ -52,6 +52,12 @@ describe SippyCup::XMLScenario do
 
   subject(:scenario) { described_class.new 'Test', xml, media, default_args.merge(args) }
 
+  describe "#to_xml" do
+    it "should return the XML representation of the scenario" do
+      subject.to_xml.should == xml
+    end
+  end
+
   describe "#to_tmpfiles" do
     it "writes the scenario XML to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
@@ -73,6 +79,15 @@ describe SippyCup::XMLScenario do
     it "allows the PCAP media to be read from disk independently" do
       files = scenario.to_tmpfiles
       File.read(files[:media].path).should eql(media)
+    end
+
+    context "when media is not provided" do
+      let(:media) { nil }
+
+      it "should not create a media file" do
+        files = scenario.to_tmpfiles
+        files[:media].should be_nil
+      end
     end
   end
 
