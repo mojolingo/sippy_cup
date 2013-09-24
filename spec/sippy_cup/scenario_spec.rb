@@ -75,7 +75,7 @@ describe SippyCup::Scenario do
 
     it "uses [media_port+1] as the RTCP port in the SDP" do
       subject.invite
-      subject.to_xml.should match(%r{m=audio \[media_port\] RTP/AVPF 0 101\na=rtcp:\[media_port\+1\]})
+      subject.to_xml.should match(%r{m=audio \[media_port\] RTP/AVP 0 101\n})
     end
 
     context "when a from user is specified" do
@@ -534,8 +534,7 @@ o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
-m=audio [media_port] RTP/AVPF 0 101
-a=rtcp:[media_port+1]
+m=audio [media_port] RTP/AVP 0 101
 a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
@@ -648,8 +647,7 @@ o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
-m=audio [media_port] RTP/AVPF 0 101
-a=rtcp:[media_port+1]
+m=audio [media_port] RTP/AVP 0 101
 a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15

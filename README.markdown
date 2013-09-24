@@ -127,14 +127,7 @@ end
 scenario.compile!
 ```
 
-The above code can either be executed as a standalone Ruby script and run with SIPp, or it can be compiled and run using rake tasks by inserting the following code into your Rakefile:
-```Ruby
-require 'sippy_cup/tasks'
-```
-
-Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]`
-
-And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
+The above code can be executed as a standalone Ruby script and the resulting scenario file run with SIPp.
 
 ## Customize Your Scenarios
 
