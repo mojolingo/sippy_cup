@@ -12,7 +12,7 @@ module SippyCup
     #
     # @param [Scenario, XMLScenario] scenario The scenario to execute
     # @param [Hash] opts Options to modify the runner
-    # @option opts [optional, true, false] :full_sipp_output Wether or not to copy SIPp's stdout/stderr to the parent process. Defaults to true.
+    # @option opts [optional, true, false] :full_sipp_output Whether or not to copy SIPp's stdout/stderr to the parent process. Defaults to true.
     # @option opts [optional, Logger] :logger A logger to use in place of the internal logger to STDOUT.
     # @option opts [optional, String] :command The command to execute. This is mostly available for testing.
     #
