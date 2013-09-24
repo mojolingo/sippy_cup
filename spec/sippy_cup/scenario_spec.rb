@@ -1,11 +1,10 @@
 require 'spec_helper'
-require 'fakefs/spec_helpers'
 
 describe SippyCup::Scenario do
   include FakeFS::SpecHelpers
 
   before do
-    Dir.mkdir "/tmp"
+    Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
     Dir.chdir "/tmp"
   end
 
@@ -455,6 +454,10 @@ describe SippyCup::Scenario do
 
         File.read("/tmp/test.pcap").should_not be_empty
       end
+
+      it "returns the path to the scenario file" do
+        scenario.compile!.should == "/tmp/test.xml"
+      end
     end
 
     context "when a filename is provided" do
@@ -475,6 +478,36 @@ describe SippyCup::Scenario do
 
         File.read("/tmp/foobar.pcap").should_not be_empty
       end
+
+      it "returns the path to the scenario file" do
+        scenario.compile!.should == "/tmp/foobar.xml"
+      end
+    end
+  end
+
+  describe "#to_tmpfiles" do
+    before { scenario.invite }
+
+    it "writes the scenario XML to a Tempfile and returns it" do
+      files = scenario.to_tmpfiles
+      files[:scenario].should be_a(Tempfile)
+      files[:scenario].read.should eql(scenario.to_xml)
+    end
+
+    it "allows the scenario XML to be read from disk independently" do
+      files = scenario.to_tmpfiles
+      File.read(files[:scenario].path).should eql(scenario.to_xml)
+    end
+
+    it "writes the PCAP media to a Tempfile and returns it" do
+      files = scenario.to_tmpfiles
+      files[:media].should be_a(Tempfile)
+      files[:media].read.should_not be_empty
+    end
+
+    it "allows the PCAP media to be read from disk independently" do
+      files = scenario.to_tmpfiles
+      File.read(files[:media].path).should_not be_empty
     end
   end
 
@@ -686,6 +719,115 @@ Content-Length: 0
         'number_of_calls' => 20,
         'from_user' => "#{specs_from}"
       }
+    end
+
+    context "when the :scenario key is provided in the manifest" do
+      let(:scenario_path) { File.expand_path('scenario.xml', File.join(File.dirname(__FILE__), '..', 'fixtures')) }
+      let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+scenario: #{scenario_path}
+        END
+      end
+
+      before { FakeFS.deactivate! }
+
+      it "creates an XMLScenario with the scenario XML and nil media" do
+        scenario = described_class.from_manifest(scenario_yaml)
+        scenario.should be_a(SippyCup::XMLScenario)
+        scenario.to_xml.should == File.read(scenario_path)
+      end
+
+      context "and the :media key is provided" do
+        let(:media_path) { File.expand_path('dtmf_2833_1.pcap', File.join(File.dirname(__FILE__), '..', 'fixtures')) }
+        let(:scenario_yaml) do <<-END
+name: spec scenario
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+scenario: #{scenario_path}
+media: #{media_path}
+          END
+        end
+
+        it "creates an XMLScenario with the scenario XML and media from the filesystem" do
+          scenario = described_class.from_manifest(scenario_yaml)
+
+          media = File.read(media_path, mode: 'rb')
+
+          files = scenario.to_tmpfiles
+          files[:media].read.should eql(media)
+        end
+      end
+    end
+
+    context "without a name specified" do
+      let(:scenario_yaml) do <<-END
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+steps:
+- invite
+- wait_for_answer
+- ack_answer
+- sleep 3
+- send_digits '3125551234'
+- sleep 5
+- send_digits '#'
+- wait_for_hangup
+        END
+      end
+
+      it "should default to 'My Scenario'" do
+        scenario = described_class.from_manifest(scenario_yaml)
+        scenario.scenario_options[:name].should == 'My Scenario'
+      end
+    end
+
+    context "with an input filename specified" do
+      context "and a name in the manifest" do
+        it "uses the name from the manifest" do
+          scenario = described_class.from_manifest(scenario_yaml, input_filename: '/tmp/foobar.yml')
+          scenario.scenario_options[:name].should == 'spec scenario'
+        end
+      end
+
+      context "and no name in the manifest" do
+        let(:scenario_yaml) do <<-END
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+from_user: #{specs_from}
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits '3125551234'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+          END
+        end
+
+        it "uses the input filename" do
+          scenario = described_class.from_manifest(scenario_yaml, input_filename: '/tmp/foobar.yml')
+          scenario.scenario_options[:name].should == 'foobar'
+        end
+      end
     end
 
     context "overriding some value" do

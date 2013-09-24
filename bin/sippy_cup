@@ -7,8 +7,7 @@ def usage
   puts "#{$0} [OPTS] </path/to/sippy_cup_definition.yml>"
   puts
   puts "--compile, -c  Compile the given scenario manifest to XML and PCAP"
-  puts "--run, -r      Run the scenario. If used without -c, must supply a previously"
-  puts "               compiled SippyCup file"
+  puts "--run, -r      Run the scenario"
   puts "--help, -h     Print this usage information"
   puts "--version, -V  Print SippyCup version"
 end
@@ -20,16 +19,14 @@ opts = GetoptLong.new(
   ['--version', '-V', GetoptLong::NO_ARGUMENT]
 )
 
-@compile = false
-@run = false
+compile = false
+run = false
 opts.each do |opt, arg|
   case opt
   when '--compile'
-    @compile = true
-    @definition_file = arg
+    compile = true
   when '--run'
-    @run = true
-    @compiled_file = arg
+    run = true
   when '--help'
     usage
     exit 0
@@ -41,38 +38,31 @@ opts.each do |opt, arg|
 end
 
 unless ARGV.count == 1
-  puts "ERROR: Must supply the SippyCup definition file"
+  puts "ERROR: Must supply the SippyCup manifest file"
   puts
   usage
   exit 1
 end
 
-@definition_file = ARGV.shift
+manifest_path = ARGV.shift
 
-unless File.readable? @definition_file
-  puts "ERROR: Unable to read definition file"
+unless File.readable? manifest_path
+  puts "ERROR: Unable to read manifest file"
   puts
   usage
   exit 1
 end
 
-unless @compile || @run
+unless compile || run
   puts "No action (compile or run) specified. Exiting."
   usage
   exit 1
 end
 
-@definition = YAML.load File.read @definition_file
+scenario = SippyCup::Scenario.from_manifest File.read(manifest_path), input_filename: manifest_path
+scenario.compile! if compile
 
-unless @definition.has_key? :scenario
-  @definition[:scenario] = @definition_file.gsub /\.ya?ml$/, ''
+if run
+  runner = SippyCup::Runner.new scenario
+  runner.run
 end
-unless @definition.has_key? :name
-  @definition[:name] = @definition[:scenario]
-end
-
-
-runner = SippyCup::Runner.new @definition
-runner.compile if @compile
-runner.run if @run
-

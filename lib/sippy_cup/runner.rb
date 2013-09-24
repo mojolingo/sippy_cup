@@ -1,29 +1,30 @@
 require 'logger'
-require 'active_support/core_ext/hash'
 
+#
+# Service object to oversee the execution of a Scenario
+#
 module SippyCup
   class Runner
     attr_accessor :sipp_pid
 
-    def initialize(opts = {})
+    #
+    # Create a runner from a scenario
+    #
+    # @param [Scenario, XMLScenario] scenario The scenario to execute
+    # @param [Hash] opts Options to modify the runner
+    # @option opts [optional, true, false] :full_sipp_output Whether or not to copy SIPp's stdout/stderr to the parent process. Defaults to true.
+    # @option opts [optional, Logger] :logger A logger to use in place of the internal logger to STDOUT.
+    # @option opts [optional, String] :command The command to execute. This is mostly available for testing.
+    #
+    def initialize(scenario, opts = {})
+      @scenario = scenario
+      @scenario_options = @scenario.scenario_options
+
       defaults = { full_sipp_output: true }
-      @options = ActiveSupport::HashWithIndifferentAccess.new defaults.merge(opts)
+      @options = defaults.merge(opts)
 
       @command = @options[:command]
-
-      [:scenario, :source, :destination, :max_concurrent, :calls_per_second, :number_of_calls].each do |arg|
-        raise ArgumentError, "Must provide #{arg}!" unless @options[arg]
-      end
-
       @logger = @options[:logger] || Logger.new(STDOUT)
-    end
-
-    def compile
-      scenario_opts = {source: @options[:source], destination: @options[:destination]}
-      scenario_opts[:filename] = @options[:filename] if @options[:filename]
-      scenario = SippyCup::Scenario.new @options[:name].titleize, scenario_opts
-      scenario.build @options[:steps]
-      scenario.compile!
     end
 
     # Runs the loaded scenario using SIPp
@@ -38,6 +39,8 @@ module SippyCup
     # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
+      @input_files = @scenario.to_tmpfiles
+
       @logger.info "Preparing to run SIPp command: #{command}"
 
       exit_status, stderr_buffer = execute_with_redirected_streams
@@ -49,9 +52,11 @@ module SippyCup
       else
         @logger.info "Test completed successfully but some calls failed."
       end
-      @logger.info "Statistics logged at #{File.expand_path @options[:stats_file]}" if @options[:stats_file]
+      @logger.info "Statistics logged at #{File.expand_path @scenario_options[:stats_file]}" if @scenario_options[:stats_file]
 
       final_result
+    ensure
+      cleanup_input_files
     end
 
     #
@@ -72,35 +77,35 @@ module SippyCup
         command_options.each_pair do |key, value|
           command << (value ? " -#{key} #{value}" : " -#{key}")
         end
-        command << " #{@options[:destination]}"
+        command << " #{@scenario_options[:destination]}"
       end
     end
 
     def command_options
       options = {
-        i: @options[:source],
-        p: @options[:source_port] || '8836',
-        sf: "#{File.expand_path @options[:scenario]}.xml",
-        l: @options[:max_concurrent],
-        m: @options[:number_of_calls],
-        r: @options[:calls_per_second],
-        s: @options[:sip_user] || '1'
+        i: @scenario_options[:source],
+        p: @scenario_options[:source_port] || '8836',
+        sf: @input_files[:scenario].path,
+        l: @scenario_options[:max_concurrent],
+        m: @scenario_options[:number_of_calls],
+        r: @scenario_options[:calls_per_second],
+        s: @scenario_options[:from_user] || '1'
       }
 
-      options[:mp] = @options[:media_port] if @options[:media_port]
-      
-      if @options[:stats_file]
+      options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
+
+      if @scenario_options[:stats_file]
         options[:trace_stat] = nil
-        options[:stf] = @options[:stats_file]
-        options[:fd] = @options[:stats_interval] || 1
+        options[:stf] = @scenario_options[:stats_file]
+        options[:fd] = @scenario_options[:stats_interval] || 1
       end
 
-      if @options[:transport_mode]
-        options[:t] = @options[:transport_mode]
+      if @scenario_options[:transport_mode]
+        options[:t] = @scenario_options[:transport_mode]
       end
 
-      if @options[:scenario_variables]
-        options[:inf] = @options[:scenario_variables]
+      if @scenario_options[:scenario_variables]
+        options[:inf] = @scenario_options[:scenario_variables]
       end
 
       options
@@ -147,6 +152,13 @@ module SippyCup
         raise SippyCup::FatalSocketBindingError, error_message
       else
         raise SippyCup::SippGenericError, error_message
+      end
+    end
+
+    def cleanup_input_files
+      @input_files.each_pair do |key, value|
+        value.close
+        value.unlink
       end
     end
   end

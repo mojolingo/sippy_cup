@@ -1,5 +1,9 @@
 # develop
 * Feature: added a :transport_mode option that will add the -t switch to SIPp for setting TCP or other UDP modes.
+* Change: Running and compiling scenarios are now separate concepts.
+  * `-c` on the CLI writes a YAML manifest to disk as SIPp XML and PCAP media. `-r` executes a YAML manifest and does not write to disk.
+  * XML scenarios may be referenced in a YAML manifest using the `scenario:` and `media:` keys, providing paths.
+  * `Runner` now takes a `Scenario` which it executes using SIPp via a temporary local-disk export. Most options passed to `Runner.new` are now properties of Scenario and can be specified in the YAML manifest. `Runner` no longer executes a scenario by path.
 
 # [0.2.3](https://github.com/bklang/sippy_cup/compare/v0.2.2...v0.2.3)
 * Bugfix: Handle file extensions .yaml and .yml equally (#21)

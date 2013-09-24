@@ -1,18 +1,12 @@
 require 'spec_helper'
 
 describe SippyCup::Runner do
-  let(:settings) { {} }
-  let(:default_settings) do
-    {
-      logger: logger,
-      scenario: 'foobar',
-      source: 'doo@dah.com',
-      destination: 'foo@bar.com',
-      max_concurrent: 5,
-      calls_per_second: 2,
-      number_of_calls: 10
-    }
+  before do
+    Dir.chdir "/tmp"
   end
+
+  let(:settings) { {} }
+  let(:default_settings) { { logger: logger } }
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
@@ -20,24 +14,28 @@ describe SippyCup::Runner do
 
   before { logger.stub :info }
 
-  subject { SippyCup::Runner.new default_settings.merge(settings) }
-
-  [
-    :scenario,
-    :source,
-    :destination,
-    :max_concurrent,
-    :calls_per_second,
-    :number_of_calls
-  ].each do |attribute|
-    context "without a " do
-      let(:settings) { { attribute => nil } }
-
-      it "raises ArgumentError" do
-        expect { subject }.to raise_error(ArgumentError)
-      end
-    end
+  let(:manifest) do
+    <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+    MANIFEST
   end
+  let(:scenario) { SippyCup::Scenario.from_manifest manifest }
+
+  subject { SippyCup::Runner.new scenario, default_settings.merge(settings) }
 
   def expect_command_execution(command = anything)
     Process.stub :wait2
@@ -48,9 +46,18 @@ describe SippyCup::Runner do
 
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
-      full_scenario_path = File.join(Dir.pwd, 'foobar.xml')
-      expect_command_execution "sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com"
+      full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
+      expect_command_execution %r{sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com}
       subject.run
+    end
+
+    it "ensures that input files are not left on the filesystem" do
+      FakeFS do
+        Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
+        expect_command_execution.and_raise
+        expect { subject.run }.to raise_error
+        Dir.entries(Dir.tmpdir).should eql(['.', '..'])
+      end
     end
 
     context "System call fails/doesn't fail" do
@@ -65,8 +72,27 @@ describe SippyCup::Runner do
       end
     end
 
-    context "specifying a source port" do
-      let(:settings) { { source_port: 1234 } }
+    context "specifying a source port in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+source_port: 1234
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'should set the -p option' do
         expect_command_execution(/-p 1234/)
@@ -74,8 +100,27 @@ describe SippyCup::Runner do
       end
     end
 
-    context "specifying a SIP user" do
-      let(:settings) { { sip_user: 'frank' } }
+    context "specifying a from_user in the Scenario" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+from_user: frank
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'should set the -s option' do
         expect_command_execution(/-s frank/)
@@ -84,7 +129,26 @@ describe SippyCup::Runner do
     end
 
     context "specifying a media port" do
-      let(:settings) { { media_port: 6000 } }
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+media_port: 6000
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'should set the -mp option' do
         expect_command_execution(/-mp 6000/)
@@ -92,8 +156,27 @@ describe SippyCup::Runner do
       end
     end
 
-    context "specifying a stats file" do
-      let(:settings) { { stats_file: 'stats.csv' } }
+    context "specifying a stats file in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+stats_file: stats.csv
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'should turn on -trace_stats, set the -stf option to the filename provided, and set the stats interval to 1 second' do
         expect_command_execution(/-trace_stat -stf stats.csv -fd 1/)
@@ -101,7 +184,27 @@ describe SippyCup::Runner do
       end
 
       context 'with a stats interval provided' do
-        let(:settings) { { stats_file: 'stats.csv', stats_interval: 3 } }
+        let(:manifest) do
+          <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+stats_file: stats.csv
+stats_interval: 3
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+          MANIFEST
+        end
 
         it "passes the interval to the -fd option" do
           expect_command_execution(/-fd 3/)
@@ -111,7 +214,7 @@ describe SippyCup::Runner do
 
       it 'logs the path to the csv file' do
         expect_command_execution
-        logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
+        logger.should_receive(:info).with "Statistics logged at #{File.expand_path('stats.csv')}"
         subject.run
       end
     end
@@ -125,18 +228,56 @@ describe SippyCup::Runner do
     end
 
     context "specifying a variables file" do
-      let(:settings) { { scenario_variables: "/path/to/csv" } }
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+scenario_variables: /path/to/vars.csv
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it 'uses CSV in the test run' do
         logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
         logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        expect_command_execution(/\-inf \/path\/to\/csv/)
+        expect_command_execution(%r{-inf /path/to/vars.csv})
         subject.run
       end
     end
 
     context 'with a transport mode specified' do
-      let(:settings) { { transport_mode: 't1' } }
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+transport_mode: t1
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
       it "passes the transport mode to the -t option" do
         expect_command_execution(/-t t1/)

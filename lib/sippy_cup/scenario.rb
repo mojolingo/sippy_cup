@@ -1,5 +1,7 @@
 require 'nokogiri'
 require 'psych'
+require 'active_support/core_ext/hash'
+require 'tempfile'
 
 module SippyCup
   #
@@ -16,6 +18,7 @@ module SippyCup
     #
     # @param [String, File] manifest The YAML manifest
     # @param [Hash] options Options to override (see #initialize)
+    # @option options [String] :input_filename The name of the input file if there is one. Used as a preferable fallback if no name is included in the manifest.
     #
     # @return [SippyCup::Scenario]
     #
@@ -43,11 +46,18 @@ module SippyCup
     def self.from_manifest(manifest, options = {})
       args = ActiveSupport::HashWithIndifferentAccess.new(Psych.safe_load(manifest)).merge options
 
-      name = args.delete :name
-      steps = args.delete :steps
+      input_name = options.has_key?(:input_filename) ? File.basename(options[:input_filename]).gsub(/\.ya?ml/, '') : nil
+      name = args.delete(:name) || input_name || 'My Scenario'
 
-      scenario = Scenario.new name, args
-      scenario.build steps
+      scenario = if args[:scenario]
+        media = args.has_key?(:media) ? File.read(args[:media], mode: 'rb') : nil
+        SippyCup::XMLScenario.new name, File.read(args[:scenario]), media, args
+      else
+        steps = args.delete :steps
+        scenario = Scenario.new name, args
+        scenario.build steps
+        scenario
+      end
 
       scenario
     end
@@ -63,10 +73,20 @@ module SippyCup
     #
     # @param [String] name The scenario's name
     # @param [Hash] args options to customise the scenario
-    # @option options [String] :filename The name of the files to be saved to disk
-    # @option options [String] :source The source IP/hostname with which to invoke SIPp
-    # @option options [String] :destination The target system at which to direct traffic
-    # @option options [String] :from_user The SIP user from which traffic should appear
+    # @option options [String] :name The name of the scenario, used for the XML scenario and for determining the compiled filenames. Defaults to 'My Scenario'.
+    # @option options [String] :filename The name of the files to be saved to disk.
+    # @option options [String] :source The source IP/hostname with which to invoke SIPp.
+    # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
+    # @option options [String] :destination The target system at which to direct traffic.
+    # @option options [String] :from_user The SIP user from which traffic should appear.
+    # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
+    # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
+    # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
+    # @option options [String, Numeric] :calls_per_second The rate at which to initiate calls.
+    # @option options [String] :stats_file The path at which to dump statistics.
+    # @option options [String, Numeric] :stats_interval The interval (in seconds) at which to dump statistics (defaults to 1s).
+    # @option options [String] :transport_mode The transport mode over which to direct SIP traffic.
+    # @option options [String] :scenario_variables A path to a CSV file of variables to be interpolated with the scenario at runtime.
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario
@@ -372,6 +392,8 @@ Content-Length: 0
     # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap.
     # {filename} is taken from the :filename option when creating the scenario, or falls back to a down-snake-cased version of the scenario name.
     #
+    # @return [String] the path to the resulting scenario file
+    #
     # @example Export a scenario to a specified filename
     #   scenario = Scenario.new 'Test Scenario', filename: 'my_scenario'
     #   scenario.compile! # Leaves files at my_scenario.xml and my_scenario.pcap
@@ -381,8 +403,9 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      print "Compiling scenario to #{@filename}.xml..."
-      File.open "#{@filename}.xml", 'w' do |file|
+      scenario_filename = "#{@filename}.xml"
+      print "Compiling scenario to #{scenario_filename}..."
+      File.open scenario_filename, 'w' do |file|
         file.write doc.to_xml
       end
       puts "done."
@@ -390,6 +413,29 @@ Content-Length: 0
       print "Compiling media to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
+
+      scenario_filename
+    end
+
+    #
+    # Write compiled Scenario XML and PCAP media to tempfiles.
+    #
+    # These will automatically be closed and deleted once they have gone out of scope, and can be used to execute the scenario without leaving stuff behind.
+    #
+    # @return [Hash<Symbol => Tempfile>] handles to created Tempfiles at :scenario and :media
+    #
+    # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
+    #
+    def to_tmpfiles
+      scenario_file = Tempfile.new 'scenario'
+      scenario_file.write to_xml
+      scenario_file.rewind
+
+      media_file = Tempfile.new 'media'
+      media_file.write compile_media.to_s
+      media_file.rewind
+
+      {scenario: scenario_file, media: media_file}
     end
 
   private
