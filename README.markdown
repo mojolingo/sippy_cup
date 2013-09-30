@@ -93,14 +93,16 @@ steps:
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
 
-Next, compile and run the scenario:
+Next, execute the scenario:
 
 ```Shell
-$ sippy_cup -cr my_test_scenario.yml
-Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario.pcap...done.
-Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario.xml...done.
-"Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /Users/bklang/src/sippy_cup/my_test_scenario.xml -l 10 -m 20 -r 5 -s 1 > /dev/null 2>&1"
-$
+$ sippy_cup -r my_test_scenario.yml
+I, [2013-09-30T14:48:08.388106 #9883]  INFO -- : Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /var/folders/n4/dpzsp6_95tb3c4sp12xj5wdr0000gn/T/scenario20130930-9883-1crejcw -l 10 -m 20 -r 5 -s 1 192.0.2.200
+Password:
+
+...snip...
+
+I, [2013-09-30T14:48:16.728712 #9883]  INFO -- : Test completed successfully.
 ```
 
 ### Example embedding SIPp in another Ruby process
@@ -133,7 +135,7 @@ The above code can be executed as a standalone Ruby script and the resulting sce
 
 ### Available Scenario Steps
 
-Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments.
+Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments. For a full list of available steps, see the [API documentation](http://rubydoc.info/gems/sippy_cup/SippyCup/Scenario).
 
 * `sleep <seconds>` Wait a specified number of seconds
 * `invite` Send a SIP INVITE to the specified target
@@ -154,11 +156,11 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
 
-For the `sippy_cup` manifest, use `scenario`:
+For the `sippy_cup` manifest, use `filename`:
 
 ```YAML
 ---
-scenario: /path/to/scenario.xml
+filename: /path/to/somewhere
 ```
 
 Or, in Ruby:
@@ -186,7 +188,7 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
 
   <dt>full_sipp_output</dt>
-  <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
+  <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
 
   <dt>media_port</dt>
   <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
