@@ -8,7 +8,6 @@
 * Feature: API for validation of scenarios in manifests.
 * Feature: Handle SIPp exit codes with clean exceptions.
 * Feature: Allow passing arbitary headers in an INVITE
-* Change: AVP is now AVPF in SDP.
 * Change: Rake tasks for executing scenarios are removed.
 * Change: Running and compiling scenarios are now separate concepts.
   * `-c` on the CLI writes a YAML manifest to disk as SIPp XML and PCAP media. `-r` executes a YAML manifest and does not write to disk.
