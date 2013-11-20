@@ -1,7 +1,12 @@
-require 'sippy_cup/runner'
+require 'spec_helper'
 
 describe SippyCup::Runner do
-  let(:settings) { Hash.new }
+  before do
+    Dir.chdir "/tmp"
+  end
+
+  let(:settings) { {} }
+  let(:default_settings) { { logger: logger } }
   let(:command) { "sudo sipp -i 127.0.0.1" }
   let(:pid) { '1234' }
 
@@ -9,64 +14,273 @@ describe SippyCup::Runner do
 
   before { logger.stub :info }
 
-  subject { SippyCup::Runner.new settings.merge(logger: logger) }
+  let(:manifest) do
+    <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+    MANIFEST
+  end
+  let(:scenario) { SippyCup::Scenario.from_manifest manifest }
+
+  subject { SippyCup::Runner.new scenario, default_settings.merge(settings) }
+
+  def expect_command_execution(command = anything)
+    Process.stub :wait2
+    subject.stub :process_exit_status
+
+    subject.should_receive(:spawn).with(command, anything)
+  end
 
   describe '#run' do
+    it "executes the correct command to invoke SIPp" do
+      full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
+      expect_command_execution %r{sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com}
+      subject.run
+    end
+
+    it "ensures that input files are not left on the filesystem" do
+      FakeFS do
+        Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
+        expect_command_execution.and_raise
+        expect { subject.run }.to raise_error
+        Dir.entries(Dir.tmpdir).should eql(['.', '..'])
+      end
+    end
+
     context "System call fails/doesn't fail" do
-      it 'should raise an error when the system call fails' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_raise(Errno::ENOENT)
-        Process.stub :wait2
-        subject.stub :process_exit_status
+      it 'raises an error when the system call fails' do
+        expect_command_execution.and_raise(Errno::ENOENT)
         expect { subject.run }.to raise_error Errno::ENOENT
       end
 
-      it 'should not raise an error when the system call is successful' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
+      it 'does not raise an error when the system call is successful' do
+        expect_command_execution
         expect { subject.run }.not_to raise_error
       end
     end
 
-    context "specifying a stats file" do
-      let(:settings) { { stats_file: 'stats.csv' } }
-      let(:command) { "sudo sipp -i 127.0.0.1 -trace_stats -stf stats.csv" }
+    context "specifying a source port in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+source_port: 1234
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
-      it 'should display the path to the csv file when one is specified' do
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
-        logger.should_receive(:info).with "Statistics logged at #{File.expand_path settings[:stats_file]}"
+      it 'should set the -p option' do
+        expect_command_execution(/-p 1234/)
+        subject.run
+      end
+    end
+
+    context "specifying a from_user in the Scenario" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+from_user: frank
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should set the -s option' do
+        expect_command_execution(/-s frank/)
+        subject.run
+      end
+    end
+
+    context "specifying a media port" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+media_port: 6000
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should set the -mp option' do
+        expect_command_execution(/-mp 6000/)
+        subject.run
+      end
+    end
+
+    context "specifying a stats file in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+stats_file: stats.csv
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should turn on -trace_stats, set the -stf option to the filename provided, and set the stats interval to 1 second' do
+        expect_command_execution(/-trace_stat -stf stats.csv -fd 1/)
+        subject.run
+      end
+
+      context 'with a stats interval provided' do
+        let(:manifest) do
+          <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+stats_file: stats.csv
+stats_interval: 3
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+          MANIFEST
+        end
+
+        it "passes the interval to the -fd option" do
+          expect_command_execution(/-fd 3/)
+          subject.run
+        end
+      end
+
+      it 'logs the path to the csv file' do
+        expect_command_execution
+        logger.should_receive(:info).with "Statistics logged at #{File.expand_path('stats.csv')}"
         subject.run
       end
     end
 
     context "no stats file" do
-      it 'should not display a csv file path if none is specified' do
-        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:prepare_command).and_return command
-        subject.should_receive(:spawn).with(command, an_instance_of(Hash)).and_return pid
-        Process.stub :wait2
-        subject.stub :process_exit_status
+      it 'does not log a statistics file path' do
+        logger.should_receive(:info).with(/Statistics logged at/).never
+        expect_command_execution
         subject.run
       end
     end
 
-    context "CSV file" do
-      let(:settings) { {scenario_variables: "/path/to/csv", scenario: "/path/to/scenario", source: "127.0.0.1",
-                        destination: "127.0.0.1", max_concurrent: 5, calls_per_second: 5,
-                        number_of_calls: 5} }
+    context "specifying a variables file" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+scenario_variables: /path/to/vars.csv
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
 
-      it 'should use CSV into the test run' do
+      it 'uses CSV in the test run' do
         logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
         logger.should_receive(:info).ordered.with(/Test completed successfully/)
-        subject.should_receive(:spawn).with(/\-inf \/path\/to\/csv/, an_instance_of(Hash))
-        Process.stub :wait2
-        subject.stub :process_exit_status
+        expect_command_execution(%r{-inf /path/to/vars.csv})
+        subject.run
+      end
+    end
+
+    context 'with a transport mode specified' do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+transport_mode: t1
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it "passes the transport mode to the -t option" do
+        expect_command_execution(/-t t1/)
         subject.run
       end
     end
@@ -76,16 +290,14 @@ describe SippyCup::Runner do
       let(:exit_code) { 255 }
       let(:command) { "sh -c 'echo \"#{error_string}\" 1>&2; exit #{exit_code}'" }
 
-      before do
-        subject.should_receive(:prepare_command).and_return command
-      end
+      let(:settings) { { command: command } }
 
       context "with normal operation" do
         let(:exit_code) { 0 }
 
-        it "should not raise anything if SIPp returns 0" do
+        it "doesn't raise anything if SIPp returns 0" do
           quietly do
-            expect { subject.run }.to_not raise_error
+            subject.run.should be_true
           end
         end
       end
@@ -93,10 +305,10 @@ describe SippyCup::Runner do
       context "with at least one call failure" do
         let(:exit_code) { 1 }
 
-        it "should return false if SIPp returns 1" do
+        it "returns false if SIPp returns 1" do
           quietly do
             logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-            subject.run.should == false
+            subject.run.should be_false
           end
         end
       end
@@ -104,7 +316,7 @@ describe SippyCup::Runner do
       context "with an exit from inside SIPp" do
         let(:exit_code) { 97 }
 
-        it "should raise a ExitOnInternalCommand error if SIPp returns 97" do
+        it "raises a ExitOnInternalCommand error if SIPp returns 97" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::ExitOnInternalCommand, error_string
           end
@@ -114,7 +326,7 @@ describe SippyCup::Runner do
       context "with no calls processed" do
         let(:exit_code) { 99 }
 
-        it "should raise a NoCallsProcessed error if SIPp returns 99" do
+        it "raises a NoCallsProcessed error if SIPp returns 99" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::NoCallsProcessed, error_string
           end
@@ -124,7 +336,7 @@ describe SippyCup::Runner do
       context "with a fatal error" do
         let(:exit_code) { 255 }
 
-        it "should raise a FatalError error if SIPp returns 255" do
+        it "raises a FatalError error if SIPp returns 255" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::FatalError, error_string
           end
@@ -134,7 +346,7 @@ describe SippyCup::Runner do
       context "with a socket binding fatal error" do
         let(:exit_code) { 254 }
 
-        it "should raise a FatalSocketBindingError error if SIPp returns 254" do
+        it "raises a FatalSocketBindingError error if SIPp returns 254" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::FatalSocketBindingError, error_string
           end
@@ -144,13 +356,13 @@ describe SippyCup::Runner do
       context "with a generic undocumented fatal error" do
         let(:exit_code) { 128 }
 
-        it "should raise a SippGenericError error if SIPp returns 255" do
+        it "raises a SippGenericError error if SIPp returns 255" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
           end
         end
 
-        it "should raise a SippGenericError error with the appropriate message" do
+        it "raises a SippGenericError error with the appropriate message" do
           quietly do
             expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
           end
@@ -163,29 +375,7 @@ describe SippyCup::Runner do
       let(:error_string) { "Some error" }
       let(:command) { "sh -c 'echo \"#{output_string}\"' && sh -c 'echo \"#{error_string}\" 1>&2'" }
 
-      def capture_stdout(&block)
-        original = $stdout
-        read, write = IO.pipe
-        buffer = ""
-        Thread.new { buffer << read.readpartial(1024).strip until read.eof? }
-        $stdout = fake = write
-        yield
-        write.close
-        buffer
-      ensure
-        $stdout = original
-      end
-
-      def capture_stderr(&block)
-        original_stderr = $stderr
-        $stderr = fake = StringIO.new
-        yield
-        fake.string
-      ensure
-        $stderr = original_stderr
-      end
-
-      before { subject.should_receive(:prepare_command).and_return command }
+      let(:settings) { { command: command } }
 
       def active_thread_count
         Thread.list.select { |t| t.status != 'aborting' }.size
@@ -193,35 +383,45 @@ describe SippyCup::Runner do
 
       context "by default" do
         it "proxies stdout to the terminal" do
-          capture_stdout { subject.run }.should == output_string
+          quietly do
+            capture(:stdout) { subject.run }.strip.should == output_string
+          end
         end
 
         it "proxies stderr to the terminal" do
-          capture_stderr { subject.run }.should == error_string
+          quietly do
+            capture(:stderr) { subject.run }.strip.should == error_string
+          end
         end
 
         it "does not leak threads" do
           original_thread_count = active_thread_count
-          subject.run
+          quietly do
+            subject.run
+          end
+          sleep 0.1
           active_thread_count.should == original_thread_count
         end
       end
 
       context "with :full_sipp_output disabled" do
-        let(:settings) { { full_sipp_output: false } }
+        let(:settings) { { command: command, full_sipp_output: false } }
 
         it "swallows stdout from SIPp" do
-          capture_stdout { subject.run }.should == ''
+          capture(:stdout) { subject.run }.should == ''
         end
 
         it "swallows stderr from SIPp" do
-          capture_stderr { subject.run }.should == ''
+          capture(:stderr) { subject.run }.should == ''
         end
 
         it "does not leak threads" do
-          original_thread_count = active_thread_count
-          subject.run
-          active_thread_count.should == original_thread_count
+          quietly do
+            original_thread_count = active_thread_count
+            subject.run
+            sleep 0.1
+            active_thread_count.should == original_thread_count
+          end
         end
       end
     end
@@ -230,7 +430,7 @@ describe SippyCup::Runner do
   describe '#stop' do
     before { subject.sipp_pid = pid }
 
-    it "should try to kill the SIPp process if there is a PID" do
+    it "tries to kill the SIPp process if there is a PID" do
       Process.should_receive(:kill).with("KILL", pid)
       subject.stop
     end
@@ -238,18 +438,18 @@ describe SippyCup::Runner do
     context "if there is no PID available" do
       let(:pid) { nil }
 
-      it "should not try to kill the SIPp process" do
+      it "doesn't try to kill the SIPp process" do
         Process.should_receive(:kill).never
         subject.stop
       end
     end
 
-    it "should raise a Errno::ESRCH if the PID does not exist" do
+    it "raises a Errno::ESRCH if the PID does not exist" do
       Process.should_receive(:kill).with("KILL", pid).and_raise(Errno::ESRCH)
       expect { subject.stop }.to raise_error Errno::ESRCH
     end
 
-    it "should raise a Errno::EPERM if the user has no permission to kill the process" do
+    it "raises a Errno::EPERM if the user has no permission to kill the process" do
       Process.should_receive(:kill).with("KILL", pid).and_raise(Errno::EPERM)
       expect { subject.stop }.to raise_error Errno::EPERM
     end

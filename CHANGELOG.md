@@ -1,3 +1,23 @@
+# develop
+
+# [0.3.0](https://github.com/bklang/sippy_cup/compare/v0.2.3...v0.3.0)
+* Feature: A whole lot more documentation, test coverage and cleaner internals.
+* Feature: Added a :transport_mode option that will add the -t switch to SIPp for setting TCP or other UDP modes.
+* Feature: A YAML manifest may now reference a SIPp scenario (and media) on disk rather than providing steps.
+* Feature: A media port may be specified as `:media_port` in the manifest or at runtime.
+* Feature: API for validation of scenarios in manifests.
+* Feature: Handle SIPp exit codes with clean exceptions.
+* Feature: Allow passing arbitary headers in an INVITE
+* Change: AVP is now AVPF in SDP.
+* Change: Rake tasks for executing scenarios are removed.
+* Change: Running and compiling scenarios are now separate concepts.
+  * `-c` on the CLI writes a YAML manifest to disk as SIPp XML and PCAP media. `-r` executes a YAML manifest and does not write to disk.
+  * XML scenarios may be referenced in a YAML manifest using the `scenario:` and `media:` keys, providing paths.
+  * `Runner` now takes a `Scenario` which it executes using SIPp via a temporary local-disk export. Most options passed to `Runner.new` are now properties of Scenario and can be specified in the YAML manifest. `Runner` no longer executes a scenario by path.
+* Bugfix/Security: Don't symbolise untrusted data (YAML manifests).
+* Bugfix: Allow the `sleep` step to take fractional seconds.
+* Bugfix: Proxy full SIPp output to terminal by default.
+
 # [0.2.3](https://github.com/bklang/sippy_cup/compare/v0.2.2...v0.2.3)
 * Bugfix: Handle file extensions .yaml and .yml equally (#21)
 * Bugfix: Fix missing Logger constant (#20)

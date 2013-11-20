@@ -7,9 +7,9 @@ namespace :sippy_cup do
     require File.expand_path(args[:scenario])
   end
 
-  desc "Run the scenario described by the given YAML file"
+  desc "Run the scenario described by the given manifest file"
   task :run, :options_file do |t, args|
-  	options = YAML.load_file args[:options_file]
-    SippyCup::Runner.new(options).run
+  	scenario = SippyCup::Scenario.from_manifest File.read(args[:options_file])
+    SippyCup::Runner.new(scenario).run
   end
 end
