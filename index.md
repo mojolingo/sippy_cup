@@ -110,7 +110,7 @@ Password:
 ...snip...
 
 I, [2013-09-30T14:48:16.728712 #9883]  INFO -- : Test completed successfully.
-{% highlight %}
+{% endhighlight %}
 
 ### Example embedding SIPp in another Ruby process
 
@@ -184,6 +184,7 @@ This will create the files `somewhere.xml` and `somewhere.pcap` in the `/path/to
 ### Customizing the Test Run
 
 Each parameter has an impact on the test, and may either be changed once the XML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
+
 <dl>
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
