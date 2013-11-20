@@ -2,21 +2,24 @@
 layout: default
 ---
 
+[![Gem Version](https://badge.fury.io/rb/sippy_cup.png)](https://rubygems.org/gems/sippy_cup)
+[![Build Status](https://secure.travis-ci.org/mojolingo/sippy_cup.png?branch=master)](http://travis-ci.org/mojolingo/sippy_cup)
+[![Dependency Status](https://gemnasium.com/mojolingo/sippy_cup.png?travis)](https://gemnasium.com/mojolingo/sippy_cup)
+[![Code Climate](https://codeclimate.com/github/mojolingo/sippy_cup.png)](https://codeclimate.com/github/mojolingo/sippy_cup)
+[![Coverage Status](https://coveralls.io/repos/mojolingo/sippy_cup/badge.png?branch=master)](https://coveralls.io/r/mojolingo/sippy_cup)
+
 # Sippy Cup
 
 * Table of Contents
 {:toc}
 
-
 ## Overview {#overview}
-
 
 ### The Problem {#the_problem}
 
 Load testing voice systems, and voice applications in particular, is tricky.  While several commercial tools exist, there is really only one tool in the Open Source world that is good at efficiently generating SIP load: [SIPp](http://sipp.sourceforge.net/).  While SIPp does a good job of generating load, it is somewhat clumsy to use, due to a verbose XML format for scenarios, a confusing set of command line parameters, and worst of all, a lack of tools to create media needed to interact with voice applications.
 
 The last problem is especially tricky: Imagine you want to load test an IVR. Testing requires:
-
 
 * calling a test number
 * waiting a certain amount of time
@@ -49,9 +52,9 @@ If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recom
 
 Once Ruby is installed, install SippyCup:
 
-```
+{% highlight bash %}
 gem install sippy_cup
-```
+{% endhighlight %}
 
 Now you can start creating scenario files like in the examples below.
 
@@ -66,7 +69,7 @@ gem install bundler --no-ri --no-rdoc
 {% endhighlight %}
 
 Then build the `sippy_cup` application with `bundle`.
- 
+
 {% highlight bash %}
 bundle install
 {% endhighlight %}
@@ -97,15 +100,17 @@ steps:
 
 Both `source` and `destination` above may be optionally supplied with a port number, eg. `192.0.2.200:5061`
 
-Next, compile and run the scenario:
+Next, execute the scenario:
 
 {% highlight bash %}
-$ sippy_cup -cr my_test_scenario.yml
-Compiling media to /Users/bklang/src/sippy_cup/my_test_scenario.pcap...done.
-Compiling scenario to /Users/bklang/src/sippy_cup/my_test_scenario.xml...done.
-"Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /Users/bklang/src/sippy_cup/my_test_scenario.xml -l 10 -m 20 -r 5 -s 1 > /dev/null 2>&1"
-$
-{% endhighlight %}
+$ sippy_cup -r my_test_scenario.yml
+I, [2013-09-30T14:48:08.388106 #9883]  INFO -- : Preparing to run SIPp command: sudo sipp -i 192.0.2.15 -p 8836 -sf /var/folders/n4/dpzsp6_95tb3c4sp12xj5wdr0000gn/T/scenario20130930-9883-1crejcw -l 10 -m 20 -r 5 -s 1 192.0.2.200
+Password:
+
+...snip...
+
+I, [2013-09-30T14:48:16.728712 #9883]  INFO -- : Test completed successfully.
+{% highlight %}
 
 ### Example embedding SIPp in another Ruby process
 
@@ -131,21 +136,13 @@ end
 scenario.compile!
 {% endhighlight %}
 
-The above code can either be executed as a standalone Ruby script and run with SIPp, or it can be compiled and run using rake tasks by inserting the following code into your Rakefile:
+The above code can be executed as a standalone Ruby script and the resulting scenario file run with SIPp.
 
-{% highlight ruby %}
-require 'sippy_cup/tasks'
-{% endhighlight %}
-
-Then running the rake task `rake sippy_cup:compile[sippy_cup.rb]` 
-
-And finally running `rake sippy_cup:run[sippy_cup.yml]` to execute the scenario.
-
-## Customizing Scenarios {#customizing_scenarios}
+## Customize Your Scenarios {#customizing}
 
 ### Available Scenario Steps
 
-Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments.
+Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments. For a full list of available steps, see the [API documentation](http://rubydoc.info/gems/sippy_cup/SippyCup/Scenario).
 
 * `sleep <seconds>` Wait a specified number of seconds
 * `invite` Send a SIP INVITE to the specified target
@@ -166,28 +163,27 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 
 Don't want your scenario to end up in the same directory as your script? Need the filename to be different than the scenario name? No problem!
 
-For the `sippy_cup` YAML specification, use `scenario`:
+For the `sippy_cup` manifest, use `filename`:
 
 {% highlight yaml %}
 ---
-scenario: /path/to/scenario.xml
+filename: /path/to/somewhere
 {% endhighlight %}
 
 Or, in Ruby:
 
 {% highlight ruby %}
-my_opts = { source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' }
-s = SippyCup::Scenario.new 'SippyCup', my_opts do
-  # scenario statements here...
+s = SippyCup::Scenario.new 'SippyCup', source: '192.168.5.5:10001', destination: '10.10.0.3:19995', filename: '/path/to/somewhere' do
+  # scenario definitions here...
 end
+s.compile!
 {% endhighlight %}
 
-This will create the files `somewhere.xml`, `somewhere.pcap`, and `somewhere.yml` in the `/path/to/` directory.
+This will create the files `somewhere.xml` and `somewhere.pcap` in the `/path/to/` directory.
 
 ### Customizing the Test Run
 
-Each parameter has an impact on the test, and may either be changed once the YAML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
-
+Each parameter has an impact on the test, and may either be changed once the XML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
 <dl>
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
@@ -199,7 +195,13 @@ Each parameter has an impact on the test, and may either be changed once the YAM
   <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
 
   <dt>full_sipp_output</dt>
-  <dd>By default, SippyCup will hide SIPp's command line output while running a scenario. Set this parameter to `true` to see full command line output</dd>
+  <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
+
+  <dt>media_port</dt>
+  <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
+
+  <dt>scenario_variables</dt>
+  <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
 </dl>
 
 ### Additional SIPp Scenario Attributes
@@ -207,20 +209,20 @@ Each parameter has an impact on the test, and may either be changed once the YAM
 With Sippy Cup, you can add additional attributes to each step of the scenario:
 
 {% highlight ruby %}
-#This limits the amount of time the server has to reply to an invite (3 seconds)
+# This limits the amount of time the server has to reply to an invite (3 seconds)
 s.receive_answer timeout: 3000
 
-#You can override the default 'optional' parameters
+# You can override the default 'optional' parameters
 s.receive_ringing optional: false
 s.receive_answer optional: true
 
-#Let's combine multiple attributes...
+# Let's combine multiple attributes...
 s.receive_answer timeout: 3000, crlf: true
-{% endhighlight %}
+{% endhighlight ruby %}
 
 For more information on possible attributes, visit the [SIPp Documentation](http://sipp.sourceforge.net/doc/reference.html).
 
-## Credits
+## Credits {#credits}
 
 Copyright (C) 2013 [Mojo Lingo LLC](https://mojolingo.com)
 
@@ -229,3 +231,4 @@ Sippy Cup is released under the [MIT license](http://opensource.org/licenses/MIT
 Sippy Cup was created by [Ben Klang](https://twitter.com/bklang) and [Will Drexler](https://github.com/wdrexler) with support from [Mojo Lingo](https://mojolingo.com) and their clients.
 
 "Sippy Cup" name suggested by [Jamey Owens](https://github.com/vindir)
+
