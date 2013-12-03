@@ -403,15 +403,16 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
+      
+      print "Compiling media to #{@filename}.pcap..."
+      compile_media.to_file filename: "#{@filename}.pcap"
+      puts "done."
+
       scenario_filename = "#{@filename}.xml"
       print "Compiling scenario to #{scenario_filename}..."
       File.open scenario_filename, 'w' do |file|
-        file.write doc.to_xml
+        file.write doc.to_xml.gsub(/\{\{PCAP\}\}/, "#{@filename}.pcap")
       end
-      puts "done."
-
-      print "Compiling media to #{@filename}.pcap..."
-      compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
 
       scenario_filename
@@ -427,13 +428,13 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      scenario_file = Tempfile.new 'scenario'
-      scenario_file.write to_xml
-      scenario_file.rewind
-
       media_file = Tempfile.new 'media'
       media_file.write compile_media.to_s
       media_file.rewind
+
+      scenario_file = Tempfile.new 'scenario'
+      scenario_file.write to_xml.gsub(/\{\{PCAP\}\}/, media_file.path)
+      scenario_file.rewind
 
       {scenario: scenario_file, media: media_file}
     end
@@ -515,7 +516,7 @@ Content-Length: 0
       action = Nokogiri::XML::Node.new 'action', doc
       nop << action
       exec = Nokogiri::XML::Node.new 'exec', doc
-      exec['play_pcap_audio'] = "#{@filename}.pcap"
+      exec['play_pcap_audio'] = "{{PCAP}}"
       action << exec
       scenario_node << nop
     end
