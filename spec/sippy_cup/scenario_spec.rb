@@ -249,7 +249,7 @@ describe SippyCup::Scenario do
     it "starts the PCAP media" do
       subject.ack_answer
 
-      subject.to_xml.should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/tmp/test.pcap"/>\n.*</action>\n.*</nop>})
+      subject.to_xml.should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="\{\{PCAP\}\}"/>\n.*</action>\n.*</nop>})
     end
 
     context "when a from user is specified" do
@@ -509,6 +509,12 @@ describe SippyCup::Scenario do
       files = scenario.to_tmpfiles
       File.read(files[:media].path).should_not be_empty
     end
+
+    it "puts the PCAP file path into the scenario XML" do
+      scenario.ack_answer
+      files = scenario.to_tmpfiles
+      files[:scenario].read.should match(%r{play_pcap_audio="#{files[:media].path}"})
+    end
   end
 
   describe "#build" do
@@ -561,7 +567,7 @@ Content-Length: 0
 </send>
   <nop>
     <action>
-      <exec play_pcap_audio="/tmp/test.pcap"/>
+      <exec play_pcap_audio="{{PCAP}}"/>
     </action>
   </nop>
   <recv request="BYE"/>
@@ -674,7 +680,7 @@ Content-Length: 0
 </send>
   <nop>
     <action>
-      <exec play_pcap_audio="/tmp/spec_scenario.pcap"/>
+      <exec play_pcap_audio="{{PCAP}}"/>
     </action>
   </nop>
   <pause milliseconds="3000"/>
