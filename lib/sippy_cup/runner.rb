@@ -27,36 +27,19 @@ module SippyCup
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
 
+    #
     # Runs the loaded scenario using SIPp
-    #
-    # @raises Errno::ENOENT when the SIPp executable cannot be found
-    # @raises SippyCup::ExitOnInternalCommand when SIPp exits on an internal command. Calls may have been processed
-    # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
-    # @raises SippyCup::FatalError when SIPp encounters a fatal failure
-    # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
-    # @raises SippyCup::SippGenericError when SIPp encounters another type of error
-    #
-    # @return Boolean true if execution succeeded without any failed calls, false otherwise
     #
     def run
       @input_files = @scenario.to_tmpfiles
 
       @logger.info "Preparing to run SIPp command: #{command}"
+      
+      execute_with_redirected_streams
 
-      exit_status, stderr_buffer = execute_with_redirected_streams
-
-      final_result = process_exit_status exit_status, stderr_buffer
-
-      if final_result
-        @logger.info "Test completed successfully!"
-      else
-        @logger.info "Test completed successfully but some calls failed."
-      end
-      @logger.info "Statistics logged at #{File.expand_path @scenario_options[:stats_file]}" if @scenario_options[:stats_file]
-
-      final_result
+      wait unless @options[:async]
     ensure
-      cleanup_input_files
+      cleanup_input_files unless @options[:async]          
     end
 
     #
@@ -67,6 +50,34 @@ module SippyCup
     #
     def stop
       Process.kill "KILL", @sipp_pid if @sipp_pid
+    end
+
+    #
+    # Waits for the runner to finish execution
+    #
+    # @raises Errno::ENOENT when the SIPp executable cannot be found
+    # @raises SippyCup::ExitOnInternalCommand when SIPp exits on an internal command. Calls may have been processed
+    # @raises SippyCup::NoCallsProcessed when SIPp exit normally, but has processed no calls
+    # @raises SippyCup::FatalError when SIPp encounters a fatal failure
+    # @raises SippyCup::FatalSocketBindingError when SIPp fails to bind to the specified socket
+    # @raises SippyCup::SippGenericError when SIPp encounters another type of error
+    #
+    # @return Boolean true if execution succeeded without any failed calls, false otherwise
+    #
+    def wait
+      exit_status = Process.wait2 @sipp_pid.to_i
+      @rd.close if @rd
+      final_result = process_exit_status exit_status, @stderr_buffer
+      if final_result
+        @logger.info "Test completed successfully!"
+      else
+        @logger.info "Test completed successfully but some calls failed."
+      end
+      @logger.info "Statistics logged at #{File.expand_path @scenario_options[:stats_file]}" if @scenario_options[:stats_file]
+
+      final_result
+    ensure
+      cleanup_input_files if @options[:async]
     end
 
   private
@@ -112,27 +123,21 @@ module SippyCup
     end
 
     def execute_with_redirected_streams
-      rd, wr = IO.pipe
+      @rd, wr = IO.pipe
       stdout_target = @options[:full_sipp_output] ? $stdout : '/dev/null'
 
       @sipp_pid = spawn command, err: wr, out: stdout_target
 
-      stderr_buffer = String.new
+      @stderr_buffer = String.new
 
       Thread.new do
         wr.close
-        until rd.eof?
-          buffer = rd.readpartial(1024).strip
-          stderr_buffer += buffer
+        until @rd.eof?
+          buffer = @rd.readpartial(1024).strip
+          @stderr_buffer += buffer
           $stderr << buffer if @options[:full_sipp_output]
         end
       end
-
-      exit_status = Process.wait2 @sipp_pid.to_i
-
-      rd.close
-
-      [exit_status, stderr_buffer]
     end
 
     def process_exit_status(process_status, error_message = nil)
