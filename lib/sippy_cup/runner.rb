@@ -77,7 +77,7 @@ module SippyCup
 
       final_result
     ensure
-      cleanup_input_files if @options[:async]
+      cleanup_input_files
     end
 
   private

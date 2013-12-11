@@ -442,6 +442,7 @@ steps:
     it "waits for the SIPp process" do
       Process.should_receive(:wait2).with pid.to_i
       subject.should_receive(:process_exit_status)
+      subject.should_receive(:cleanup_input_files)
       subject.wait
     end
 
