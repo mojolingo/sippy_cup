@@ -72,6 +72,16 @@ steps:
       end
     end
 
+    context "async" do
+      let(:settings) { {async: true} }
+      it 'should not wait for SIPp to terminate' do
+        subject.stub :process_exit_status
+        subject.should_receive :spawn
+        Process.should_not_receive :wait2
+        subject.run
+      end
+    end
+
     context "specifying a source port in the manifest" do
       let(:manifest) do
         <<-MANIFEST
@@ -434,6 +444,7 @@ steps:
       subject.should_receive(:process_exit_status)
       subject.wait
     end
+
     context "async" do
       subject { SippyCup::Runner.new scenario, logger: logger, async: true }
       it "waits for the SIPp process and cleans up input files" do
