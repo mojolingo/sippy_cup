@@ -82,6 +82,36 @@ steps:
       end
     end
 
+    context "specifying arbitrary options in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'doo@dah.com'
+destination: 'foo@bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+options:
+  trace_err: ~
+  foo: bar
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should pass the options to sipp' do
+        expect_command_execution(/-trace_err -foo bar/)
+        subject.run
+      end
+    end
+
     context "specifying a source port in the manifest" do
       let(:manifest) do
         <<-MANIFEST

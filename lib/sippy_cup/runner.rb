@@ -119,6 +119,8 @@ module SippyCup
         options[:inf] = @scenario_options[:scenario_variables]
       end
 
+      options.merge! @scenario_options[:options] if @scenario_options[:options]
+
       options
     end
 

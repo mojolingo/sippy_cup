@@ -87,6 +87,7 @@ module SippyCup
     # @option options [String, Numeric] :stats_interval The interval (in seconds) at which to dump statistics (defaults to 1s).
     # @option options [String] :transport_mode The transport mode over which to direct SIP traffic.
     # @option options [String] :scenario_variables A path to a CSV file of variables to be interpolated with the scenario at runtime.
+    # @option options [Hash] :options A collection of options to pass through to SIPp, as key-value pairs. In cases of value-less options (eg -trace_err), specify a nil value.
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario

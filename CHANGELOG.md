@@ -1,4 +1,5 @@
 # develop
+  * Allow passing arbitrary SIPp options from the YAML manifest
 
 # [0.3.0](https://github.com/bklang/sippy_cup/compare/v0.2.3...v0.3.0)
 * Feature: A whole lot more documentation, test coverage and cleaner internals.
