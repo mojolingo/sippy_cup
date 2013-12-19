@@ -404,7 +404,7 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      
+
       print "Compiling media to #{@filename}.pcap..."
       compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."

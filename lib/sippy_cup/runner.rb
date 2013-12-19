@@ -34,12 +34,12 @@ module SippyCup
       @input_files = @scenario.to_tmpfiles
 
       @logger.info "Preparing to run SIPp command: #{command}"
-      
+
       execute_with_redirected_streams
 
       wait unless @options[:async]
     ensure
-      cleanup_input_files unless @options[:async]          
+      cleanup_input_files unless @options[:async]
     end
 
     #
