@@ -97,9 +97,9 @@ module SippyCup
         i: @scenario_options[:source],
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
-        l: @scenario_options[:max_concurrent],
-        m: @scenario_options[:number_of_calls],
-        r: @scenario_options[:calls_per_second],
+        l: @scenario_options[:max_concurrent] || 5,
+        m: @scenario_options[:number_of_calls] || 10,
+        r: @scenario_options[:calls_per_second] || 10,
         s: @scenario_options[:from_user] || '1'
       }
 
