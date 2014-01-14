@@ -454,13 +454,16 @@ Content-Length: 0
     def doc
       @doc ||= begin
         Nokogiri::XML::Builder.new do |xml|
-          xml.scenario name: @scenario_options[:name]
+          xml.scenario name: @scenario_options[:name] do
+            @scenario_node = xml.parent
+          end
         end.doc
       end
     end
 
     def scenario_node
-      @scenario_node = doc.xpath('//scenario').first
+      doc
+      @scenario_node
     end
 
     def parse_args(args)
