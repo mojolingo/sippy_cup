@@ -279,7 +279,7 @@ a=fmtp:101 0-15
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
@@ -364,10 +364,10 @@ Content-Length: 0
       msg = <<-MSG
 
 BYE [next_url] SIP/2.0
-[last_Via:]
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-[last_To:]
-[last_Call-ID]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+Call-ID: [call_id]
 CSeq: [cseq] BYE
 Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
 Max-Forwards: 100

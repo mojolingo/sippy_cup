@@ -2,6 +2,7 @@
   * Feature: receive_message for incoming SIP MESSAGEs.
   * Change: Split `#receive_200` into its own method ([#61](https://github.com/mojolingo/sippy_cup/pull/61))
   * Allow passing arbitrary SIPp options from the YAML manifest
+  * Bugfix: Fix ACK/BYE being sent to self.
 
 # [0.3.0](https://github.com/bklang/sippy_cup/compare/v0.2.3...v0.3.0)
 * Feature: A whole lot more documentation, test coverage and cleaner internals.
