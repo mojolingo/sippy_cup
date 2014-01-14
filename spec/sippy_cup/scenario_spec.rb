@@ -472,6 +472,28 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe "#send_digits with a SIP INFO DTMF mode" do
+    let(:args) { {dtmf_mode: 'info'} }
+
+    it "creates the requested DTMF string as SIP INFO messages" do
+      scenario.send_digits '136'
+
+      xml = scenario.to_xml
+      scenario.to_xml.should match(%r{(<send>.*INFO \[next_url\] SIP/2\.0.*</send>.*){3}}m)
+      scenario.to_xml.should match(%r{Signal=1(\nDuration=250\n).*Signal=3\1.*Signal=6\1}m)
+    end
+
+    it "expects a response for each digit sent" do
+      scenario.send_digits '123'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<recv response="200"/>.*){3}}m)
+    end
+
+    it "inserts 250ms pauses between each digit" do
+      scenario.send_digits '321'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<pause milliseconds="250"/>.*){3}}m)
+    end
+  end
+
   describe "#compile!" do
     context "when a filename is not provided" do
       it "writes the scenario XML to disk at name.xml" do

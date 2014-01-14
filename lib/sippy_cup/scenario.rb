@@ -87,6 +87,7 @@ module SippyCup
     # @option options [String] :stats_file The path at which to dump statistics.
     # @option options [String, Numeric] :stats_interval The interval (in seconds) at which to dump statistics (defaults to 1s).
     # @option options [String] :transport_mode The transport mode over which to direct SIP traffic.
+    # @option options [String] :dtmf_mode The output DTMF mode, either rfc2833 (default) or info.
     # @option options [String] :scenario_variables A path to a CSV file of variables to be interpolated with the scenario at runtime.
     # @option options [Hash] :options A collection of options to pass through to SIPp, as key-value pairs. In cases of value-less options (eg -trace_err), specify a nil value.
     # @option options [Array<String>] :steps A collection of steps
@@ -319,10 +320,38 @@ Content-Length: 0
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
 
-        @media << "dtmf:#{digit}"
-        @media << "silence:#{delay}"
+        case @dtmf_mode
+        when :rfc2833
+          @media << "dtmf:#{digit}"
+          @media << "silence:#{delay}"
+        when :info
+          info = <<-INFO
+
+INFO [next_url] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+Call-ID: [call_id]
+CSeq: [cseq] INFO
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+[routes]
+Content-Length: [len]
+Content-Type: application/dtmf-relay
+
+Signal=#{digit}
+Duration=#{delay}
+          INFO
+          send info
+          recv response: 200
+          pause delay
+        end
       end
-      pause delay * 2 * digits.size
+
+      if @dtmf_mode == :rfc2833
+        pause delay * 2 * digits.size
+      end
     end
 
     #
@@ -511,6 +540,13 @@ Content-Length: 0
     def parse_args(args)
       raise ArgumentError, "Must include source IP:PORT" unless args.has_key? :source
       raise ArgumentError, "Must include destination IP:PORT" unless args.has_key? :destination
+
+      if args[:dtmf_mode]
+        @dtmf_mode = args[:dtmf_mode].to_sym
+        raise ArgumentError, "dtmf_mode must be rfc2833 or info" unless [:rfc2833, :info].include?(@dtmf_mode)
+      else
+        @dtmf_mode = :rfc2833
+      end
 
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
