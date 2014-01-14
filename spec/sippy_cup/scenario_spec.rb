@@ -314,6 +314,23 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe '#receive_message' do
+    it "expects a MESSAGE and acks it" do
+      subject.receive_message
+      subject.to_xml.should match(%r{<recv request="MESSAGE"/>.*SIP/2\.0 200 OK}m)
+    end
+
+    it "allows a string to be given as a regexp for matching" do
+      subject.receive_message "Hello World!"
+      subject.to_xml.should match(%r{<action>\s*<ereg regexp="Hello World!" search_in="body" check_it="true" assign_to="[^"]+"/>\s*</action>}m)
+    end
+
+    it "declares the variable used for regexp matching so that SIPp doesn't complain" do
+      subject.receive_message "Hello World!"
+      subject.to_xml.should match(%r{<ereg [^>]* assign_to="([^"]+)"/>.*<Reference variables="\1"/>}m)
+    end
+  end
+
   describe '#send_bye' do
     it "sends a BYE message" do
       subject.send_bye
@@ -360,16 +377,16 @@ describe SippyCup::Scenario do
     end
   end
 
-  describe '#ack_bye' do
+  describe '#okay' do
     it "sends a 200 OK" do
-      subject.ack_bye
+      subject.okay
 
       subject.to_xml.should match(%r{<send>})
       subject.to_xml.should match(%r{SIP/2.0 200 OK})
     end
 
     it "allows setting options on the send instruction" do
-      subject.ack_bye foo: 'bar'
+      subject.okay foo: 'bar'
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
@@ -377,14 +394,14 @@ describe SippyCup::Scenario do
       let(:args) { {from_user: 'frank'} }
 
       it "includes the specified user in the Contact header" do
-        subject.ack_bye
+        subject.okay
         subject.to_xml.should match(%r{Contact: <sip:frank@})
       end
     end
 
     context "when no from user is specified" do
       it "uses a default of 'sipp' in the Contact header" do
-        subject.ack_bye
+        subject.okay
         subject.to_xml.should match(%r{Contact: <sip:sipp@})
       end
     end
@@ -396,15 +413,6 @@ describe SippyCup::Scenario do
 
       scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
       scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
-    end
-  end
-
-  describe '#ack_bye' do
-    it "sends a 200 OK" do
-      subject.ack_bye
-
-      subject.to_xml.should match(%r{<send>})
-      subject.to_xml.should match(%r{SIP/2.0 200 OK})
     end
   end
 
