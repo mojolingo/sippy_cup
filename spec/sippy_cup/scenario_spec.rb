@@ -325,7 +325,14 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<action>\s*<ereg regexp="Hello World!" search_in="body" check_it="true" assign_to="[^"]+"/>\s*</action>}m)
     end
 
-    it "declares the variable used for regexp matching so that SIPp doesn't complain" do
+    it "increments the variable name used for regexp matching because SIPp requires it to be unique" do
+      subject.receive_message "Hello World!"
+      subject.receive_message "Hello Again World!"
+      subject.receive_message "Goodbye World!"
+      subject.to_xml.should match(%r{<ereg [^>]* assign_to="([^"]+)_1"/>.*<ereg [^>]* assign_to="\1_2"/>.*<ereg [^>]* assign_to="\1_3"/>}m)
+    end
+
+    it "declares the variable used for regexp matching so that SIPp doesn't complain that it's unused" do
       subject.receive_message "Hello World!"
       subject.to_xml.should match(%r{<ereg [^>]* assign_to="([^"]+)"/>.*<Reference variables="\1"/>}m)
     end
