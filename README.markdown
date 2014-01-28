@@ -184,8 +184,11 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>stats_interval</dt>
   <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless :stats_file is also specified</dd>
 
-  <dt>sip_user</dt>
-  <dd>SIP username to use. Defaults to "1" (as in 1@127.0.0.1)</dd>
+  <dt>from_user</dt>
+  <dd>SIP user from which traffic should appear. Defaults to "sipp".</dd>
+
+  <dt>to_user</dt>
+  <dd>SIP user to send requests to. Defaults to "1" (as in 1@127.0.0.1).</dd>
 
   <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
