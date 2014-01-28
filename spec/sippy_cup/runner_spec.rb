@@ -17,8 +17,8 @@ describe SippyCup::Runner do
   let(:manifest) do
     <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -47,7 +47,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com}
+      expect_command_execution %r{sudo sipp -i dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 bar.com}
       subject.run
     end
 
@@ -86,8 +86,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -116,8 +116,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -140,16 +140,17 @@ steps:
       end
     end
 
-    context "specifying a from_user in the Scenario" do
+    context "specifying a to_user in the Scenario" do
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
-from_user: frank
+from_user: pat
+to_user: frank
 steps:
   - invite
   - wait_for_answer
@@ -172,8 +173,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -200,8 +201,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -227,8 +228,8 @@ steps:
         let(:manifest) do
           <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -271,8 +272,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -301,8 +302,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10

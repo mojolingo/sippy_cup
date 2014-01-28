@@ -100,7 +100,7 @@ module SippyCup
         l: @scenario_options[:max_concurrent] || 5,
         m: @scenario_options[:number_of_calls] || 10,
         r: @scenario_options[:calls_per_second] || 10,
-        s: @scenario_options[:from_user] || '1'
+        s: @scenario_options[:to_user] || '1'
       }
 
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]

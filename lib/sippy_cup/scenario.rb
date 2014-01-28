@@ -79,6 +79,7 @@ module SippyCup
     # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
     # @option options [String] :destination The target system at which to direct traffic.
     # @option options [String] :from_user The SIP user from which traffic should appear.
+    # @option options [String] :to_user The SIP user to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
     # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
     # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
