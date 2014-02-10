@@ -1,4 +1,5 @@
 # develop
+  * Change: Split receive_200 into its own method
   * Allow passing arbitrary SIPp options from the YAML manifest
 
 # [0.3.0](https://github.com/bklang/sippy_cup/compare/v0.2.3...v0.3.0)

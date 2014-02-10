@@ -200,7 +200,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 100 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_trying(opts = {})
       handle_response 100, opts
@@ -211,7 +211,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 180 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_ringing(opts = {})
       handle_response 180, opts
@@ -222,7 +222,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 183 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_progress(opts = {})
       handle_response 183, opts
@@ -231,20 +231,29 @@ a=fmtp:101 0-15
 
     #
     # Sets an expectation for a SIP 200 message from the remote party
+    # as well as storing the record set and the response time duration
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
     #
     def receive_answer(opts = {})
       options = {
-        response: 200,
         rrs: true, # Record Record Set: Make the Route headers available via [route] later
         rtd: true # Response Time Duration: Record the response time
       }
 
-      recv options.merge(opts)
+      receive_200 options.merge(opts)
     end
-    alias :receive_200 :receive_answer
+
+    #
+    # Sets an expectation for a SIP 200 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
+    #
+    def receive_200(opts = {})
+      recv({ response: 200 }.merge(opts))
+    end
 
     #
     # Shortcut that sets expectations for optional SIP 100, 180 and 183, followed by a required 200.
@@ -252,9 +261,9 @@ a=fmtp:101 0-15
     # @param [Hash] opts A set of options to modify the expectations
     #
     def wait_for_answer(opts = {})
-      receive_trying({optional: true}.merge opts)
-      receive_ringing({optional: true}.merge opts)
-      receive_progress({optional: true}.merge opts)
+      receive_trying opts
+      receive_ringing opts
+      receive_progress opts
       receive_answer opts
     end
 

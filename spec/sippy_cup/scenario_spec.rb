@@ -233,6 +233,26 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe '#receive_200' do
+    it "expects a 200" do
+      subject.receive_200
+
+      scenario.to_xml.should match(%q{<recv response="200"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_200 foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv response="200" foo="bar"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_200 response: 999 # Silly but still...
+
+      scenario.to_xml.should match(%q{<recv response="999"/>})
+    end
+  end
+
   describe '#ack_answer' do
     it "sends an ACK message" do
       subject.ack_answer
@@ -276,11 +296,11 @@ describe SippyCup::Scenario do
       scenario.wait_for_answer
 
       xml = scenario.to_xml
-      xml.should =~ /recv optional="true".*response="100"/
-      xml.should =~ /recv optional="true".*response="180"/
-      xml.should =~ /recv optional="true".*response="183"/
+      xml.should =~ /recv response="100".*optional="true"/
+      xml.should =~ /recv response="180".*optional="true"/
+      xml.should =~ /recv response="183".*optional="true"/
       xml.should =~ /recv response="200"/
-      xml.should_not =~ /recv optional="true".*response="200"/
+      xml.should_not =~ /recv response="200".*optional="true"/
     end
 
     it "passes through additional options" do
@@ -546,9 +566,9 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
 </send>
-  <recv optional="true" response="100"/>
-  <recv optional="true" response="180"/>
-  <recv optional="true" response="183"/>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
@@ -659,9 +679,9 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
 </send>
-  <recv optional="true" response="100"/>
-  <recv optional="true" response="180"/>
-  <recv optional="true" response="183"/>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
