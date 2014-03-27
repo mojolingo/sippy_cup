@@ -8,7 +8,6 @@ module SippyCup
     USEC = 1_000_000
     MSEC = 1_000
     attr_accessor :sequence
-    attr_reader :packets
 
     def initialize(from_addr, from_port, to_addr, to_port, generator = PCMUPayload)
       @from_addr, @to_addr = IPAddr.new(from_addr), IPAddr.new(to_addr)
@@ -18,7 +17,6 @@ module SippyCup
 
     def reset!
       @sequence = []
-      @packets = []
     end
 
     def <<(input)
