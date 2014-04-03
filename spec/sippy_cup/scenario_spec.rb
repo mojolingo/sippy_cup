@@ -590,7 +590,7 @@ a=fmtp:101 0-15
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
@@ -703,7 +703,7 @@ a=fmtp:101 0-15
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
