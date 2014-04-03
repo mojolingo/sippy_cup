@@ -24,6 +24,10 @@ module SippyCup
       @sequence << input
     end
 
+    def empty?
+      @sequence.empty?
+    end
+
     def compile!
       sequence_number = 0
       start_time = Time.now

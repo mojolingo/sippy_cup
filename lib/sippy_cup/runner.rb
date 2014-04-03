@@ -163,7 +163,7 @@ module SippyCup
     end
 
     def cleanup_input_files
-      @input_files.each_pair do |key, value|
+      @input_files.values.compact.each do |value|
         value.close
         value.unlink
       end

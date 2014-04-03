@@ -13,6 +13,15 @@ describe SippyCup::Media do
     @media.sequence.should be_empty
   end
 
+  it 'should correctly report itself as empty' do
+    expect(@media.empty?).to be true
+  end
+
+  it 'should correctly report itself as non-empty' do
+    @media << 'silence:1000'
+    expect(@media.empty?).to be false
+  end
+
   it 'should append a valid action to the sequence list' do
     @media << 'silence:1000'
     @media.sequence.include?('silence:1000').should be true

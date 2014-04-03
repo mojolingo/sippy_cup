@@ -103,6 +103,7 @@ module SippyCup
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
       @message_variables = 0
+      @media_nodes = []
       @errors = []
 
       instance_eval &block if block_given?
@@ -454,14 +455,30 @@ Content-Length: 0
     # Dump the scenario to a SIPp XML string
     #
     # @return [String] the SIPp XML scenario
-    def to_xml
-      doc.to_xml
+    def to_xml(options = {})
+      pcap_path = options[:pcap_path]
+      docdup = doc.dup
+
+      # Not removing in reverse would most likely remove the wrong
+      # nodes because of changing indices.
+      @media_nodes.reverse.each do |nop|
+        nopdup = docdup.xpath(nop.path)
+
+        if pcap_path.nil? or @media.empty?
+          nopdup.remove
+        else
+          exec = nopdup.xpath("./action/exec").first
+          exec['play_pcap_audio'] = pcap_path
+        end
+      end
+
+      docdup.to_xml
     end
 
     #
     # Compile the scenario and its media to disk
     #
-    # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap.
+    # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap if applicable.
     # {filename} is taken from the :filename option when creating the scenario, or falls back to a down-snake-cased version of the scenario name.
     #
     # @return [String] the path to the resulting scenario file
@@ -475,15 +492,16 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-
-      print "Compiling media to #{@filename}.pcap..."
-      compile_media.to_file filename: "#{@filename}.pcap"
-      puts "done."
+      unless @media.empty?
+        print "Compiling media to #{@filename}.pcap..."
+        compile_media.to_file filename: "#{@filename}.pcap"
+        puts "done."
+      end
 
       scenario_filename = "#{@filename}.xml"
       print "Compiling scenario to #{scenario_filename}..."
       File.open scenario_filename, 'w' do |file|
-        file.write doc.to_xml.gsub(/\{\{PCAP\}\}/, "#{@filename}.pcap")
+        file.write doc.to_xml(:pcap_path => "#{@filename}.pcap")
       end
       puts "done."
 
@@ -491,7 +509,7 @@ Content-Length: 0
     end
 
     #
-    # Write compiled Scenario XML and PCAP media to tempfiles.
+    # Write compiled Scenario XML and PCAP media (if applicable) to tempfiles.
     #
     # These will automatically be closed and deleted once they have gone out of scope, and can be used to execute the scenario without leaving stuff behind.
     #
@@ -500,12 +518,14 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      media_file = Tempfile.new 'media'
-      media_file.write compile_media.to_s
-      media_file.rewind
+      unless @media.empty?
+        media_file = Tempfile.new 'media'
+        media_file.write compile_media.to_s
+        media_file.rewind
+      end
 
       scenario_file = Tempfile.new 'scenario'
-      scenario_file.write to_xml.gsub(/\{\{PCAP\}\}/, media_file.path)
+      scenario_file.write to_xml(:pcap_path => media_file.path)
       scenario_file.rewind
 
       {scenario: scenario_file, media: media_file}
@@ -594,12 +614,13 @@ Content-Length: 0
     end
 
     def start_media
-      nop = Nokogiri::XML::Node.new 'nop', doc
-      action = Nokogiri::XML::Node.new 'action', doc
-      nop << action
-      exec = Nokogiri::XML::Node.new 'exec', doc
-      exec['play_pcap_audio'] = "{{PCAP}}"
-      action << exec
+      nop = doc.create_element('nop') { |nop|
+        nop << doc.create_element('action') { |action|
+          action << doc.create_element('exec')
+        }
+      }
+
+      @media_nodes << nop
       scenario_node << nop
     end
 
