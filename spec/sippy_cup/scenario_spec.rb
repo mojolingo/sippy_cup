@@ -266,10 +266,20 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
-    it "starts the PCAP media" do
-      subject.ack_answer
+    context "when media is present" do
+      before { subject.sleep 1 }
 
-      subject.to_xml.should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="\{\{PCAP\}\}"/>\n.*</action>\n.*</nop>})
+      it "starts the PCAP media" do
+        subject.ack_answer
+        subject.to_xml(:pcap_path => "/dev/null").should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
+      end
+    end
+
+    context "when media is not present" do
+      it "does not start the PCAP media" do
+        subject.ack_answer
+        subject.to_xml(:pcap_path => "/dev/null").should_not match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
+      end
     end
 
     context "when a from user is specified" do
@@ -472,6 +482,28 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe "#send_digits with a SIP INFO DTMF mode" do
+    let(:args) { {dtmf_mode: 'info'} }
+
+    it "creates the requested DTMF string as SIP INFO messages" do
+      scenario.send_digits '136'
+
+      xml = scenario.to_xml
+      scenario.to_xml.should match(%r{(<send>.*INFO \[next_url\] SIP/2\.0.*</send>.*){3}}m)
+      scenario.to_xml.should match(%r{Signal=1(\nDuration=250\n).*Signal=3\1.*Signal=6\1}m)
+    end
+
+    it "expects a response for each digit sent" do
+      scenario.send_digits '123'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<recv response="200"/>.*){3}}m)
+    end
+
+    it "inserts 250ms pauses between each digit" do
+      scenario.send_digits '321'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<pause milliseconds="250"/>.*){3}}m)
+    end
+  end
+
   describe "#compile!" do
     context "when a filename is not provided" do
       it "writes the scenario XML to disk at name.xml" do
@@ -521,7 +553,10 @@ describe SippyCup::Scenario do
   end
 
   describe "#to_tmpfiles" do
-    before { scenario.invite }
+    before do
+      scenario.invite
+      scenario.sleep 1
+    end
 
     it "writes the scenario XML to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
@@ -600,11 +635,6 @@ Content-Length: 0
 [routes]
 ]]>
 </send>
-  <nop>
-    <action>
-      <exec play_pcap_audio="{{PCAP}}"/>
-    </action>
-  </nop>
   <recv request="BYE"/>
   <send>
 <![CDATA[
@@ -630,7 +660,7 @@ Content-Length: 0
 
       it "runs each step" do
         subject.build(steps)
-        subject.to_xml.should == scenario_xml
+        subject.to_xml(:pcap_path => "/dev/null").should == scenario_xml
       end
     end
 
@@ -715,7 +745,7 @@ Content-Length: 0
 </send>
   <nop>
     <action>
-      <exec play_pcap_audio="{{PCAP}}"/>
+      <exec play_pcap_audio="/dev/null"/>
     </action>
   </nop>
   <pause milliseconds="3000"/>
@@ -746,7 +776,7 @@ Content-Length: 0
 
     it "generates the correct XML" do
       scenario = described_class.from_manifest(scenario_yaml)
-      scenario.to_xml.should == scenario_xml
+      scenario.to_xml(:pcap_path => "/dev/null").should == scenario_xml
     end
 
     it "sets the proper options" do
@@ -876,7 +906,7 @@ steps:
 
       it "overrides keys with values from the options hash" do
         scenario = described_class.from_manifest(scenario_yaml, override_options)
-        scenario.to_xml.should == scenario_xml
+        scenario.to_xml(:pcap_path => "/dev/null").should == scenario_xml
       end
 
       it "sets the proper options" do
