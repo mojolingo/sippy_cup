@@ -101,6 +101,7 @@ module SippyCup
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
+      @message_variables = 0
       @errors = []
 
       instance_eval &block if block_given?
@@ -325,6 +326,36 @@ Content-Length: 0
     end
 
     #
+    # Expect to receive a MESSAGE message
+    #
+    # @param [String] regexp A regular expression (as a String) to match the message body against
+    #
+    def receive_message(regexp = nil)
+      recv = Nokogiri::XML::Node.new 'recv', doc
+      recv['request'] = 'MESSAGE'
+      scenario_node << recv
+
+      if regexp
+        action = Nokogiri::XML::Node.new 'action', doc
+        ereg = Nokogiri::XML::Node.new 'ereg', doc
+        ref = Nokogiri::XML::Node.new 'Reference', doc
+
+        ereg['regexp'] = regexp
+        ereg['search_in'] = 'body'
+        ereg['check_it'] = true
+
+        var = "message_#{@message_variables += 1}"
+        ereg['assign_to'] = ref['variables'] = var
+
+        action << ereg
+        recv << action
+        scenario_node << ref
+      end
+
+      okay
+    end
+
+    #
     # Send a BYE message
     #
     # @param [Hash] opts A set of options to modify the message parameters
@@ -357,11 +388,11 @@ Content-Length: 0
     end
 
     #
-    # Acknowledge a received BYE message
+    # Acknowledge the last request
     #
     # @param [Hash] opts A set of options to modify the message parameters
     #
-    def ack_bye(opts = {})
+    def okay(opts = {})
       msg = <<-ACK
 
 SIP/2.0 200 OK
@@ -378,6 +409,7 @@ Content-Length: 0
       ACK
       send msg, opts
     end
+    alias :ack_bye :okay
 
     #
     # Shortcut to set an expectation for a BYE and acknowledge it when received

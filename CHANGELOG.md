@@ -1,4 +1,5 @@
 # develop
+  * Feature: receive_message for incoming SIP MESSAGEs.
   * Change: Split `#receive_200` into its own method ([#61](https://github.com/mojolingo/sippy_cup/pull/61))
   * Allow passing arbitrary SIPp options from the YAML manifest
 
