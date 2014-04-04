@@ -553,10 +553,7 @@ describe SippyCup::Scenario do
   end
 
   describe "#to_tmpfiles" do
-    before do
-      scenario.invite
-      scenario.sleep 1
-    end
+    before { scenario.invite }
 
     it "writes the scenario XML to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
@@ -569,21 +566,32 @@ describe SippyCup::Scenario do
       File.read(files[:scenario].path).should eql(scenario.to_xml)
     end
 
-    it "writes the PCAP media to a Tempfile and returns it" do
-      files = scenario.to_tmpfiles
-      files[:media].should be_a(Tempfile)
-      files[:media].read.should_not be_empty
+    context "without media" do
+      it "does not write a PCAP media file" do
+        files = scenario.to_tmpfiles
+        files[:media].should be_nil
+      end
     end
 
-    it "allows the PCAP media to be read from disk independently" do
-      files = scenario.to_tmpfiles
-      File.read(files[:media].path).should_not be_empty
-    end
+    context "with media" do
+      before { scenario.sleep 1 }
 
-    it "puts the PCAP file path into the scenario XML" do
-      scenario.ack_answer
-      files = scenario.to_tmpfiles
-      files[:scenario].read.should match(%r{play_pcap_audio="#{files[:media].path}"})
+      it "writes the PCAP media to a Tempfile and returns it" do
+        files = scenario.to_tmpfiles
+        files[:media].should be_a(Tempfile)
+        files[:media].read.should_not be_empty
+      end
+
+      it "allows the PCAP media to be read from disk independently" do
+        files = scenario.to_tmpfiles
+        File.read(files[:media].path).should_not be_empty
+      end
+
+      it "puts the PCAP file path into the scenario XML" do
+        scenario.ack_answer
+        files = scenario.to_tmpfiles
+        files[:scenario].read.should match(%r{play_pcap_audio="#{files[:media].path}"})
+      end
     end
   end
 
