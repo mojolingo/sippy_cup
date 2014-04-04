@@ -525,7 +525,7 @@ Content-Length: 0
       end
 
       scenario_file = Tempfile.new 'scenario'
-      scenario_file.write to_xml(:pcap_path => media_file.path)
+      scenario_file.write to_xml(:pcap_path => media_file.try(:path))
       scenario_file.rewind
 
       {scenario: scenario_file, media: media_file}
