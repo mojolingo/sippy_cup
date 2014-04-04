@@ -2,6 +2,7 @@
   * Feature: receive_message for incoming SIP MESSAGEs.
   * Feature: SIP INFO DTMF.
   * Feature: Don't write unnecessary PCAP files.
+  * Feature: Execute sipp via which, allowing sudo rule to be more restrictive.
   * Change: Split `#receive_200` into its own method ([#61](https://github.com/mojolingo/sippy_cup/pull/61))
   * Allow passing arbitrary SIPp options from the YAML manifest
   * Bugfix: Fix ACK/BYE being sent to self.

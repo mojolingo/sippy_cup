@@ -7,7 +7,7 @@ describe SippyCup::Runner do
 
   let(:settings) { {} }
   let(:default_settings) { { logger: logger } }
-  let(:command) { "sudo sipp -i 127.0.0.1" }
+  let(:command) { "sudo $(which sipp) -i 127.0.0.1" }
   let(:pid) { '1234' }
 
   let(:logger) { double }
@@ -47,7 +47,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo sipp -i dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 bar.com}
+      expect_command_execution %r{sudo \$\(which sipp\) -i dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 bar.com}
       subject.run
     end
 

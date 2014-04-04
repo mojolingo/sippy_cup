@@ -84,7 +84,7 @@ module SippyCup
 
     def command
       @command ||= begin
-        command = "sudo sipp"
+        command = "sudo $(which sipp)"
         command_options.each_pair do |key, value|
           command << (value ? " -#{key} #{value}" : " -#{key}")
         end
