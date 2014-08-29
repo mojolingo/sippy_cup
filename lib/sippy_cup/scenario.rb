@@ -257,6 +257,7 @@ a=fmtp:101 0-15
     def receive_200(opts = {})
       recv({ response: 200 }.merge(opts))
     end
+    alias :receive_200 :receive_ok
 
     #
     # Shortcut that sets expectations for optional SIP 100, 180 and 183, followed by a required 200.

@@ -33,13 +33,13 @@ Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test p
 
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
-* Ruby 1.9.3 (2.0.0 NOT YET SUPPORTED; see [PacketFu Issue #28](https://github.com/todb/packetfu/issues/28))
+* Ruby 1.9.3 or later (2.1.2 recommended)
 * [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
 * "root" user access via sudo: needed to run SIPp so it can bind to raw network sockets
 
 ## Installation
 
-If you do not have Ruby 1.9.3 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
+If you do not have Ruby 2.1.2 available (check using `ruby --version`), we recommend installing Ruby with [RVM](http://rvm.io)
 
 ### Install via gem (production)
 
@@ -147,6 +147,8 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 * `wait_for_answer` Convenient shortcut for `receive_trying; receive_ringing; receive_progress; receive_answer`, with all but the `answer` marked as optional
 * `ack_answer` Send an `ACK` in response to a `200 OK`
 * `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
+* `receive_ok` Expect to receive a `200 OK`
+* `receive_message [regex]` Expect to receive a SIP MESSAGE, optionally matching a regex
 * `send_bye` Send a `BYE` (hangup request)
 * `receive_bye` Expect to receive a `BYE` from the target
 * `ack_bye` Send a `200 OK` response to a `BYE`
@@ -190,11 +192,20 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>to_user</dt>
   <dd>SIP user to send requests to. Defaults to "1" (as in 1@127.0.0.1).</dd>
 
+  <dt>transport</dt>
+  <dd>Specify the SIP transport. Valid options are `udp` (default) or `tcp`.</dd>
+
   <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
 
+  <dt>options</dt>
+  <dd>A string of SIPp command line options included with the SIPp run.</dd>
+
   <dt>media_port</dt>
   <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
+
+  <dt>dtmf_mode</dt>
+  <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO.</dd>
 
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
@@ -220,7 +231,7 @@ For more information on possible attributes, visit the [SIPp Documentation](http
 
 ## Credits
 
-Copyright (C) 2013 [Mojo Lingo LLC](https://mojolingo.com)
+Copyright (C) 2013-2014 [Mojo Lingo LLC](https://mojolingo.com)
 
 Sippy Cup is released under the [MIT license](http://opensource.org/licenses/MIT). Please see the [LICENSE](https://github.com/bklang/sippy_cup/blob/master/LICENSE) file for details.
 
