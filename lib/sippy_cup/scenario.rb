@@ -501,7 +501,7 @@ Content-Length: 0
       scenario_filename = "#{@filename}.xml"
       print "Compiling scenario to #{scenario_filename}..."
       File.open scenario_filename, 'w' do |file|
-        file.write doc.to_xml(:pcap_path => "#{@filename}.pcap")
+        file.write to_xml(:pcap_path => "#{@filename}.pcap")
       end
       puts "done."
 
