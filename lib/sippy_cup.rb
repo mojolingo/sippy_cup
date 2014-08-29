@@ -1,3 +1,4 @@
+# encoding: utf-8
 %w{
   scenario
   xml_scenario

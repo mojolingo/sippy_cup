@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'ipaddr'
 require 'sippy_cup/media/pcmu_payload'
 require 'sippy_cup/media/dtmf_payload'

@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'nokogiri'
 require 'psych'
 require 'active_support/core_ext/hash'

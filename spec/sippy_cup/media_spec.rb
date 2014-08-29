@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 describe SippyCup::Media do
@@ -50,7 +51,7 @@ describe SippyCup::Media do
     pf = @media.compile!
     packet = pf.body.first
     packet.class.should be PacketFu::PcapPacket
-    packet.data[-4, 4].should == "\x03\x0a\x00\xa0"
+    packet.data[-4, 4].should == ['030a00a0'].pack('H*')
   end
 
   it 'should produce a PcapPacket with DTMF digit #, volume 10 at the end' do
@@ -58,6 +59,6 @@ describe SippyCup::Media do
     pf = @media.compile!
     packet = pf.body.first
     packet.class.should be PacketFu::PcapPacket
-    packet.data[-4, 4].should == "\x0b\x0a\x00\xa0"
+    packet.data[-4, 4].should == ['0b0a00a0'].pack('H*')
   end
 end
