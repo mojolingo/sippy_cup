@@ -7,7 +7,7 @@ describe SippyCup::Runner do
 
   let(:settings) { {} }
   let(:default_settings) { { logger: logger } }
-  let(:command) { "sudo sipp -i 127.0.0.1" }
+  let(:command) { "sudo $(which sipp) -i 127.0.0.1" }
   let(:pid) { '1234' }
 
   let(:logger) { double }
@@ -17,8 +17,8 @@ describe SippyCup::Runner do
   let(:manifest) do
     <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -47,7 +47,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo sipp -i doo@dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 foo@bar.com}
+      expect_command_execution %r{sudo \$\(which sipp\) -i dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 bar.com}
       subject.run
     end
 
@@ -72,12 +72,52 @@ steps:
       end
     end
 
+    context "async" do
+      let(:settings) { {async: true} }
+      it 'should not wait for SIPp to terminate' do
+        subject.stub :process_exit_status
+        subject.should_receive :spawn
+        Process.should_not_receive :wait2
+        subject.run
+      end
+    end
+
+    context "specifying arbitrary options in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+options:
+  trace_err: ~
+  foo: bar
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should pass the options to sipp' do
+        expect_command_execution(/-trace_err -foo bar/)
+        subject.run
+      end
+    end
+
     context "specifying a source port in the manifest" do
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -100,16 +140,17 @@ steps:
       end
     end
 
-    context "specifying a from_user in the Scenario" do
+    context "specifying a to_user in the Scenario" do
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
-from_user: frank
+from_user: pat
+to_user: frank
 steps:
   - invite
   - wait_for_answer
@@ -132,8 +173,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -160,8 +201,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -187,8 +228,8 @@ steps:
         let(:manifest) do
           <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -231,8 +272,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -261,8 +302,8 @@ steps:
       let(:manifest) do
         <<-MANIFEST
 name: foobar
-source: 'doo@dah.com'
-destination: 'foo@bar.com'
+source: 'dah.com'
+destination: 'bar.com'
 max_concurrent: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -423,6 +464,26 @@ steps:
             active_thread_count.should == original_thread_count
           end
         end
+      end
+    end
+  end
+
+  describe '#wait' do
+    before { subject.sipp_pid = pid }
+    it "waits for the SIPp process" do
+      Process.should_receive(:wait2).with pid.to_i
+      subject.should_receive(:process_exit_status)
+      subject.should_receive(:cleanup_input_files)
+      subject.wait
+    end
+
+    context "async" do
+      subject { SippyCup::Runner.new scenario, logger: logger, async: true }
+      it "waits for the SIPp process and cleans up input files" do
+        Process.should_receive(:wait2).with pid.to_i
+        subject.should_receive(:process_exit_status)
+        subject.should_receive(:cleanup_input_files)
+        subject.wait
       end
     end
   end

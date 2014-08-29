@@ -233,6 +233,26 @@ describe SippyCup::Scenario do
     end
   end
 
+  describe '#receive_200' do
+    it "expects a 200" do
+      subject.receive_200
+
+      scenario.to_xml.should match(%q{<recv response="200"/>})
+    end
+
+    it "allows passing options to the recv expectation" do
+      subject.receive_200 foo: 'bar'
+
+      scenario.to_xml.should match(%q{<recv response="200" foo="bar"/>})
+    end
+
+    it "allows overriding options" do
+      subject.receive_200 response: 999 # Silly but still...
+
+      scenario.to_xml.should match(%q{<recv response="999"/>})
+    end
+  end
+
   describe '#ack_answer' do
     it "sends an ACK message" do
       subject.ack_answer
@@ -246,10 +266,20 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
-    it "starts the PCAP media" do
-      subject.ack_answer
+    context "when media is present" do
+      before { subject.sleep 1 }
 
-      subject.to_xml.should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/tmp/test.pcap"/>\n.*</action>\n.*</nop>})
+      it "starts the PCAP media" do
+        subject.ack_answer
+        subject.to_xml(:pcap_path => "/dev/null").should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
+      end
+    end
+
+    context "when media is not present" do
+      it "does not start the PCAP media" do
+        subject.ack_answer
+        subject.to_xml(:pcap_path => "/dev/null").should_not match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
+      end
     end
 
     context "when a from user is specified" do
@@ -276,11 +306,11 @@ describe SippyCup::Scenario do
       scenario.wait_for_answer
 
       xml = scenario.to_xml
-      xml.should =~ /recv optional="true".*response="100"/
-      xml.should =~ /recv optional="true".*response="180"/
-      xml.should =~ /recv optional="true".*response="183"/
+      xml.should =~ /recv response="100".*optional="true"/
+      xml.should =~ /recv response="180".*optional="true"/
+      xml.should =~ /recv response="183".*optional="true"/
       xml.should =~ /recv response="200"/
-      xml.should_not =~ /recv optional="true".*response="200"/
+      xml.should_not =~ /recv response="200".*optional="true"/
     end
 
     it "passes through additional options" do
@@ -291,6 +321,30 @@ describe SippyCup::Scenario do
       xml.should =~ /recv .*foo="bar".*response="180"/
       xml.should =~ /recv .*foo="bar".*response="183"/
       xml.should =~ /recv .*response="200" .*foo="bar"/
+    end
+  end
+
+  describe '#receive_message' do
+    it "expects a MESSAGE and acks it" do
+      subject.receive_message
+      subject.to_xml.should match(%r{<recv request="MESSAGE"/>.*SIP/2\.0 200 OK}m)
+    end
+
+    it "allows a string to be given as a regexp for matching" do
+      subject.receive_message "Hello World!"
+      subject.to_xml.should match(%r{<action>\s*<ereg regexp="Hello World!" search_in="body" check_it="true" assign_to="[^"]+"/>\s*</action>}m)
+    end
+
+    it "increments the variable name used for regexp matching because SIPp requires it to be unique" do
+      subject.receive_message "Hello World!"
+      subject.receive_message "Hello Again World!"
+      subject.receive_message "Goodbye World!"
+      subject.to_xml.should match(%r{<ereg [^>]* assign_to="([^"]+)_1"/>.*<ereg [^>]* assign_to="\1_2"/>.*<ereg [^>]* assign_to="\1_3"/>}m)
+    end
+
+    it "declares the variable used for regexp matching so that SIPp doesn't complain that it's unused" do
+      subject.receive_message "Hello World!"
+      subject.to_xml.should match(%r{<ereg [^>]* assign_to="([^"]+)"/>.*<Reference variables="\1"/>}m)
     end
   end
 
@@ -340,16 +394,16 @@ describe SippyCup::Scenario do
     end
   end
 
-  describe '#ack_bye' do
+  describe '#okay' do
     it "sends a 200 OK" do
-      subject.ack_bye
+      subject.okay
 
       subject.to_xml.should match(%r{<send>})
       subject.to_xml.should match(%r{SIP/2.0 200 OK})
     end
 
     it "allows setting options on the send instruction" do
-      subject.ack_bye foo: 'bar'
+      subject.okay foo: 'bar'
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
@@ -357,14 +411,14 @@ describe SippyCup::Scenario do
       let(:args) { {from_user: 'frank'} }
 
       it "includes the specified user in the Contact header" do
-        subject.ack_bye
+        subject.okay
         subject.to_xml.should match(%r{Contact: <sip:frank@})
       end
     end
 
     context "when no from user is specified" do
       it "uses a default of 'sipp' in the Contact header" do
-        subject.ack_bye
+        subject.okay
         subject.to_xml.should match(%r{Contact: <sip:sipp@})
       end
     end
@@ -376,15 +430,6 @@ describe SippyCup::Scenario do
 
       scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
       scenario.to_xml.should match(%q{<recv foo="bar" request="BYE"/>})
-    end
-  end
-
-  describe '#ack_bye' do
-    it "sends a 200 OK" do
-      subject.ack_bye
-
-      subject.to_xml.should match(%r{<send>})
-      subject.to_xml.should match(%r{SIP/2.0 200 OK})
     end
   end
 
@@ -434,6 +479,28 @@ describe SippyCup::Scenario do
         scenario.send_digits '136'
         scenario.to_xml.should match(%r{<pause milliseconds="1500"/>})
       end
+    end
+  end
+
+  describe "#send_digits with a SIP INFO DTMF mode" do
+    let(:args) { {dtmf_mode: 'info'} }
+
+    it "creates the requested DTMF string as SIP INFO messages" do
+      scenario.send_digits '136'
+
+      xml = scenario.to_xml
+      scenario.to_xml.should match(%r{(<send>.*INFO \[next_url\] SIP/2\.0.*</send>.*){3}}m)
+      scenario.to_xml.should match(%r{Signal=1(\nDuration=250\n).*Signal=3\1.*Signal=6\1}m)
+    end
+
+    it "expects a response for each digit sent" do
+      scenario.send_digits '123'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<recv response="200"/>.*){3}}m)
+    end
+
+    it "inserts 250ms pauses between each digit" do
+      scenario.send_digits '321'
+      scenario.to_xml.should match(%r{(<send>.*INFO.*</send>.*<pause milliseconds="250"/>.*){3}}m)
     end
   end
 
@@ -499,15 +566,32 @@ describe SippyCup::Scenario do
       File.read(files[:scenario].path).should eql(scenario.to_xml)
     end
 
-    it "writes the PCAP media to a Tempfile and returns it" do
-      files = scenario.to_tmpfiles
-      files[:media].should be_a(Tempfile)
-      files[:media].read.should_not be_empty
+    context "without media" do
+      it "does not write a PCAP media file" do
+        files = scenario.to_tmpfiles
+        files[:media].should be_nil
+      end
     end
 
-    it "allows the PCAP media to be read from disk independently" do
-      files = scenario.to_tmpfiles
-      File.read(files[:media].path).should_not be_empty
+    context "with media" do
+      before { scenario.sleep 1 }
+
+      it "writes the PCAP media to a Tempfile and returns it" do
+        files = scenario.to_tmpfiles
+        files[:media].should be_a(Tempfile)
+        files[:media].read.should_not be_empty
+      end
+
+      it "allows the PCAP media to be read from disk independently" do
+        files = scenario.to_tmpfiles
+        File.read(files[:media].path).should_not be_empty
+      end
+
+      it "puts the PCAP file path into the scenario XML" do
+        scenario.ack_answer
+        files = scenario.to_tmpfiles
+        files[:scenario].read.should match(%r{play_pcap_audio="#{files[:media].path}"})
+      end
     end
   end
 
@@ -540,16 +624,16 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
 </send>
-  <recv optional="true" response="100"/>
-  <recv optional="true" response="180"/>
-  <recv optional="true" response="183"/>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
@@ -559,11 +643,6 @@ Content-Length: 0
 [routes]
 ]]>
 </send>
-  <nop>
-    <action>
-      <exec play_pcap_audio="/tmp/test.pcap"/>
-    </action>
-  </nop>
   <recv request="BYE"/>
   <send>
 <![CDATA[
@@ -589,7 +668,7 @@ Content-Length: 0
 
       it "runs each step" do
         subject.build(steps)
-        subject.to_xml.should == scenario_xml
+        subject.to_xml(:pcap_path => "/dev/null").should == scenario_xml
       end
     end
 
@@ -653,16 +732,16 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
 </send>
-  <recv optional="true" response="100"/>
-  <recv optional="true" response="180"/>
-  <recv optional="true" response="183"/>
+  <recv response="100" optional="true"/>
+  <recv response="180" optional="true"/>
+  <recv response="183" optional="true"/>
   <recv response="200" rrs="true" rtd="true"/>
   <send>
 <![CDATA[
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
@@ -674,7 +753,7 @@ Content-Length: 0
 </send>
   <nop>
     <action>
-      <exec play_pcap_audio="/tmp/spec_scenario.pcap"/>
+      <exec play_pcap_audio="/dev/null"/>
     </action>
   </nop>
   <pause milliseconds="3000"/>
@@ -705,7 +784,7 @@ Content-Length: 0
 
     it "generates the correct XML" do
       scenario = described_class.from_manifest(scenario_yaml)
-      scenario.to_xml.should == scenario_xml
+      scenario.to_xml(:pcap_path => "/dev/null").should == scenario_xml
     end
 
     it "sets the proper options" do
@@ -835,7 +914,7 @@ steps:
 
       it "overrides keys with values from the options hash" do
         scenario = described_class.from_manifest(scenario_yaml, override_options)
-        scenario.to_xml.should == scenario_xml
+        scenario.to_xml(:pcap_path => "/dev/null").should == scenario_xml
       end
 
       it "sets the proper options" do

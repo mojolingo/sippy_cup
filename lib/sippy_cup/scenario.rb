@@ -79,6 +79,7 @@ module SippyCup
     # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
     # @option options [String] :destination The target system at which to direct traffic.
     # @option options [String] :from_user The SIP user from which traffic should appear.
+    # @option options [String] :to_user The SIP user to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
     # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
     # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
@@ -86,7 +87,9 @@ module SippyCup
     # @option options [String] :stats_file The path at which to dump statistics.
     # @option options [String, Numeric] :stats_interval The interval (in seconds) at which to dump statistics (defaults to 1s).
     # @option options [String] :transport_mode The transport mode over which to direct SIP traffic.
+    # @option options [String] :dtmf_mode The output DTMF mode, either rfc2833 (default) or info.
     # @option options [String] :scenario_variables A path to a CSV file of variables to be interpolated with the scenario at runtime.
+    # @option options [Hash] :options A collection of options to pass through to SIPp, as key-value pairs. In cases of value-less options (eg -trace_err), specify a nil value.
     # @option options [Array<String>] :steps A collection of steps
     #
     # @yield [scenario] Builder block to construct scenario
@@ -99,6 +102,8 @@ module SippyCup
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
+      @message_variables = 0
+      @media_nodes = []
       @errors = []
 
       instance_eval &block if block_given?
@@ -198,7 +203,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 100 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_trying(opts = {})
       handle_response 100, opts
@@ -209,7 +214,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 180 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_ringing(opts = {})
       handle_response 180, opts
@@ -220,7 +225,7 @@ a=fmtp:101 0-15
     # Sets an expectation for a SIP 183 message from the remote party
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to true.
     #
     def receive_progress(opts = {})
       handle_response 183, opts
@@ -229,20 +234,30 @@ a=fmtp:101 0-15
 
     #
     # Sets an expectation for a SIP 200 message from the remote party
+    # as well as storing the record set and the response time duration
     #
     # @param [Hash] opts A set of options to modify the expectation
-    # @option opts [true, false] :optional Wether or not receipt of the message is optional. Defaults to true.
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
     #
     def receive_answer(opts = {})
       options = {
-        response: 200,
         rrs: true, # Record Record Set: Make the Route headers available via [route] later
         rtd: true # Response Time Duration: Record the response time
       }
 
-      recv options.merge(opts)
+      receive_200 options.merge(opts)
     end
-    alias :receive_200 :receive_answer
+
+    #
+    # Sets an expectation for a SIP 200 message from the remote party
+    #
+    # @param [Hash] opts A set of options to modify the expectation
+    # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
+    #
+    def receive_200(opts = {})
+      recv({ response: 200 }.merge(opts))
+    end
+    alias :receive_200 :receive_ok
 
     #
     # Shortcut that sets expectations for optional SIP 100, 180 and 183, followed by a required 200.
@@ -250,9 +265,9 @@ a=fmtp:101 0-15
     # @param [Hash] opts A set of options to modify the expectations
     #
     def wait_for_answer(opts = {})
-      receive_trying({optional: true}.merge opts)
-      receive_ringing({optional: true}.merge opts)
-      receive_progress({optional: true}.merge opts)
+      receive_trying opts
+      receive_ringing opts
+      receive_progress opts
       receive_answer opts
     end
 
@@ -267,7 +282,7 @@ a=fmtp:101 0-15
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-[last_To:]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
@@ -307,10 +322,68 @@ Content-Length: 0
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
 
-        @media << "dtmf:#{digit}"
-        @media << "silence:#{delay}"
+        case @dtmf_mode
+        when :rfc2833
+          @media << "dtmf:#{digit}"
+          @media << "silence:#{delay}"
+        when :info
+          info = <<-INFO
+
+INFO [next_url] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+Call-ID: [call_id]
+CSeq: [cseq] INFO
+Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Max-Forwards: 100
+User-Agent: #{USER_AGENT}
+[routes]
+Content-Length: [len]
+Content-Type: application/dtmf-relay
+
+Signal=#{digit}
+Duration=#{delay}
+          INFO
+          send info
+          recv response: 200
+          pause delay
+        end
       end
-      pause delay * 2 * digits.size
+
+      if @dtmf_mode == :rfc2833
+        pause delay * 2 * digits.size
+      end
+    end
+
+    #
+    # Expect to receive a MESSAGE message
+    #
+    # @param [String] regexp A regular expression (as a String) to match the message body against
+    #
+    def receive_message(regexp = nil)
+      recv = Nokogiri::XML::Node.new 'recv', doc
+      recv['request'] = 'MESSAGE'
+      scenario_node << recv
+
+      if regexp
+        action = Nokogiri::XML::Node.new 'action', doc
+        ereg = Nokogiri::XML::Node.new 'ereg', doc
+        ref = Nokogiri::XML::Node.new 'Reference', doc
+
+        ereg['regexp'] = regexp
+        ereg['search_in'] = 'body'
+        ereg['check_it'] = true
+
+        var = "message_#{@message_variables += 1}"
+        ereg['assign_to'] = ref['variables'] = var
+
+        action << ereg
+        recv << action
+        scenario_node << ref
+      end
+
+      okay
     end
 
     #
@@ -322,10 +395,10 @@ Content-Length: 0
       msg = <<-MSG
 
 BYE [next_url] SIP/2.0
-[last_Via:]
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-[last_To:]
-[last_Call-ID]
+To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+Call-ID: [call_id]
 CSeq: [cseq] BYE
 Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
 Max-Forwards: 100
@@ -346,11 +419,11 @@ Content-Length: 0
     end
 
     #
-    # Acknowledge a received BYE message
+    # Acknowledge the last request
     #
     # @param [Hash] opts A set of options to modify the message parameters
     #
-    def ack_bye(opts = {})
+    def okay(opts = {})
       msg = <<-ACK
 
 SIP/2.0 200 OK
@@ -367,6 +440,7 @@ Content-Length: 0
       ACK
       send msg, opts
     end
+    alias :ack_bye :okay
 
     #
     # Shortcut to set an expectation for a BYE and acknowledge it when received
@@ -382,14 +456,30 @@ Content-Length: 0
     # Dump the scenario to a SIPp XML string
     #
     # @return [String] the SIPp XML scenario
-    def to_xml
-      doc.to_xml
+    def to_xml(options = {})
+      pcap_path = options[:pcap_path]
+      docdup = doc.dup
+
+      # Not removing in reverse would most likely remove the wrong
+      # nodes because of changing indices.
+      @media_nodes.reverse.each do |nop|
+        nopdup = docdup.xpath(nop.path)
+
+        if pcap_path.nil? or @media.empty?
+          nopdup.remove
+        else
+          exec = nopdup.xpath("./action/exec").first
+          exec['play_pcap_audio'] = pcap_path
+        end
+      end
+
+      docdup.to_xml
     end
 
     #
     # Compile the scenario and its media to disk
     #
-    # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap.
+    # Writes the SIPp scenario file to disk at {filename}.xml, and the PCAP media to {filename}.pcap if applicable.
     # {filename} is taken from the :filename option when creating the scenario, or falls back to a down-snake-cased version of the scenario name.
     #
     # @return [String] the path to the resulting scenario file
@@ -403,22 +493,24 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
+      unless @media.empty?
+        print "Compiling media to #{@filename}.pcap..."
+        compile_media.to_file filename: "#{@filename}.pcap"
+        puts "done."
+      end
+
       scenario_filename = "#{@filename}.xml"
       print "Compiling scenario to #{scenario_filename}..."
       File.open scenario_filename, 'w' do |file|
-        file.write doc.to_xml
+        file.write to_xml(:pcap_path => "#{@filename}.pcap")
       end
-      puts "done."
-
-      print "Compiling media to #{@filename}.pcap..."
-      compile_media.to_file filename: "#{@filename}.pcap"
       puts "done."
 
       scenario_filename
     end
 
     #
-    # Write compiled Scenario XML and PCAP media to tempfiles.
+    # Write compiled Scenario XML and PCAP media (if applicable) to tempfiles.
     #
     # These will automatically be closed and deleted once they have gone out of scope, and can be used to execute the scenario without leaving stuff behind.
     #
@@ -427,13 +519,15 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      scenario_file = Tempfile.new 'scenario'
-      scenario_file.write to_xml
-      scenario_file.rewind
+      unless @media.empty?
+        media_file = Tempfile.new 'media'
+        media_file.write compile_media.to_s
+        media_file.rewind
+      end
 
-      media_file = Tempfile.new 'media'
-      media_file.write compile_media.to_s
-      media_file.rewind
+      scenario_file = Tempfile.new 'scenario'
+      scenario_file.write to_xml(:pcap_path => media_file.try(:path))
+      scenario_file.rewind
 
       {scenario: scenario_file, media: media_file}
     end
@@ -452,18 +546,28 @@ Content-Length: 0
     def doc
       @doc ||= begin
         Nokogiri::XML::Builder.new do |xml|
-          xml.scenario name: @scenario_options[:name]
+          xml.scenario name: @scenario_options[:name] do
+            @scenario_node = xml.parent
+          end
         end.doc
       end
     end
 
     def scenario_node
-      @scenario_node = doc.xpath('//scenario').first
+      doc
+      @scenario_node
     end
 
     def parse_args(args)
       raise ArgumentError, "Must include source IP:PORT" unless args.has_key? :source
       raise ArgumentError, "Must include destination IP:PORT" unless args.has_key? :destination
+
+      if args[:dtmf_mode]
+        @dtmf_mode = args[:dtmf_mode].to_sym
+        raise ArgumentError, "dtmf_mode must be rfc2833 or info" unless [:rfc2833, :info].include?(@dtmf_mode)
+      else
+        @dtmf_mode = :rfc2833
+      end
 
       @from_addr, @from_port = args[:source].split ':'
       @to_addr, @to_port = args[:destination].split ':'
@@ -511,12 +615,13 @@ Content-Length: 0
     end
 
     def start_media
-      nop = Nokogiri::XML::Node.new 'nop', doc
-      action = Nokogiri::XML::Node.new 'action', doc
-      nop << action
-      exec = Nokogiri::XML::Node.new 'exec', doc
-      exec['play_pcap_audio'] = "#{@filename}.pcap"
-      action << exec
+      nop = doc.create_element('nop') { |nop|
+        nop << doc.create_element('action') { |action|
+          action << doc.create_element('exec')
+        }
+      }
+
+      @media_nodes << nop
       scenario_node << nop
     end
 

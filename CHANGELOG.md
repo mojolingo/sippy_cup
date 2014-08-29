@@ -1,4 +1,13 @@
-# develop
+# [0.4.0](https://github.com/bklang/sippy_cup/compare/v0.3.0...v0.4.0)
+  * Feature: receive_message for incoming SIP MESSAGEs.
+  * Feature: SIP INFO DTMF.
+  * Feature: Don't write unnecessary PCAP files.
+  * Feature: Execute sipp via which, allowing sudo rule to be more restrictive.
+  * Change: Split `#receive_200` into its own method ([#61](https://github.com/mojolingo/sippy_cup/pull/61))
+  * Allow passing arbitrary SIPp options from the YAML manifest
+  * Bugfix: Fix ACK/BYE being sent to self.
+  * Bugfix: Require Psych 2.0.1 to fix `safe_load` NoMethodError (#63)
+  * Bugfix: Ensure the correct XML serializer is used (#66)
 
 # [0.3.0](https://github.com/bklang/sippy_cup/compare/v0.2.3...v0.3.0)
 * Feature: A whole lot more documentation, test coverage and cleaner internals.
@@ -8,7 +17,6 @@
 * Feature: API for validation of scenarios in manifests.
 * Feature: Handle SIPp exit codes with clean exceptions.
 * Feature: Allow passing arbitary headers in an INVITE
-* Change: AVP is now AVPF in SDP.
 * Change: Rake tasks for executing scenarios are removed.
 * Change: Running and compiling scenarios are now separate concepts.
   * `-c` on the CLI writes a YAML manifest to disk as SIPp XML and PCAP media. `-r` executes a YAML manifest and does not write to disk.
