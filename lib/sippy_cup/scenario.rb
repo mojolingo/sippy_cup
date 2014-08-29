@@ -255,7 +255,7 @@ a=fmtp:101 0-15
     # @param [Hash] opts A set of options to modify the expectation
     # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
     #
-    def receive_200(opts = {})
+    def receive_ok(opts = {})
       recv({ response: 200 }.merge(opts))
     end
     alias :receive_200 :receive_ok
