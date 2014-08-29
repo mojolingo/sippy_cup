@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'yaml'
 require 'sippy_cup/runner'
 

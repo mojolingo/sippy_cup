@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'sippy_cup/media/rtp_payload'
 
 module SippyCup

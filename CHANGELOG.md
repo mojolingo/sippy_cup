@@ -1,3 +1,7 @@
+# [0.4.1](https://github.com/bklang/sippy_cup/compare/v0.4.0...v0.4.1)
+  * Bugfix: Fix some Ruby 2 string encoding problems
+  * Bugfix: Fix backward alias of `respond_ok` with `respond_200`
+
 # [0.4.0](https://github.com/bklang/sippy_cup/compare/v0.3.0...v0.4.0)
   * Feature: receive_message for incoming SIP MESSAGEs.
   * Feature: SIP INFO DTMF.
