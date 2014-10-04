@@ -95,7 +95,6 @@ module SippyCup
 
     def command_options
       options = {
-        i: @scenario_options[:source],
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
         l: @scenario_options[:max_concurrent] || 5,
@@ -104,6 +103,7 @@ module SippyCup
         s: @scenario_options[:to_user] || '1'
       }
 
+      options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
 
       if @scenario_options[:stats_file]

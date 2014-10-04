@@ -48,7 +48,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo \$\(which sipp\) -i dah.com -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 bar.com}
+      expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 -i dah.com bar.com}
       subject.run
     end
 

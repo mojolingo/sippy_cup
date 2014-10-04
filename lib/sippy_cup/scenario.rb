@@ -560,7 +560,6 @@ Content-Length: 0
     end
 
     def parse_args(args)
-      raise ArgumentError, "Must include source IP:PORT" unless args.has_key? :source
       raise ArgumentError, "Must include destination IP:PORT" unless args.has_key? :destination
 
       if args[:dtmf_mode]
@@ -570,7 +569,7 @@ Content-Length: 0
         @dtmf_mode = :rfc2833
       end
 
-      @from_addr, @from_port = args[:source].split ':'
+      @from_addr, @from_port = args[:source].split ':' if args[:source]
       @to_addr, @to_port = args[:destination].split ':'
       @from_user = args[:from_user] || "sipp"
     end
