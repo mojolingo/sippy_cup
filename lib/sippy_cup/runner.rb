@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'logger'
+require 'fileutils'
 
 #
 # Service object to oversee the execution of a Scenario
@@ -76,6 +77,14 @@ module SippyCup
       end
       @logger.info "Statistics logged at #{File.expand_path @scenario_options[:stats_file]}" if @scenario_options[:stats_file]
 
+      if @scenario_options[:summary_report_file]
+        input_file_path = File.dirname @input_files[:scenario].path
+        input_file_basename = File.basename @input_files[:scenario].path, 'xml'
+        screen_file = "#{input_file_path}/#{input_file_basename}_#{@sipp_pid}_screen.log"
+        FileUtils.cp "#{screen_file}", @scenario_options[:summary_report_file]
+        FileUtils.rm screens_file rescue nil
+      end
+
       final_result
     ensure
       cleanup_input_files
@@ -110,6 +119,10 @@ module SippyCup
         options[:trace_stat] = nil
         options[:stf] = @scenario_options[:stats_file]
         options[:fd] = @scenario_options[:stats_interval] || 1
+      end
+
+      if @scenario_options[:summary_report_file]
+        options[:trace_screen] = nil
       end
 
       if @scenario_options[:transport_mode]
