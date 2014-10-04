@@ -77,14 +77,6 @@ module SippyCup
       end
       @logger.info "Statistics logged at #{File.expand_path @scenario_options[:stats_file]}" if @scenario_options[:stats_file]
 
-      if @scenario_options[:summary_report_file]
-        input_file_path = File.dirname @input_files[:scenario].path
-        input_file_basename = File.basename @input_files[:scenario].path, 'xml'
-        screen_file = "#{input_file_path}/#{input_file_basename}_#{@sipp_pid}_screen.log"
-        FileUtils.cp "#{screen_file}", @scenario_options[:summary_report_file]
-        FileUtils.rm screens_file rescue nil
-      end
-
       final_result
     ensure
       cleanup_input_files
@@ -123,6 +115,7 @@ module SippyCup
 
       if @scenario_options[:summary_report_file]
         options[:trace_screen] = nil
+        options[:screen_file] = @scenario_options[:summary_report_file]
       end
 
       if @scenario_options[:transport_mode]
