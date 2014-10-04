@@ -167,7 +167,7 @@ module SippyCup
       @input_files.values.compact.each do |value|
         value.close
         value.unlink
-      end
+      end if @input_files
     end
   end
 
