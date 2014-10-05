@@ -118,6 +118,11 @@ module SippyCup
         options[:screen_file] = @scenario_options[:summary_report_file]
       end
 
+      if @scenario_options[:errors_report_file]
+        options[:trace_err] = nil
+        options[:error_file] = @scenario_options[:errors_report_file]
+      end
+
       if @scenario_options[:transport_mode]
         options[:t] = @scenario_options[:transport_mode]
       end

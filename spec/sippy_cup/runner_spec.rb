@@ -297,6 +297,34 @@ steps:
       end
     end
 
+    context "specifying a errors report file in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+errors_report_file: errors.txt
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should turn on -trace_err and set the -error_file option to the filename provided' do
+        expect_command_execution(/-trace_err -error_file errors.txt/)
+        subject.run
+      end
+    end
+
     context "specifying a variables file" do
       let(:manifest) do
         <<-MANIFEST

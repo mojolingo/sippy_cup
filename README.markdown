@@ -200,7 +200,10 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
 
   <dt>summary_report_file</dt>
-  <dd>Write a summary of the SIPp run to this file. This summary is the equivalent of the output from the SIPp `-trace_screen` command. Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/106.</dd>
+  <dd>Write a summary of the SIPp run to the specified file. This summary is the output from the SIPp `-trace_screen` command. Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/106.</dd>
+
+  <dt>errors_report_file</dt>
+  <dd>Record SIPp's errors to the specified file. This report is the output from the SIPp `-trace_err` command.</dd>
 
   <dt>options</dt>
   <dd>A string of SIPp command line options included with the SIPp run.</dd>
