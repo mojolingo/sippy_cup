@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'logger'
+require 'fileutils'
 
 #
 # Service object to oversee the execution of a Scenario
@@ -110,6 +111,11 @@ module SippyCup
         options[:trace_stat] = nil
         options[:stf] = @scenario_options[:stats_file]
         options[:fd] = @scenario_options[:stats_interval] || 1
+      end
+
+      if @scenario_options[:summary_report_file]
+        options[:trace_screen] = nil
+        options[:screen_file] = @scenario_options[:summary_report_file]
       end
 
       if @scenario_options[:transport_mode]

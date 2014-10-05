@@ -261,6 +261,34 @@ steps:
       end
     end
 
+    context "specifying a summary report file in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+max_concurrent: 5
+calls_per_second: 2
+number_of_calls: 10
+summary_report_file: report.txt
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should turn on -trace_screen and set the -screen_file option to the filename provided' do
+        expect_command_execution(/-trace_screen -screen_file report.txt/)
+        subject.run
+      end
+    end
+
     context "no stats file" do
       it 'does not log a statistics file path' do
         logger.should_receive(:info).with(/Statistics logged at/).never

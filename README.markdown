@@ -179,6 +179,7 @@ This will create the files `somewhere.xml` and `somewhere.pcap` in the `/path/to
 ### Customizing the Test Run
 
 Each parameter has an impact on the test, and may either be changed once the XML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
+
 <dl>
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
@@ -197,6 +198,9 @@ Each parameter has an impact on the test, and may either be changed once the XML
 
   <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
+
+  <dt>summary_report_file</dt>
+  <dd>Write a summary of the SIPp run to this file. This summary is the equivalent of the output from the SIPp `-trace_screen` command. Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/106.</dd>
 
   <dt>options</dt>
   <dd>A string of SIPp command line options included with the SIPp run.</dd>
