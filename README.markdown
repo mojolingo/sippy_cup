@@ -217,6 +217,9 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
 
+  <dt>concurrent_max</dt>
+  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Default: 5</dd>
+
   <dt>calls_per_second</dt>
   <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Default: 10</dt>
 

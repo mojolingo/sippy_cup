@@ -20,7 +20,7 @@ describe SippyCup::Runner do
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 steps:
@@ -89,7 +89,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 options:
@@ -119,7 +119,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 source_port: 1234
@@ -147,7 +147,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 from_user: pat
@@ -176,7 +176,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 media_port: 6000
@@ -204,7 +204,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 stats_file: stats.csv
@@ -231,7 +231,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 stats_file: stats.csv
@@ -275,7 +275,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 summary_report_file: report.txt
@@ -303,7 +303,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 errors_report_file: errors.txt
@@ -361,7 +361,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 scenario_variables: /path/to/vars.csv
@@ -391,7 +391,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-max_concurrent: 5
+concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 transport_mode: t1
