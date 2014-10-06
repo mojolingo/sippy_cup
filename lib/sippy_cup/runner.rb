@@ -107,6 +107,12 @@ module SippyCup
       options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
 
+      if @scenario_options[:calls_per_second_max]
+        options[:no_rate_quit] = nil
+        options[:rate_max] = @scenario_options[:calls_per_second_max]
+        options[:rate_increase] = @scenario_options[:calls_per_second_incr] || 1
+      end
+
       if @scenario_options[:stats_file]
         options[:trace_stat] = nil
         options[:stf] = @scenario_options[:stats_file]

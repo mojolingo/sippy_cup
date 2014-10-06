@@ -325,6 +325,36 @@ steps:
       end
     end
 
+    context "specifying rate increase options" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+concurrent_max: 5
+calls_per_second: 2
+calls_per_second_max: 5
+calls_per_second_incr: 2
+number_of_calls: 10
+errors_report_file: errors.txt
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should not terminate the test when reaching the rate limit and set the rate limit and increase appropriately' do
+        expect_command_execution(/-no_rate_quit -rate_max 5 -rate_increase 2/)
+        subject.run
+      end
+    end
+
     context "specifying a variables file" do
       let(:manifest) do
         <<-MANIFEST
