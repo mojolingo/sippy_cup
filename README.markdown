@@ -241,7 +241,10 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Defaults to SIP's default of 10</dt>
 
   <dt>calls_per_second_incr</dt>
-  <dd>When used with `calls_per_second_max`, tells SIPp the amount by which `calls_per_second` should be incremented. CPS rate is adjusted each `stats_interval`. Default: 1</dd>
+  <dd>When used with `calls_per_second_max`, tells SIPp the amount by which `calls_per_second` should be incremented. CPS rate is adjusted each `calls_per_second_interval`. Default: 1.</dd>
+
+  <dt>calls_per_second_interval</dt>
+  <dd>When used with `calls_per_second_max`, tells SIPp the time interval (in seconds) by which calls-per-second should be incremented. Default: Unset; SIPp's default (60s). NOTE: Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/107</dd>
 
   <dt>calls_per_second_max</dt>
   <dd>The maximum rate of calls-per-second. Default: unused (`calls_per_second` will not change)</dd>

@@ -114,6 +114,7 @@ module SippyCup
         options[:no_rate_quit] = nil
         options[:rate_max] = @scenario_options[:calls_per_second_max]
         options[:rate_increase] = @scenario_options[:calls_per_second_incr] || 1
+        options[:rate_interval] = @scenario_options[:calls_per_second_interval] if @scenario_options[:calls_per_second_interval]
       end
 
       if @scenario_options[:stats_file]
