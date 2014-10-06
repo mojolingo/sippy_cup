@@ -212,7 +212,7 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
 
   <dt>dtmf_mode</dt>
-  <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO.</dd>
+  <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO. Default: rfc2833</dd>
 
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
