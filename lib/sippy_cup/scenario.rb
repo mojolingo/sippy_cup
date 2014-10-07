@@ -12,6 +12,7 @@ module SippyCup
     USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
+    DEFAULT_RETRANS = 500
 
     #
     # Build a scenario based on either a manifest string or a file handle. Manifests are supplied in YAML format.
@@ -189,7 +190,7 @@ a=fmtp:101 0-15
     #   s.register 'frank'
     #
     def register(user, password = nil, opts = {})
-      opts[:retrans] ||= 500
+      opts[:retrans] ||= DEFAULT_RETRANS
       user, domain = parse_user user
       msg = if password
         register_auth domain, user, password
