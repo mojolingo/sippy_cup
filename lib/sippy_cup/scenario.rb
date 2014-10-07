@@ -367,7 +367,7 @@ a=rtpmap:0 PCMU/8000
     end
 
     #
-    # Acknowledge a received answer message (SIP 200) and start media playback
+    # Acknowledge a received answer message and start media playback
     #
     # @param [Hash] opts A set of options to modify the message parameters
     #
