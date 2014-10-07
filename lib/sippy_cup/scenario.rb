@@ -521,6 +521,7 @@ Content-Length: 0
     def to_tmpfiles
       unless @media.empty?
         media_file = Tempfile.new 'media'
+        media_file.binmode
         media_file.write compile_media.to_s
         media_file.rewind
       end
