@@ -124,11 +124,10 @@ module SippyCup
       raise ArgumentError, "Must provide scenario steps" unless steps
       steps.each_with_index do |step, index|
         begin
-          instruction, arg = step.split ' ', 2
-          if arg && !arg.empty?
-            # Strip leading/trailing quotes if present
-            arg.gsub!(/^'|^"|'$|"$/, '')
-            self.__send__ instruction, arg
+          instruction, args = step.split ' ', 2
+          args = split_quoted_string args
+          if args && !args.empty?
+            self.__send__ instruction, *args
           else
             self.__send__ instruction
           end
@@ -542,6 +541,12 @@ Content-Length: 0
       user, domain = user.split("@")
       domain ||= "[remote_ip]"
       [user, domain]
+    end
+
+    # Split a string into space-delimited components, optionally allowing quoted groups
+    # Example: cars "cats and dogs" fish 'hammers' => ["cars", "cats and dogs", "fish", "hammers"]
+    def split_quoted_string(args)
+      args.to_s.scan(/'.+?'|".+?"|[^ ]+/).map { |s| s.gsub /^['"]|['"]$/, '' }
     end
 
     def doc

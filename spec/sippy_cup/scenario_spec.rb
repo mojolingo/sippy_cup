@@ -673,6 +673,23 @@ Content-Length: 0
       end
     end
 
+    context "having steps with arguments" do
+      let(:steps) do
+        [
+          %q(register 'user@domain.com' "my password has spaces"),
+          %q(sleep 3),
+          %q(send_digits 12345)
+        ]
+      end
+
+      it "each method should receive the correct arguments" do
+        subject.should_receive(:register).once.ordered.with('user@domain.com', 'my password has spaces')
+        subject.should_receive(:sleep).once.ordered.with('3')
+        subject.should_receive(:send_digits).once.ordered.with('12345')
+        subject.build steps
+      end
+    end
+
     context "with an invalid steps definition" do
       let(:steps) { ["send_digits 'b'"] }
 
