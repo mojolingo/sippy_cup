@@ -3,6 +3,7 @@ require 'nokogiri'
 require 'psych'
 require 'active_support/core_ext/hash'
 require 'tempfile'
+require 'set'
 
 module SippyCup
   #
@@ -105,6 +106,8 @@ module SippyCup
       @filename = File.expand_path @filename, Dir.pwd
       @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
       @message_variables = 0
+      # Reference variables don't generate warnings/errors if unused in the scenario
+      @reference_variables = Set.new
       @media_nodes = []
       @errors = []
 
@@ -464,18 +467,17 @@ Duration=#{delay}
       if regexp
         action = Nokogiri::XML::Node.new 'action', doc
         ereg = Nokogiri::XML::Node.new 'ereg', doc
-        ref = Nokogiri::XML::Node.new 'Reference', doc
 
         ereg['regexp'] = regexp
         ereg['search_in'] = 'body'
         ereg['check_it'] = true
 
         var = "message_#{@message_variables += 1}"
-        ereg['assign_to'] = ref['variables'] = var
+        ereg['assign_to'] = var
+        @reference_variables << var
 
         action << ereg
         recv << action
-        scenario_node << ref
       end
 
       okay
@@ -565,6 +567,13 @@ Content-Length: 0
         else
           exec = nopdup.xpath("./action/exec").first
           exec['play_pcap_audio'] = pcap_path
+        end
+      end
+
+      unless @reference_variables.empty?
+        scenario_node = docdup.xpath('scenario').first
+        scenario_node << docdup.create_element('Reference') do |ref|
+          ref[:variables] = @reference_variables.to_a.join ','
         end
       end
 
