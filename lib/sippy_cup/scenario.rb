@@ -339,7 +339,7 @@ a=rtpmap:0 PCMU/8000
     #
     def receive_answer(opts = {})
       options = {
-        rrs: true, # Record Record Set: Make the Route headers available via [route] later
+        rrs: true, # Record Record Set: Make the Route headers available via [routes] later
         rtd: true # Response Time Duration: Record the response time
       }
 
