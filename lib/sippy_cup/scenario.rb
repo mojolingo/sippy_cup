@@ -152,15 +152,18 @@ module SippyCup
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
+      from_addr = "#{@from_user}@[local_ip]"
+      to_addr   = "[service]@[remote_ip]:[remote_port]"
+      contact   = "#{@from_user}@[local_ip]:[local_port];transport=[transport]"
       msg = <<-MSG
 
 INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>
+From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
+To: <sip:#{to_addr}>
 Call-ID: [call_id]
 CSeq: [cseq] INVITE
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:#{contact}>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Type: application/sdp
@@ -176,7 +179,22 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
       MSG
-      send msg, opts
+      send msg, opts do |send|
+        send << doc.create_element('action') do |action|
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "invite_to"
+            assignstr['value']     = to_addr
+          end
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "invite_from"
+            assignstr['value']     = from_addr
+          end
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "invite_contact"
+            assignstr['value']     = contact
+          end
+        end
+      end
     end
 
     #
@@ -209,8 +227,32 @@ a=fmtp:101 0-15
     # @param [Hash] opts A set of options containing SIPp <recv> element attributes
     #
     def receive_invite(opts = {})
-      recv opts.merge request: 'INVITE'
+      recv(opts.merge(request: 'INVITE', rrs: true)) do |recv|
+        action = doc.create_element('action') do |action|
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = ': (.*)'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'From'
+            ereg['assign_to'] = 'dummy,invite_from'
+          end
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = ': (.*)'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'To'
+            ereg['assign_to'] = 'dummy,invite_to'
+          end
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = 'sip:(.*)>'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'Contact'
+            ereg['assign_to'] = 'dummy,invite_contact'
+            @reference_variables << 'dummy'
+          end
+        end
+        recv << action
+      end
     end
+    alias :wait_for_call :receive_invite
 
     #
     # Send a "100 Trying" response
@@ -491,13 +533,12 @@ Duration=#{delay}
     def send_bye(opts = {})
       msg = <<-MSG
 
-BYE [next_url] SIP/2.0
+BYE sip:[$invite_contact] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+From: [$invite_to];tag=[call_number]
+To: [$invite_from]
 Call-ID: [call_id]
 CSeq: [cseq] BYE
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -547,6 +588,16 @@ Content-Length: 0
     def wait_for_hangup(opts = {})
       receive_bye(opts)
       ack_bye(opts)
+    end
+
+    #
+    # Shortcut to send a BYE and wait for the acknowledgement
+    #
+    # @param [Hash] opts A set of options containing SIPp <recv> element attributes - will be passed to both the <send> and <recv> elements
+    #
+    def hangup(opts = {})
+      send_bye opts
+      receive_ok opts
     end
 
     #
@@ -749,6 +800,7 @@ Content-Length: 0
       send << "\n"
       send << Nokogiri::XML::CDATA.new(doc, msg)
       send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
+      yield send if block_given?
       scenario_node << send
     end
 
@@ -758,6 +810,7 @@ Content-Length: 0
       opts.each do |k,v|
         recv[k.to_s] = v
       end
+      yield recv if block_given?
       scenario_node << recv
     end
 
