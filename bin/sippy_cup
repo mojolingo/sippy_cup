@@ -60,7 +60,15 @@ unless compile || run
 end
 
 scenario = SippyCup::Scenario.from_manifest File.read(manifest_path), input_filename: manifest_path
-scenario.compile! if compile
+if scenario.valid?
+  scenario.compile! if compile
+else
+  $stderr.puts "Errors encountered while building the scenario!"
+  puts "Step\tError Message"
+  scenario.errors.each do |error|
+    puts "#{error[:step]}\t#{error[:message]}"
+  end
+end
 
 if run
   runner = SippyCup::Runner.new scenario
