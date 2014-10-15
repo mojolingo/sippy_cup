@@ -14,11 +14,6 @@ describe SippyCup::Scenario do
 
   subject(:scenario) { described_class.new 'Test', default_args.merge(args) }
 
-  it "creates a media stream on initialization" do
-    SippyCup::Media.should_receive(:new).once
-    subject
-  end
-
   it "takes a block to generate a scenario" do
     s = described_class.new 'Test', default_args do
       invite
@@ -268,10 +263,14 @@ describe SippyCup::Scenario do
     end
 
     context "when media is present" do
-      before { subject.sleep 1 }
+      before do
+        subject.answer
+        subject.sleep 1
+      end
 
       it "starts the PCAP media" do
         subject.ack_answer
+        subject.sleep 1
         subject.to_xml(:pcap_path => "/dev/null").should match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
       end
     end
@@ -362,22 +361,10 @@ describe SippyCup::Scenario do
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
 
-    context "when a from user is specified" do
-      let(:args) { {from_user: 'frank'} }
-
-      it "includes the specified user in the From and Contact headers" do
-        subject.send_bye
-        subject.to_xml.should match(%r{From: "frank" <sip:frank@})
-        subject.to_xml.should match(%r{Contact: <sip:frank@})
-      end
-    end
-
-    context "when no from user is specified" do
-      it "uses a default of 'sipp' in the From and Contact headers" do
-        subject.send_bye
-        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@})
-        subject.to_xml.should match(%r{Contact: <sip:sipp@})
-      end
+    it "uses a default of 'sipp' in the From and Contact headers" do
+      subject.send_bye
+      subject.to_xml.should match(%r{From: \[\$invite_to\];tag=\[call_number\]})
+      subject.to_xml.should match(%r{Contact: \[\$invite_contact\]})
     end
   end
 
@@ -438,6 +425,7 @@ describe SippyCup::Scenario do
     let(:media) { double :media }
     before do
       SippyCup::Media.should_receive(:new).once.and_return media
+      scenario.ack_answer
       media.stub :<<
     end
 
@@ -485,6 +473,7 @@ describe SippyCup::Scenario do
 
   describe "#send_digits with a SIP INFO DTMF mode" do
     let(:args) { {dtmf_mode: 'info'} }
+    before { scenario.answer }
 
     it "creates the requested DTMF string as SIP INFO messages" do
       scenario.send_digits '136'
@@ -516,6 +505,7 @@ describe SippyCup::Scenario do
       end
 
       it "writes the PCAP media to disk at name.pcap" do
+        scenario.ack_answer
         scenario.send_digits '123'
 
         scenario.compile!
@@ -540,6 +530,7 @@ describe SippyCup::Scenario do
       end
 
       it "writes the PCAP media to disk at filename.pcap" do
+        scenario.ack_answer
         scenario.send_digits '123'
 
         scenario.compile!
@@ -575,7 +566,10 @@ describe SippyCup::Scenario do
     end
 
     context "with media" do
-      before { scenario.sleep 1 }
+      before do
+        scenario.ack_answer
+        scenario.sleep 1
+      end
 
       it "writes the PCAP media to a Tempfile and returns it" do
         files = scenario.to_tmpfiles
@@ -589,7 +583,6 @@ describe SippyCup::Scenario do
       end
 
       it "puts the PCAP file path into the scenario XML" do
-        scenario.ack_answer
         files = scenario.to_tmpfiles
         files[:scenario].read.should match(%r{play_pcap_audio="#{files[:media].path}"})
       end
@@ -624,7 +617,7 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
-</send>
+<action><assignstr assign_to="invite_to" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="invite_from" value="sipp@[local_ip]"/><assignstr assign_to="invite_contact" value="sipp@[local_ip]:[local_port];transport=[transport]"/></action></send>
   <recv response="100" optional="true"/>
   <recv response="180" optional="true"/>
   <recv response="183" optional="true"/>
@@ -749,7 +742,7 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
-</send>
+<action><assignstr assign_to="invite_to" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="invite_from" value="#{specs_from}@[local_ip]"/><assignstr assign_to="invite_contact" value="#{specs_from}@[local_ip]:[local_port];transport=[transport]"/></action></send>
   <recv response="100" optional="true"/>
   <recv response="180" optional="true"/>
   <recv response="183" optional="true"/>

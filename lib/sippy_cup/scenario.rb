@@ -542,6 +542,7 @@ BYE sip:[$invite_contact] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: [$invite_to];tag=[call_number]
 To: [$invite_from]
+Contact: [$invite_contact]
 Call-ID: [call_id]
 CSeq: [cseq] BYE
 Max-Forwards: 100
@@ -679,7 +680,7 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      unless @media.empty?
+      unless @media.nil? || @media.empty?
         media_file = Tempfile.new 'media'
         media_file.binmode
         media_file.write compile_media.to_s
