@@ -104,7 +104,7 @@ module SippyCup
       @scenario_options = args.merge name: name
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
-      @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
+      @media = nil
       @message_variables = 0
       # Reference variables don't generate warnings/errors if unused in the scenario
       @reference_variables = Set.new
@@ -314,6 +314,7 @@ SIP/2.0 200 Ok
 Server: #{USER_AGENT}
 Contact: <sip:[local_ip]:[local_port];transport=[transport]>
 Content-Type: application/sdp
+[routes]
 Content-Length: [len]
 
 v=0
@@ -324,11 +325,14 @@ t=0 0
 m=audio [media_port] RTP/AVP 0
 a=rtpmap:0 PCMU/8000
       MSG
+      start_media
       send msg, opts
     end
 
     #
     # Helper method to answer an INVITE and expect the ACK
+    #
+    # @param [Hash] opts A set of options containing SIPp element attributes - will be passed to both the <send> and <recv> elements
     #
     def answer(opts = {})
       send_answer opts
@@ -443,7 +447,7 @@ Content-Length: 0
     def sleep(seconds)
       milliseconds = (seconds.to_f * MSEC).to_i
       pause milliseconds
-      @media << "silence:#{milliseconds}"
+      @media << "silence:#{milliseconds}" if @media
     end
 
     #
@@ -458,6 +462,7 @@ Content-Length: 0
     #   send_digits '1234'
     #
     def send_digits(digits)
+      raise "Media not started" unless @media
       delay = (0.250 * MSEC).to_i # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
@@ -648,7 +653,7 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      unless @media.empty?
+      unless @media.nil?
         print "Compiling media to #{@filename}.pcap..."
         compile_media.to_file filename: "#{@filename}.pcap"
         puts "done."
@@ -736,6 +741,7 @@ Content-Length: 0
     end
 
     def compile_media
+      raise "Media not started" unless @media
       @media.compile!
     end
 
@@ -776,6 +782,7 @@ Content-Length: 0
     end
 
     def start_media
+      @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 44444
       nop = doc.create_element('nop') { |nop|
         nop << doc.create_element('action') { |action|
           action << doc.create_element('exec')

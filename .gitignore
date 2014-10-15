@@ -5,3 +5,6 @@
 Gemfile.lock
 .ruby-gemset
 tmp/
+/examples/*.xml
+/examples/*.pcap
+/examples/*.log
