@@ -298,6 +298,8 @@ Content-Length: 0
     #
     # Answer an incoming call
     #
+    # @param [Hash] opts A set of options containing SIPp <send> element attributes
+    #
     def send_answer(opts = {})
       opts[:retrans] ||= DEFAULT_RETRANS
       msg = <<-MSG
