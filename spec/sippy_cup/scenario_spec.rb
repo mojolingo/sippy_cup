@@ -97,7 +97,7 @@ describe SippyCup::Scenario do
     it "sends a REGISTER message" do
       subject.register 'frank'
 
-      subject.to_xml.should match(%r{<send .*>})
+      subject.to_xml.should match(%r{<send.*>})
       subject.to_xml.should match(%r{REGISTER})
     end
 
@@ -293,6 +293,8 @@ describe SippyCup::Scenario do
       xml.should =~ /recv response="183".*optional="true"/
       xml.should =~ /recv response="200"/
       xml.should_not =~ /recv response="200".*optional="true"/
+      xml.should match(%r{<send>})
+      xml.should match(%r{ACK})
     end
 
     it "passes through additional options" do
@@ -303,6 +305,8 @@ describe SippyCup::Scenario do
       xml.should =~ /recv .*foo="bar".*response="180"/
       xml.should =~ /recv .*foo="bar".*response="183"/
       xml.should =~ /recv .*response="200" .*foo="bar"/
+      xml.should match(%r{<send.*foo="bar".*>})
+      xml.should match(%r{ACK})
     end
   end
 
@@ -623,7 +627,7 @@ Content-Length: 0
     end
 
     context "with a valid steps definition" do
-      let(:steps) { ['invite', 'wait_for_answer', 'ack_answer', 'wait_for_hangup'] }
+      let(:steps) { ['invite', 'wait_for_answer', 'wait_for_hangup'] }
 
       it "runs each step" do
         subject.build(steps)
@@ -671,7 +675,6 @@ from_user: #{specs_from}
 steps:
   - invite
   - wait_for_answer
-  - ack_answer
   - sleep 3
   - send_digits '3125551234'
   - sleep 5
@@ -840,7 +843,6 @@ from_user: #{specs_from}
 steps:
 - invite
 - wait_for_answer
-- ack_answer
 - sleep 3
 - send_digits '3125551234'
 - sleep 5
@@ -874,7 +876,6 @@ from_user: #{specs_from}
 steps:
   - invite
   - wait_for_answer
-  - ack_answer
   - sleep 3
   - send_digits '3125551234'
   - sleep 5
@@ -924,9 +925,8 @@ from_user: #{specs_from}
 steps:
   - invite
   - wait_for_answer
-  - ack_answer
   - sleep 3
-  - send_digits 'abc'
+  - send_digits 'xyz'
   - sleep 5
   - send_digits '#'
   - wait_for_hangup
@@ -944,7 +944,7 @@ steps:
 
       it "sets the error messages for the scenario" do
         scenario = SippyCup::Scenario.from_manifest(scenario_yaml)
-        scenario.errors.should == [{step: 5, message: "send_digits 'abc': Invalid DTMF digit requested: a"}]
+        scenario.errors.should == [{step: 4, message: "send_digits 'xyz': Invalid DTMF digit requested: x"}]
       end
     end
   end

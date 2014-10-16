@@ -413,7 +413,10 @@ a=rtpmap:0 PCMU/8000
     alias :receive_200 :receive_ok
 
     #
-    # Shortcut that sets expectations for optional SIP 100, 180 and 183, followed by a required 200.
+    # Convenience method to wait for an answer from the called party
+    #
+    # This sets expectations for optional SIP 100, 180 and 183,
+    # followed by a required 200 and sending the acknowledgement.
     #
     # @param [Hash] opts A set of options to modify the expectations
     #
@@ -422,6 +425,7 @@ a=rtpmap:0 PCMU/8000
       receive_ringing opts
       receive_progress opts
       receive_answer opts
+      ack_answer opts
     end
 
     #

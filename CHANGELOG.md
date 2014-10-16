@@ -1,8 +1,12 @@
 # develop
+SYNTAX CHANGES!
+This is a backward incompatible change. If upgrading from Sippy Cup 0.4.0 please see the [documentation](http://mojolingo.github.io/sippy_cup/#available-scenario-steps) and the `Change` items below.
+You will also need to compile the latest [SIPp from Github](https://github.com/sipp/sipp) to make use of all the features.
   * Feature: Add support for saving screen and error reports to specified files
   * Feature: Add support for UAS actions (waiting for an incoming call)
   * Bugfix: Much improved support for sending a hangup from SIPp, rather than waiting for the far end to do it
   * Bugfix: If scenario compilation fails on the CLI, explain why
+  * Change: `wait_for_answer` now includes `ack_answer`
   * Documentation: Create `examples/` directory with example scenarios
 
 # [0.4.1](https://github.com/bklang/sippy_cup/compare/v0.4.0...v0.4.1)
