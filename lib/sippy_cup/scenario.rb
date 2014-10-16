@@ -3,6 +3,7 @@ require 'nokogiri'
 require 'psych'
 require 'active_support/core_ext/hash'
 require 'tempfile'
+require 'set'
 
 module SippyCup
   #
@@ -12,6 +13,7 @@ module SippyCup
     USER_AGENT = "SIPp/sippy_cup"
     VALID_DTMF = %w{0 1 2 3 4 5 6 7 8 9 0 * # A B C D}.freeze
     MSEC = 1_000
+    DEFAULT_RETRANS = 500
 
     #
     # Build a scenario based on either a manifest string or a file handle. Manifests are supplied in YAML format.
@@ -102,8 +104,10 @@ module SippyCup
       @scenario_options = args.merge name: name
       @filename = args[:filename] || name.downcase.gsub(/\W+/, '_')
       @filename = File.expand_path @filename, Dir.pwd
-      @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 5060
+      @media = nil
       @message_variables = 0
+      # Reference variables don't generate warnings/errors if unused in the scenario
+      @reference_variables = Set.new
       @media_nodes = []
       @errors = []
 
@@ -148,15 +152,17 @@ module SippyCup
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
+      from_addr = "#{@from_user}@[local_ip]:[local_port]"
+      to_addr   = "[service]@[remote_ip]:[remote_port]"
       msg = <<-MSG
 
-INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+INVITE sip:#{to_addr} SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>
+From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
+To: <sip:#{to_addr}>
 Call-ID: [call_id]
 CSeq: [cseq] INVITE
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:#{from_addr};transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Type: application/sdp
@@ -172,7 +178,22 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
       MSG
-      send msg, opts
+      send msg, opts do |send|
+        send << doc.create_element('action') do |action|
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "remote_addr"
+            assignstr['value']     = to_addr
+          end
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "local_addr"
+            assignstr['value']     = from_addr
+          end
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "call_addr"
+            assignstr['value']     = to_addr
+          end
+        end
+      end
     end
 
     #
@@ -189,7 +210,7 @@ a=fmtp:101 0-15
     #   s.register 'frank'
     #
     def register(user, password = nil, opts = {})
-      opts[:retrans] ||= 500
+      opts[:retrans] ||= DEFAULT_RETRANS
       user, domain = parse_user user
       msg = if password
         register_auth domain, user, password
@@ -197,6 +218,128 @@ a=fmtp:101 0-15
         register_message domain, user
       end
       send msg, opts
+    end
+
+    #
+    # Expect to receive a SIP INVITE
+    #
+    # @param [Hash] opts A set of options containing SIPp <recv> element attributes
+    #
+    def receive_invite(opts = {})
+      recv(opts.merge(request: 'INVITE', rrs: true)) do |recv|
+        action = doc.create_element('action') do |action|
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = '<sip:(.*)>.*;tag=([^;]*)'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'From:'
+            ereg['assign_to'] = 'dummy,remote_addr,remote_tag'
+          end
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = '<sip:(.*)>'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'To:'
+            ereg['assign_to'] = 'dummy,local_addr'
+          end
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "call_addr"
+            assignstr['value']     = "[$local_addr]"
+          end
+        end
+        recv << action
+      end
+      @reference_variables << 'dummy'
+    end
+    alias :wait_for_call :receive_invite
+
+    #
+    # Send a "100 Trying" response
+    #
+    # @param [Hash] opts A set of options containing SIPp <recv> element attributes
+    #
+    def send_trying(opts = {})
+      msg = <<-MSG
+
+SIP/2.0 100 Trying
+[last_Via:]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
+[last_Call-ID:]
+[last_CSeq:]
+Server: #{USER_AGENT}
+Contact: <sip:[$local_addr];transport=[transport]>
+Content-Length: 0
+      MSG
+      send msg, opts
+    end
+    alias :send_100 :send_trying
+
+    #
+    # Send a "180 Ringing" response
+    #
+    # @param [Hash] opts A set of options containing SIPp <recv> element attributes
+    #
+    def send_ringing(opts = {})
+      msg = <<-MSG
+
+SIP/2.0 180 Ringing
+[last_Via:]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
+[last_Call-ID:]
+[last_CSeq:]
+Server: #{USER_AGENT}
+Contact: <sip:[$local_addr];transport=[transport]>
+Content-Length: 0
+      MSG
+      send msg, opts
+    end
+    alias :send_180 :send_ringing
+
+    #
+    # Answer an incoming call
+    #
+    # @param [Hash] opts A set of options containing SIPp <send> element attributes
+    #
+    def send_answer(opts = {})
+      opts[:retrans] ||= DEFAULT_RETRANS
+      msg = <<-MSG
+
+SIP/2.0 200 Ok
+[last_Via:]
+From: <sip:[$remote_addr]>;tag=[$remote_tag]
+To: <sip:[$local_addr]>;tag=[call_number]
+[last_Call-ID:]
+[last_CSeq:]
+Server: #{USER_AGENT}
+Contact: <sip:[$local_addr];transport=[transport]>
+Content-Type: application/sdp
+[routes]
+Content-Length: [len]
+
+v=0
+o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+s=-
+c=IN IP[media_ip_type] [media_ip]
+t=0 0
+m=audio [media_port] RTP/AVP 0
+a=rtpmap:0 PCMU/8000
+      MSG
+      start_media
+      send msg, opts
+    end
+
+    #
+    # Helper method to answer an INVITE and expect the ACK
+    #
+    # @param [Hash] opts A set of options containing SIPp element attributes - will be passed to both the <send> and <recv> elements
+    #
+    def answer(opts = {})
+      send_answer opts
+      receive_ack opts
+    end
+
+    def receive_ack(opts = {})
+      recv opts.merge request: 'ACK'
     end
 
     #
@@ -241,11 +384,21 @@ a=fmtp:101 0-15
     #
     def receive_answer(opts = {})
       options = {
-        rrs: true, # Record Record Set: Make the Route headers available via [route] later
+        rrs: true, # Record Record Set: Make the Route headers available via [routes] later
         rtd: true # Response Time Duration: Record the response time
       }
 
-      receive_200 options.merge(opts)
+      receive_200(options.merge(opts)) do |recv|
+        recv << doc.create_element('action') do |action|
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = '<sip:(.*)>.*;tag=([^;]*)'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'To:'
+            ereg['assign_to'] = 'dummy,remote_addr,remote_tag'
+          end
+        end
+      end
+      @reference_variables << 'dummy'
     end
 
     #
@@ -254,8 +407,8 @@ a=fmtp:101 0-15
     # @param [Hash] opts A set of options to modify the expectation
     # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
     #
-    def receive_ok(opts = {})
-      recv({ response: 200 }.merge(opts))
+    def receive_ok(opts = {}, &block)
+      recv({ response: 200 }.merge(opts), &block)
     end
     alias :receive_200 :receive_ok
 
@@ -272,7 +425,7 @@ a=fmtp:101 0-15
     end
 
     #
-    # Acknowledge a received answer message (SIP 200) and start media playback
+    # Acknowledge a received answer message and start media playback
     #
     # @param [Hash] opts A set of options to modify the message parameters
     #
@@ -281,11 +434,11 @@ a=fmtp:101 0-15
 
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -303,7 +456,7 @@ Content-Length: 0
     def sleep(seconds)
       milliseconds = (seconds.to_f * MSEC).to_i
       pause milliseconds
-      @media << "silence:#{milliseconds}"
+      @media << "silence:#{milliseconds}" if @media
     end
 
     #
@@ -318,6 +471,7 @@ Content-Length: 0
     #   send_digits '1234'
     #
     def send_digits(digits)
+      raise "Media not started" unless @media
       delay = (0.250 * MSEC).to_i # FIXME: Need to pass this down to the media layer
       digits.split('').each do |digit|
         raise ArgumentError, "Invalid DTMF digit requested: #{digit}" unless VALID_DTMF.include? digit
@@ -331,11 +485,11 @@ Content-Length: 0
 
 INFO [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] INFO
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 [routes]
@@ -369,18 +523,17 @@ Duration=#{delay}
       if regexp
         action = Nokogiri::XML::Node.new 'action', doc
         ereg = Nokogiri::XML::Node.new 'ereg', doc
-        ref = Nokogiri::XML::Node.new 'Reference', doc
 
         ereg['regexp'] = regexp
         ereg['search_in'] = 'body'
         ereg['check_it'] = true
 
         var = "message_#{@message_variables += 1}"
-        ereg['assign_to'] = ref['variables'] = var
+        ereg['assign_to'] = var
+        @reference_variables << var
 
         action << ereg
         recv << action
-        scenario_node << ref
       end
 
       okay
@@ -394,13 +547,13 @@ Duration=#{delay}
     def send_bye(opts = {})
       msg = <<-MSG
 
-BYE [next_url] SIP/2.0
+BYE sip:[$call_addr] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
+Contact: <sip:[$local_addr];transport=[transport]>
 Call-ID: [call_id]
 CSeq: [cseq] BYE
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -432,7 +585,7 @@ SIP/2.0 200 OK
 [last_To:]
 [last_Call-ID:]
 [last_CSeq:]
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -450,6 +603,16 @@ Content-Length: 0
     def wait_for_hangup(opts = {})
       receive_bye(opts)
       ack_bye(opts)
+    end
+
+    #
+    # Shortcut to send a BYE and wait for the acknowledgement
+    #
+    # @param [Hash] opts A set of options containing SIPp <recv> element attributes - will be passed to both the <send> and <recv> elements
+    #
+    def hangup(opts = {})
+      send_bye opts
+      receive_ok opts
     end
 
     #
@@ -473,6 +636,13 @@ Content-Length: 0
         end
       end
 
+      unless @reference_variables.empty?
+        scenario_node = docdup.xpath('scenario').first
+        scenario_node << docdup.create_element('Reference') do |ref|
+          ref[:variables] = @reference_variables.to_a.join ','
+        end
+      end
+
       docdup.to_xml
     end
 
@@ -493,7 +663,7 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      unless @media.empty?
+      unless @media.nil?
         print "Compiling media to #{@filename}.pcap..."
         compile_media.to_file filename: "#{@filename}.pcap"
         puts "done."
@@ -519,7 +689,7 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      unless @media.empty?
+      unless @media.nil? || @media.empty?
         media_file = Tempfile.new 'media'
         media_file.binmode
         media_file.write compile_media.to_s
@@ -581,6 +751,7 @@ Content-Length: 0
     end
 
     def compile_media
+      raise "Media not started" unless @media
       @media.compile!
     end
 
@@ -621,6 +792,7 @@ Content-Length: 0
     end
 
     def start_media
+      @media = Media.new '127.0.0.255', 55555, '127.255.255.255', 44444
       nop = doc.create_element('nop') { |nop|
         nop << doc.create_element('action') { |action|
           action << doc.create_element('exec')
@@ -645,15 +817,17 @@ Content-Length: 0
       send << "\n"
       send << Nokogiri::XML::CDATA.new(doc, msg)
       send << "\n" #Newlines are required before and after CDATA so SIPp will parse properly
+      yield send if block_given?
       scenario_node << send
     end
 
-    def recv(opts = {})
+    def recv(opts = {}, &block)
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
       recv = Nokogiri::XML::Node.new 'recv', doc
       opts.each do |k,v|
         recv[k.to_s] = v
       end
+      yield recv if block_given?
       scenario_node << recv
     end
 

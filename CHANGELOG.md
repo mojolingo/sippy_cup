@@ -1,5 +1,9 @@
 # develop
   * Feature: Add support for saving screen and error reports to specified files
+  * Feature: Add support for UAS actions (waiting for an incoming call)
+  * Bugfix: Much improved support for sending a hangup from SIPp, rather than waiting for the far end to do it
+  * Bugfix: If scenario compilation fails on the CLI, explain why
+  * Documentation: Create `examples/` directory with example scenarios
 
 # [0.4.1](https://github.com/bklang/sippy_cup/compare/v0.4.0...v0.4.1)
   * Bugfix: Fix some Ruby 2 string encoding problems

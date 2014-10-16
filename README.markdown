@@ -105,6 +105,8 @@ Password:
 I, [2013-09-30T14:48:16.728712 #9883]  INFO -- : Test completed successfully.
 ```
 
+More examples are [available in the source repository](https://github.com/mojolingo/sippy_cup/tree/develop/examples).
+
 ### Example embedding SIPp in another Ruby process
 
 ```Ruby
@@ -135,17 +137,23 @@ The above code can be executed as a standalone Ruby script and the resulting sce
 
 ### Available Scenario Steps
 
-Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments. For a full list of available steps, see the [API documentation](http://rubydoc.info/gems/sippy_cup/SippyCup/Scenario).
+Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/reference.html) as optional arguments. For a full list of available steps with arguments explained, see the [API documentation](http://rubydoc.info/gems/sippy_cup/SippyCup/Scenario).
 
 * `sleep <seconds>` Wait a specified number of seconds
 * `invite` Send a SIP INVITE to the specified target
+* `receive_invite` Wait for an INVITE to be received
 * `register <username> [password]` Register the specified user to the target with an optional password
+* `send_trying` Send a `100 Trying` provisional response
 * `receive_trying` Expect to receive a `100 Trying` response from the target
+* `send_ringing` Send a `180 Ringing` provisional response
 * `receive_ringing` Expect to receive a `180 Ringing` response from the target
 * `receive_progress` Expect to receive a `183 Progress` response from the target
+* `send_answer` Send a `200 Ok` response to an INVITE (answer the call)
 * `receive_answer` Expect to receive a `200 OK` (answering the call) response from the target
+* `answer` Convenient shortcut for `send_answer; receive_ack`
 * `wait_for_answer` Convenient shortcut for `receive_trying; receive_ringing; receive_progress; receive_answer`, with all but the `answer` marked as optional
 * `ack_answer` Send an `ACK` in response to a `200 OK`
+* `receive_ack` Expect to receive an `ACK`
 * `send_digits <string>` Send a DTMF string. May send one or many digits, including `0-9`, `*`, `#`, and `A-D`
 * `receive_ok` Expect to receive a `200 OK`
 * `receive_message [regex]` Expect to receive a SIP MESSAGE, optionally matching a regex
@@ -153,6 +161,7 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 * `receive_bye` Expect to receive a `BYE` from the target
 * `ack_bye` Send a `200 OK` response to a `BYE`
 * `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
+* `hangup` Convenient shortcut for `send_bye; receive_ok`
 
 ### Alternate Output File Path
 
