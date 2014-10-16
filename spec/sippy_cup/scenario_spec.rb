@@ -213,19 +213,19 @@ describe SippyCup::Scenario do
     it "expects a 200 with rrs and rtd true" do
       subject.receive_answer
 
-      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true"/>})
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true">})
     end
 
     it "allows passing options to the recv expectation" do
       subject.receive_answer foo: 'bar'
 
-      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true" foo="bar"/>})
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="true" foo="bar">})
     end
 
     it "allows overriding options" do
       subject.receive_answer rtd: false
 
-      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="false"/>})
+      scenario.to_xml.should match(%q{<recv response="200" rrs="true" rtd="false">})
     end
   end
 
@@ -279,24 +279,6 @@ describe SippyCup::Scenario do
       it "does not start the PCAP media" do
         subject.ack_answer
         subject.to_xml(:pcap_path => "/dev/null").should_not match(%r{<nop>\n.*<action>\n.*<exec play_pcap_audio="/dev/null"/>\n.*</action>\n.*</nop>})
-      end
-    end
-
-    context "when a from user is specified" do
-      let(:args) { {from_user: 'frank'} }
-
-      it "includes the specified user in the From and Contact headers" do
-        subject.ack_answer
-        subject.to_xml.should match(%r{From: "frank" <sip:frank@})
-        subject.to_xml.should match(%r{Contact: <sip:frank@})
-      end
-    end
-
-    context "when no from user is specified" do
-      it "uses a default of 'sipp' in the From and Contact headers" do
-        subject.ack_answer
-        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@})
-        subject.to_xml.should match(%r{Contact: <sip:sipp@})
       end
     end
   end
@@ -360,12 +342,6 @@ describe SippyCup::Scenario do
       subject.send_bye foo: 'bar'
       subject.to_xml.should match(%r{<send foo="bar".*>})
     end
-
-    it "uses a default of 'sipp' in the From and Contact headers" do
-      subject.send_bye
-      subject.to_xml.should match(%r{From: \[\$invite_to\];tag=\[call_number\]})
-      subject.to_xml.should match(%r{Contact: \[\$invite_contact\]})
-    end
   end
 
   describe '#receive_bye' do
@@ -393,22 +369,6 @@ describe SippyCup::Scenario do
     it "allows setting options on the send instruction" do
       subject.okay foo: 'bar'
       subject.to_xml.should match(%r{<send foo="bar".*>})
-    end
-
-    context "when a from user is specified" do
-      let(:args) { {from_user: 'frank'} }
-
-      it "includes the specified user in the Contact header" do
-        subject.okay
-        subject.to_xml.should match(%r{Contact: <sip:frank@})
-      end
-    end
-
-    context "when no from user is specified" do
-      it "uses a default of 'sipp' in the Contact header" do
-        subject.okay
-        subject.to_xml.should match(%r{Contact: <sip:sipp@})
-      end
     end
   end
 
@@ -597,7 +557,7 @@ describe SippyCup::Scenario do
 <![CDATA[
 INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+From: "sipp" <sip:sipp@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>
 Call-ID: [call_id]
 CSeq: [cseq] INVITE
@@ -617,20 +577,24 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
-<action><assignstr assign_to="invite_to" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="invite_from" value="sipp@[local_ip]"/><assignstr assign_to="invite_contact" value="sipp@[local_ip]:[local_port];transport=[transport]"/></action></send>
+<action><assignstr assign_to="remote_addr" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="local_addr" value="sipp@[local_ip]:[local_port]"/><assignstr assign_to="call_addr" value="[service]@[remote_ip]:[remote_port]"/></action></send>
   <recv response="100" optional="true"/>
   <recv response="180" optional="true"/>
   <recv response="183" optional="true"/>
-  <recv response="200" rrs="true" rtd="true"/>
+  <recv response="200" rrs="true" rtd="true">
+    <action>
+      <ereg regexp="&lt;sip:(.*)&gt;.*;tag=([^;]*)" search_in="hdr" header="To:" assign_to="dummy,remote_addr,remote_tag"/>
+    </action>
+  </recv>
   <send>
 <![CDATA[
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "sipp" <sip:sipp@[local_ip]>;tag=[call_number]
+From: "sipp" <sip:sipp@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
-Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: SIPp/sippy_cup
 Content-Length: 0
@@ -646,13 +610,14 @@ SIP/2.0 200 OK
 [last_To:]
 [last_Call-ID:]
 [last_CSeq:]
-Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: SIPp/sippy_cup
 Content-Length: 0
 [routes]
 ]]>
 </send>
+  <Reference variables="dummy"/>
 </scenario>
     END
     end
@@ -722,7 +687,7 @@ steps:
 <![CDATA[
 INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+From: "#{specs_from}" <sip:#{specs_from}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>
 Call-ID: [call_id]
 CSeq: [cseq] INVITE
@@ -742,20 +707,24 @@ a=rtpmap:0 PCMU/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-15
 ]]>
-<action><assignstr assign_to="invite_to" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="invite_from" value="#{specs_from}@[local_ip]"/><assignstr assign_to="invite_contact" value="#{specs_from}@[local_ip]:[local_port];transport=[transport]"/></action></send>
+<action><assignstr assign_to="remote_addr" value="[service]@[remote_ip]:[remote_port]"/><assignstr assign_to="local_addr" value="#{specs_from}@[local_ip]:[local_port]"/><assignstr assign_to="call_addr" value="[service]@[remote_ip]:[remote_port]"/></action></send>
   <recv response="100" optional="true"/>
   <recv response="180" optional="true"/>
   <recv response="183" optional="true"/>
-  <recv response="200" rrs="true" rtd="true"/>
+  <recv response="200" rrs="true" rtd="true">
+    <action>
+      <ereg regexp="&lt;sip:(.*)&gt;.*;tag=([^;]*)" search_in="hdr" header="To:" assign_to="dummy,remote_addr,remote_tag"/>
+    </action>
+  </recv>
   <send>
 <![CDATA[
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{specs_from}" <sip:#{specs_from}@[local_ip]>;tag=[call_number]
+From: "#{specs_from}" <sip:#{specs_from}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
-Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: SIPp/sippy_cup
 Content-Length: 0
@@ -780,13 +749,14 @@ SIP/2.0 200 OK
 [last_To:]
 [last_Call-ID:]
 [last_CSeq:]
-Contact: <sip:#{specs_from}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: SIPp/sippy_cup
 Content-Length: 0
 [routes]
 ]]>
 </send>
+  <Reference variables="dummy"/>
 </scenario>
       END
     end

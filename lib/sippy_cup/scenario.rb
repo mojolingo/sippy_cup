@@ -152,18 +152,17 @@ module SippyCup
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
-      from_addr = "#{@from_user}@[local_ip]"
+      from_addr = "#{@from_user}@[local_ip]:[local_port]"
       to_addr   = "[service]@[remote_ip]:[remote_port]"
-      contact   = "#{@from_user}@[local_ip]:[local_port];transport=[transport]"
       msg = <<-MSG
 
-INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+INVITE sip:#{to_addr} SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
 To: <sip:#{to_addr}>
 Call-ID: [call_id]
 CSeq: [cseq] INVITE
-Contact: <sip:#{contact}>
+Contact: <sip:#{from_addr};transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Type: application/sdp
@@ -182,16 +181,16 @@ a=fmtp:101 0-15
       send msg, opts do |send|
         send << doc.create_element('action') do |action|
           action << doc.create_element('assignstr') do |assignstr|
-            assignstr['assign_to'] = "invite_to"
+            assignstr['assign_to'] = "remote_addr"
             assignstr['value']     = to_addr
           end
           action << doc.create_element('assignstr') do |assignstr|
-            assignstr['assign_to'] = "invite_from"
+            assignstr['assign_to'] = "local_addr"
             assignstr['value']     = from_addr
           end
           action << doc.create_element('assignstr') do |assignstr|
-            assignstr['assign_to'] = "invite_contact"
-            assignstr['value']     = contact
+            assignstr['assign_to'] = "call_addr"
+            assignstr['value']     = to_addr
           end
         end
       end
@@ -230,27 +229,25 @@ a=fmtp:101 0-15
       recv(opts.merge(request: 'INVITE', rrs: true)) do |recv|
         action = doc.create_element('action') do |action|
           action << doc.create_element('ereg') do |ereg|
-            ereg['regexp'] = ': (.*)'
+            ereg['regexp'] = '<sip:(.*)>.*;tag=([^;]*)'
             ereg['search_in'] = 'hdr'
-            ereg['header'] = 'From'
-            ereg['assign_to'] = 'dummy,invite_from'
+            ereg['header'] = 'From:'
+            ereg['assign_to'] = 'dummy,remote_addr,remote_tag'
           end
           action << doc.create_element('ereg') do |ereg|
-            ereg['regexp'] = ': (.*)'
+            ereg['regexp'] = '<sip:(.*)>'
             ereg['search_in'] = 'hdr'
-            ereg['header'] = 'To'
-            ereg['assign_to'] = 'dummy,invite_to'
+            ereg['header'] = 'To:'
+            ereg['assign_to'] = 'dummy,local_addr'
           end
-          action << doc.create_element('ereg') do |ereg|
-            ereg['regexp'] = 'sip:(.*)>'
-            ereg['search_in'] = 'hdr'
-            ereg['header'] = 'Contact'
-            ereg['assign_to'] = 'dummy,invite_contact'
-            @reference_variables << 'dummy'
+          action << doc.create_element('assignstr') do |assignstr|
+            assignstr['assign_to'] = "call_addr"
+            assignstr['value']     = "[$local_addr]"
           end
         end
         recv << action
       end
+      @reference_variables << 'dummy'
     end
     alias :wait_for_call :receive_invite
 
@@ -264,12 +261,12 @@ a=fmtp:101 0-15
 
 SIP/2.0 100 Trying
 [last_Via:]
-[last_From:]
-[last_To:];tag=[call_number]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
 [last_Call-ID:]
 [last_CSeq:]
 Server: #{USER_AGENT}
-Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Content-Length: 0
       MSG
       send msg, opts
@@ -286,12 +283,12 @@ Content-Length: 0
 
 SIP/2.0 180 Ringing
 [last_Via:]
-[last_From:]
-[last_To:];tag=[call_number]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
 [last_Call-ID:]
 [last_CSeq:]
 Server: #{USER_AGENT}
-Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Content-Length: 0
       MSG
       send msg, opts
@@ -307,12 +304,12 @@ Content-Length: 0
 
 SIP/2.0 200 Ok
 [last_Via:]
-[last_From:]
-[last_To:];tag=[call_number]
+From: <sip:[$remote_addr]>;tag=[$remote_tag]
+To: <sip:[$local_addr]>;tag=[call_number]
 [last_Call-ID:]
 [last_CSeq:]
 Server: #{USER_AGENT}
-Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Content-Type: application/sdp
 [routes]
 Content-Length: [len]
@@ -389,7 +386,17 @@ a=rtpmap:0 PCMU/8000
         rtd: true # Response Time Duration: Record the response time
       }
 
-      receive_200 options.merge(opts)
+      receive_200(options.merge(opts)) do |recv|
+        recv << doc.create_element('action') do |action|
+          action << doc.create_element('ereg') do |ereg|
+            ereg['regexp'] = '<sip:(.*)>.*;tag=([^;]*)'
+            ereg['search_in'] = 'hdr'
+            ereg['header'] = 'To:'
+            ereg['assign_to'] = 'dummy,remote_addr,remote_tag'
+          end
+        end
+      end
+      @reference_variables << 'dummy'
     end
 
     #
@@ -398,8 +405,8 @@ a=rtpmap:0 PCMU/8000
     # @param [Hash] opts A set of options to modify the expectation
     # @option opts [true, false] :optional Whether or not receipt of the message is optional. Defaults to false.
     #
-    def receive_ok(opts = {})
-      recv({ response: 200 }.merge(opts))
+    def receive_ok(opts = {}, &block)
+      recv({ response: 200 }.merge(opts), &block)
     end
     alias :receive_200 :receive_ok
 
@@ -425,11 +432,11 @@ a=rtpmap:0 PCMU/8000
 
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -476,11 +483,11 @@ Content-Length: 0
 
 INFO [next_url] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] INFO
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 [routes]
@@ -538,11 +545,11 @@ Duration=#{delay}
     def send_bye(opts = {})
       msg = <<-MSG
 
-BYE sip:[$invite_contact] SIP/2.0
+BYE sip:[$call_addr] SIP/2.0
 Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: [$invite_to];tag=[call_number]
-To: [$invite_from]
-Contact: [$invite_contact]
+From: <sip:[$local_addr]>;tag=[call_number]
+To: <sip:[$remote_addr]>;tag=[$remote_tag]
+Contact: <sip:[$local_addr];transport=[transport]>
 Call-ID: [call_id]
 CSeq: [cseq] BYE
 Max-Forwards: 100
@@ -576,7 +583,7 @@ SIP/2.0 200 OK
 [last_To:]
 [last_Call-ID:]
 [last_CSeq:]
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:[$local_addr];transport=[transport]>
 Max-Forwards: 100
 User-Agent: #{USER_AGENT}
 Content-Length: 0
@@ -812,7 +819,7 @@ Content-Length: 0
       scenario_node << send
     end
 
-    def recv(opts = {})
+    def recv(opts = {}, &block)
       raise ArgumentError, "Receive must include either a response or a request" unless opts.keys.include?(:response) || opts.keys.include?(:request)
       recv = Nokogiri::XML::Node.new 'recv', doc
       opts.each do |k,v|
