@@ -6,6 +6,7 @@ You will also need to compile the latest [SIPp from Github](https://github.com/s
   * Feature: Add support for UAS actions (waiting for an incoming call)
   * Bugfix: Much improved support for sending a hangup from SIPp, rather than waiting for the far end to do it
   * Bugfix: If scenario compilation fails on the CLI, explain why
+  * Change: Rework the `register` command so it works without any other expectations
   * Change: `wait_for_answer` now includes `ack_answer`
   * Documentation: Create `examples/` directory with example scenarios
 

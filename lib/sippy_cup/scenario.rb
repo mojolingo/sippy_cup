@@ -210,14 +210,17 @@ a=fmtp:101 0-15
     #   s.register 'frank'
     #
     def register(user, password = nil, opts = {})
-      opts[:retrans] ||= DEFAULT_RETRANS
+      send_opts = opts.dup
+      send_opts[:retrans] ||= DEFAULT_RETRANS
       user, domain = parse_user user
-      msg = if password
-        register_auth domain, user, password
+      if password
+        send register_message(domain, user), send_opts
+        recv opts.merge(response: 401, auth: true, optional: false)
+        send register_auth(domain, user, password), send_opts
+        receive_ok opts.merge(optional: false)
       else
-        register_message domain, user
+        send register_message(domain, user), send_opts
       end
-      send msg, opts
     end
 
     #
@@ -759,7 +762,7 @@ Content-Length: 0
       @media.compile!
     end
 
-    def register_message(domain, user, opts = {})
+    def register_message(domain, user)
       <<-BODY
 
 REGISTER sip:#{domain} SIP/2.0
@@ -776,8 +779,7 @@ Content-Length: 0
       BODY
     end
 
-    def register_auth(domain, user, password, opts = {})
-      recv response: '401', auth: true, optional: false
+    def register_auth(domain, user, password)
       <<-AUTH
 
 REGISTER sip:#{domain} SIP/2.0
