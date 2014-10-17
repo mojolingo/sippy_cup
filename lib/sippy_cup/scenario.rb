@@ -194,6 +194,8 @@ a=fmtp:101 0-15
           end
         end
       end
+      # These variables will only be used if we initiate a hangup
+      @reference_variables += %w(remote_addr local_addr call_addr)
     end
 
     #
@@ -250,7 +252,8 @@ a=fmtp:101 0-15
         end
         recv << action
       end
-      @reference_variables << 'dummy'
+      # These variables (except dummy) will only be used if we initiate a hangup
+      @reference_variables += %w(dummy remote_addr remote_tag local_addr call_addr)
     end
     alias :wait_for_call :receive_invite
 
@@ -401,7 +404,8 @@ a=rtpmap:0 PCMU/8000
           end
         end
       end
-      @reference_variables << 'dummy'
+      # These variables will only be used if we initiate a hangup
+      @reference_variables += %w(dummy remote_addr remote_tag)
     end
 
     #

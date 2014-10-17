@@ -622,7 +622,7 @@ Content-Length: 0
 [routes]
 ]]>
 </send>
-  <Reference variables="dummy"/>
+  <Reference variables="remote_addr,local_addr,call_addr,dummy,remote_tag"/>
 </scenario>
     END
     end
@@ -760,7 +760,7 @@ Content-Length: 0
 [routes]
 ]]>
 </send>
-  <Reference variables="dummy"/>
+  <Reference variables="remote_addr,local_addr,call_addr,dummy,remote_tag"/>
 </scenario>
       END
     end
