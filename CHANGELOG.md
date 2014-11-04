@@ -9,6 +9,7 @@ You will also need to compile the latest [SIPp from Github](https://github.com/s
   * Change: Rework the `register` command so it works without any other expectations
   * Change: `wait_for_answer` now includes `ack_answer`
   * Documentation: Create `examples/` directory with example scenarios
+  * Feature: Add support for CallLengthRepartition and ResponseTimeRepartition tables
 
 # [0.4.1](https://github.com/bklang/sippy_cup/compare/v0.4.0...v0.4.1)
   * Bugfix: Fix some Ruby 2 string encoding problems

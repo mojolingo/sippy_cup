@@ -628,20 +628,20 @@ Content-Length: 0
 
     # Create partition table for Call Length
     #
-    # @param [String] min An value specifying the minimum time in milliseconds for the table
-    # @param [String] max An value specifying the maximum time in milliseconds for the table
-    # @param [String] interval An value specifying the interval in milliseconds for the table
+    # @param [Integer] min An value specifying the minimum time in milliseconds for the table
+    # @param [Integer] max An value specifying the maximum time in milliseconds for the table
+    # @param [Integer] interval An value specifying the interval in milliseconds for the table
     def call_length_repartition(min, max, interval)
-      partition_table('CallLengthRepartition', min.to_i, max.to_i, interval.to_i)
+      partition_table 'CallLengthRepartition', min.to_i, max.to_i, interval.to_i
     end
 
     # Create partition table for Response Time
     #
-    # @param [String] min An value specifying the minimum time in milliseconds for the table
-    # @param [String] max An value specifying the maximum time in milliseconds for the table
-    # @param [String] interval An value specifying the interval in milliseconds for the table
+    # @param [Integer] min An value specifying the minimum time in milliseconds for the table
+    # @param [Integer] max An value specifying the maximum time in milliseconds for the table
+    # @param [Integer] interval An value specifying the interval in milliseconds for the table
     def response_time_repartition(min, max, interval)
-      partition_table('ResponseTimeRepartition', min.to_i, max.to_i, interval.to_i)
+      partition_table 'ResponseTimeRepartition', min.to_i, max.to_i, interval.to_i
     end
 
     #

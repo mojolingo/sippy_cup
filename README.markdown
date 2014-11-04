@@ -162,6 +162,8 @@ Each command below can take [SIPp attributes](http://sipp.sourceforge.net/doc/re
 * `ack_bye` Send a `200 OK` response to a `BYE`
 * `wait_for_hangup` Convenient shortcut for `receive_bye; ack_bye`
 * `hangup` Convenient shortcut for `send_bye; receive_ok`
+* `call_length_repartition` Creates a histogram table of individual call lengths in milliseconds between min length and max length, at the specified interval
+* `response_time_repartition` Creates a histogram table of individual SIP request response times in milliseconds between min length and max length, at the specified interval
 
 ### Alternate Output File Path
 
