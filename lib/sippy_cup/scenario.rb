@@ -626,6 +626,24 @@ Content-Length: 0
       receive_ok opts
     end
 
+    # Create partition table for Call Length
+    #
+    # @param [Integer] min An value specifying the minimum time in milliseconds for the table
+    # @param [Integer] max An value specifying the maximum time in milliseconds for the table
+    # @param [Integer] interval An value specifying the interval in milliseconds for the table
+    def call_length_repartition(min, max, interval)
+      partition_table 'CallLengthRepartition', min.to_i, max.to_i, interval.to_i
+    end
+
+    # Create partition table for Response Time
+    #
+    # @param [Integer] min An value specifying the minimum time in milliseconds for the table
+    # @param [Integer] max An value specifying the maximum time in milliseconds for the table
+    # @param [Integer] interval An value specifying the interval in milliseconds for the table
+    def response_time_repartition(min, max, interval)
+      partition_table 'ResponseTimeRepartition', min.to_i, max.to_i, interval.to_i
+    end
+
     #
     # Dump the scenario to a SIPp XML string
     #
@@ -846,6 +864,13 @@ Content-Length: 0
 
     def handle_response(code, opts)
       optional_recv opts.merge(response: code)
+    end
+
+    def partition_table(name, min, max, interval)
+      range = Range.new(min, max).step interval
+      partition_table = Nokogiri::XML::Node.new name, doc
+      partition_table[:value] = range.inject{ |n,m| "#{n},#{m}"}
+      scenario_node << partition_table
     end
   end
 end
