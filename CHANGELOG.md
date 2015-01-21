@@ -4,6 +4,7 @@ This is a backward incompatible change. If upgrading from Sippy Cup 0.4.0 please
 You will also need to compile the latest [SIPp from Github](https://github.com/sipp/sipp) to make use of all the features.
   * Feature: Add support for saving screen and error reports to specified files
   * Feature: Add support for UAS actions (waiting for an incoming call)
+  * Feature: Permit supplying a SIP advertise address that is different from the bind IP for NAT traversal purposes
   * Bugfix: Much improved support for sending a hangup from SIPp, rather than waiting for the far end to do it
   * Bugfix: If scenario compilation fails on the CLI, explain why
   * Change: Rework the `register` command so it works without any other expectations
