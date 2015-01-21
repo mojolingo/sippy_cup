@@ -425,7 +425,7 @@ steps:
 
         it "doesn't raise anything if SIPp returns 0" do
           quietly do
-            subject.run.should be_true
+            subject.run.should be true
           end
         end
       end
@@ -436,7 +436,7 @@ steps:
         it "returns false if SIPp returns 1" do
           quietly do
             logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-            subject.run.should be_false
+            subject.run.should be false
           end
         end
       end
