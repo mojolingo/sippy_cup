@@ -68,7 +68,8 @@ module SippyCup
     #
     def wait
       exit_status = Process.wait2 @sipp_pid.to_i
-      @rd.close if @rd
+      @err_rd.close if @err_rd
+      @stdout_rd.close if @stdout_rd
       final_result = process_exit_status exit_status, @stderr_buffer
       if final_result
         @logger.info "Test completed successfully!"
@@ -143,19 +144,37 @@ module SippyCup
     end
 
     def execute_with_redirected_streams
-      @rd, wr = IO.pipe
-      stdout_target = @options[:full_sipp_output] ? $stdout : '/dev/null'
+      @err_rd, err_wr = IO.pipe
+      stdout_target = if @options[:full_sipp_output]
+        @stdout_rd, stdout_wr = IO.pipe
+        stdout_wr
+      else
+        '/dev/null'
+      end
 
-      @sipp_pid = spawn command, err: wr, out: stdout_target
+      @sipp_pid = spawn command, err: err_wr, out: stdout_target
 
       @stderr_buffer = String.new
 
       Thread.new do
-        wr.close
-        until @rd.eof?
-          buffer = @rd.readpartial(1024).strip
+        err_wr.close
+        until @err_rd.eof?
+          buffer = @err_rd.readpartial(1024).strip
           @stderr_buffer += buffer
           $stderr << buffer if @options[:full_sipp_output]
+        end
+      end
+
+      if @stdout_rd
+        @stdout_buffer = String.new
+
+        Thread.new do
+          stdout_wr.close
+          until @stdout_rd.eof?
+            buffer = @stdout_rd.readpartial(1024).strip
+            @stdout_buffer += buffer
+            $stdout << buffer
+          end
         end
       end
     end
