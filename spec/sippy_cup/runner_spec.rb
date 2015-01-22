@@ -523,6 +523,8 @@ steps:
         end
 
         it "does not leak threads" do
+          Thread.list.each { |t| t.kill unless t = Thread.main }
+          sleep 0.1
           original_thread_count = active_thread_count
           quietly do
             subject.run
@@ -545,6 +547,8 @@ steps:
 
         it "does not leak threads" do
           quietly do
+            Thread.list.each { |t| t.kill unless t = Thread.main }
+            sleep 0.1
             original_thread_count = active_thread_count
             subject.run
             sleep 0.1
