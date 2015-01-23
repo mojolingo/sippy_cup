@@ -81,6 +81,7 @@ module SippyCup
     # @option options [String] :source The source IP/hostname with which to invoke SIPp.
     # @option options [String, Numeric] :source_port The source port to bind SIPp to (defaults to 8836).
     # @option options [String] :destination The target system at which to direct traffic.
+    # @option options [String] :advertise_address The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).
     # @option options [String] :from_user The SIP user from which traffic should appear.
     # @option options [String] :to_user The SIP user to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
@@ -110,6 +111,7 @@ module SippyCup
       @reference_variables = Set.new
       @media_nodes = []
       @errors = []
+      @adv_ip = args[:advertise_address] || "[local_ip]"
 
       instance_eval &block if block_given?
     end
@@ -152,12 +154,12 @@ module SippyCup
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
-      from_addr = "#{@from_user}@[local_ip]:[local_port]"
+      from_addr = "#{@from_user}@#{@adv_ip}:[local_port]"
       to_addr   = "[service]@[remote_ip]:[remote_port]"
       msg = <<-MSG
 
 INVITE sip:#{to_addr} SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
 To: <sip:#{to_addr}>
 Call-ID: [call_id]
@@ -169,7 +171,7 @@ Content-Type: application/sdp
 Content-Length: [len]
 #{opts.has_key?(:headers) ? opts.delete(:headers).sub(/\n*\Z/, "\n") : ''}
 v=0
-o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip}
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
@@ -323,7 +325,7 @@ Content-Type: application/sdp
 Content-Length: [len]
 
 v=0
-o=user1 53655765 2353687637 IN IP[local_ip_type] [local_ip]
+o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip} 
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
@@ -444,8 +446,8 @@ a=rtpmap:0 PCMU/8000
       msg = <<-BODY
 
 ACK [next_url] SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
@@ -495,8 +497,8 @@ Content-Length: 0
           info = <<-INFO
 
 INFO [next_url] SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@[local_ip]:[local_port]>;tag=[call_number]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
+From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
 To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] INFO
@@ -559,7 +561,7 @@ Duration=#{delay}
       msg = <<-MSG
 
 BYE sip:[$call_addr] SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: <sip:[$local_addr]>;tag=[call_number]
 To: <sip:[$remote_addr]>;tag=[$remote_tag]
 Contact: <sip:[$local_addr];transport=[transport]>
@@ -786,12 +788,12 @@ Content-Length: 0
       <<-BODY
 
 REGISTER sip:#{domain} SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: <sip:#{user}@#{domain}>;tag=[call_number]
 To: <sip:#{user}@#{domain}>
 Call-ID: [call_id]
 CSeq: [cseq] REGISTER
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:#{@from_user}@#{@adv_ip}:[local_port];transport=[transport]>
 Max-Forwards: 10
 Expires: 120
 User-Agent: #{USER_AGENT}
@@ -803,12 +805,12 @@ Content-Length: 0
       <<-AUTH
 
 REGISTER sip:#{domain} SIP/2.0
-Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: <sip:#{user}@#{domain}>;tag=[call_number]
 To: <sip:#{user}@#{domain}>
 Call-ID: [call_id]
 CSeq: [cseq] REGISTER
-Contact: <sip:#{@from_user}@[local_ip]:[local_port];transport=[transport]>
+Contact: <sip:#{@from_user}@#{@adv_ip}:[local_port];transport=[transport]>
 Max-Forwards: 20
 Expires: 3600
 [authentication username=#{user} password=#{password}]

@@ -239,6 +239,9 @@ Each parameter has an impact on the test, and may either be changed once the XML
 
   <dt>calls_per_second_max</dt>
   <dd>The maximum rate of calls-per-second. If unset, the CPS rate will remain at the level set by `calls_per_second`.</dd>
+
+  <dt>advertise_address</dt>
+  <dd>The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).</dd>
 </dl>
 
 ### Additional SIPp Scenario Attributes
