@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'logger'
+require 'fileutils'
 
 #
 # Service object to oversee the execution of a Scenario
@@ -67,7 +68,8 @@ module SippyCup
     #
     def wait
       exit_status = Process.wait2 @sipp_pid.to_i
-      @rd.close if @rd
+      @err_rd.close if @err_rd
+      @stdout_rd.close if @stdout_rd
       final_result = process_exit_status exit_status, @stderr_buffer
       if final_result
         @logger.info "Test completed successfully!"
@@ -95,21 +97,37 @@ module SippyCup
 
     def command_options
       options = {
-        i: @scenario_options[:source],
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
-        l: @scenario_options[:max_concurrent] || 5,
+        l: @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5,
         m: @scenario_options[:number_of_calls] || 10,
         r: @scenario_options[:calls_per_second] || 10,
         s: @scenario_options[:to_user] || '1'
       }
 
+      options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
+
+      if @scenario_options[:calls_per_second_max]
+        options[:no_rate_quit] = nil
+        options[:rate_max] = @scenario_options[:calls_per_second_max]
+        options[:rate_increase] = @scenario_options[:calls_per_second_incr] || 1
+      end
 
       if @scenario_options[:stats_file]
         options[:trace_stat] = nil
         options[:stf] = @scenario_options[:stats_file]
         options[:fd] = @scenario_options[:stats_interval] || 1
+      end
+
+      if @scenario_options[:summary_report_file]
+        options[:trace_screen] = nil
+        options[:screen_file] = @scenario_options[:summary_report_file]
+      end
+
+      if @scenario_options[:errors_report_file]
+        options[:trace_err] = nil
+        options[:error_file] = @scenario_options[:errors_report_file]
       end
 
       if @scenario_options[:transport_mode]
@@ -126,19 +144,37 @@ module SippyCup
     end
 
     def execute_with_redirected_streams
-      @rd, wr = IO.pipe
-      stdout_target = @options[:full_sipp_output] ? $stdout : '/dev/null'
+      @err_rd, err_wr = IO.pipe
+      stdout_target = if @options[:full_sipp_output]
+        @stdout_rd, stdout_wr = IO.pipe
+        stdout_wr
+      else
+        '/dev/null'
+      end
 
-      @sipp_pid = spawn command, err: wr, out: stdout_target
+      @sipp_pid = spawn command, err: err_wr, out: stdout_target
 
       @stderr_buffer = String.new
 
       Thread.new do
-        wr.close
-        until @rd.eof?
-          buffer = @rd.readpartial(1024).strip
+        err_wr.close
+        until @err_rd.eof?
+          buffer = @err_rd.readpartial(1024).strip
           @stderr_buffer += buffer
           $stderr << buffer if @options[:full_sipp_output]
+        end
+      end
+
+      if @stdout_rd
+        @stdout_buffer = String.new
+
+        Thread.new do
+          stdout_wr.close
+          until @stdout_rd.eof?
+            buffer = @stdout_rd.readpartial(1024).strip
+            @stdout_buffer += buffer
+            $stdout << buffer
+          end
         end
       end
     end
@@ -167,7 +203,7 @@ module SippyCup
       @input_files.values.compact.each do |value|
         value.close
         value.unlink
-      end
+      end if @input_files
     end
   end
 

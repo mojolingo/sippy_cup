@@ -1,0 +1,15 @@
+---
+source: 10.3.18.108
+destination: 10.3.18.134
+max_concurrent: 1
+calls_per_second: 1
+number_of_calls: 1
+steps:
+  - wait_for_call
+  - send_trying
+  - sleep 1
+  - send_ringing
+  - sleep 3
+  - answer
+  - sleep 5
+  - hangup

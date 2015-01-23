@@ -1,0 +1,11 @@
+source: 192.0.2.15
+destination: 192.0.2.200
+max_concurrent: 10
+calls_per_second: 5
+number_of_calls: 20
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 5
+  - hangup

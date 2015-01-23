@@ -9,7 +9,7 @@ RSpec.configure do |config|
   config.mock_framework = :rspec
   config.filter_run :focus => true
   config.run_all_when_everything_filtered = true
-  config.color_enabled = true
+  config.color = true
 
   config.around(:each) do |example|
     quietly { example.run }

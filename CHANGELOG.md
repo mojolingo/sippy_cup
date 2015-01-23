@@ -1,3 +1,19 @@
+# develop
+
+# [0.5.0](https://github.com/mojolingo/sippy_cup/compare/v0.4.1...v0.5.0)
+SYNTAX CHANGES!
+This is a backward incompatible change. If upgrading from Sippy Cup 0.4.x please see the [documentation](http://mojolingo.github.io/sippy_cup/#available-scenario-steps) and the `Change` items below.
+You will also need to compile the latest [SIPp from Github](https://github.com/sipp/sipp) to make use of all the features.
+  * Feature: Add support for saving screen and error reports to specified files
+  * Feature: Add support for UAS actions (waiting for an incoming call)
+  * Feature: Permit supplying a SIP advertise address that is different from the bind IP for NAT traversal purposes
+  * Feature: Add support for CallLengthRepartition and ResponseTimeRepartition tables
+  * Bugfix: Much improved support for sending a hangup from SIPp, rather than waiting for the far end to do it
+  * Bugfix: If scenario compilation fails on the CLI, explain why
+  * Change: Rework the `register` command so it works without any other expectations
+  * Change: `wait_for_answer` now includes `ack_answer`
+  * Documentation: Create `examples/` directory with example scenarios
+
 # [0.4.1](https://github.com/bklang/sippy_cup/compare/v0.4.0...v0.4.1)
   * Bugfix: Fix some Ruby 2 string encoding problems
   * Bugfix: Fix backward alias of `respond_ok` with `respond_200`
