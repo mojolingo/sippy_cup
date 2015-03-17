@@ -202,7 +202,7 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>SIP user from which traffic should appear. Defaults to "sipp".</dd>
 
   <dt>to_user</dt>
-  <dd>SIP user to send requests to. Defaults to "1" (as in 1@127.0.0.1).</dd>
+  <dd>SIP user to send requests to. Defaults to `s` (as in `s@127.0.0.1`).</dd>
 
   <dt>transport</dt>
   <dd>Specify the SIP transport. Valid options are `udp` (default) or `tcp`.</dd>
@@ -228,11 +228,14 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
 
+  <dt>number_of_calls</dt>
+  <dd>The total number of calls permitted for the entire test. When this limit is reached, the test is over. Defaults to nil.</dd>
+
   <dt>concurrent_max</dt>
-  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Default: 5</dd>
+  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Defaults to nil.</dd>
 
   <dt>calls_per_second</dt>
-  <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Default: 10</dt>
+  <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Defaults to nil.</dt>
 
   <dt>calls_per_second_incr</dt>
   <dd>When used with `calls_per_second_max`, tells SIPp the amount by which calls-per-second should be incremented. CPS rate is adjusted each `stats_interval`. Default: 1.</dd>

@@ -1,4 +1,5 @@
 # develop
+  * Change: Call limits (`number_of_calls`, `concurrent_max` and `calls_per_second`) no longer have default values for simplicity of UAS scenarios. The value of `to_user` now defaults to the SIPp default of `s`.
 
 # [0.5.0](https://github.com/mojolingo/sippy_cup/compare/v0.4.1...v0.5.0)
 SYNTAX CHANGES!
