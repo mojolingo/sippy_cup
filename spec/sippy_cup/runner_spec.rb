@@ -360,6 +360,7 @@ concurrent_max: 5
 calls_per_second: 2
 calls_per_second_max: 5
 calls_per_second_incr: 2
+calls_per_second_interval: 20
 number_of_calls: 10
 errors_report_file: errors.txt
 steps:
@@ -375,7 +376,7 @@ steps:
       end
 
       it 'should not terminate the test when reaching the rate limit and set the rate limit and increase appropriately' do
-        expect_command_execution(/-no_rate_quit -rate_max 5 -rate_increase 2/)
+        expect_command_execution(/-no_rate_quit -rate_max 5 -rate_increase 2 -rate_interval 20/)
         subject.run
       end
     end
