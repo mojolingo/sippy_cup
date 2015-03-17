@@ -1,4 +1,6 @@
 # develop
+
+# [0.6.0](https://github.com/mojolingo/sippy_cup/compare/v0.5.0...v0.6.0)
   * Change: Call limits (`number_of_calls`, `concurrent_max` and `calls_per_second`) no longer have default values for simplicity of UAS scenarios. The value of `to_user` now defaults to the SIPp default of `s`.
   * Feature: Support for setting rate scaling independently of reporting frequency via the new `calls_per_second_interval` option. See also https://github.com/SIPp/sipp/pull/107 and https://github.com/SIPp/sipp/pull/126.
 
