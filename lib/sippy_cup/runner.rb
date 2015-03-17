@@ -99,11 +99,13 @@ module SippyCup
       options = {
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
-        l: @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5,
-        m: @scenario_options[:number_of_calls] || 10,
-        r: @scenario_options[:calls_per_second] || 10,
-        s: @scenario_options[:to_user] || '1'
       }
+
+      max_concurrent = @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent]
+      options[:l] = max_concurrent if max_concurrent
+      options[:m] = @scenario_options[:number_of_calls] if @scenario_options[:number_of_calls]
+      options[:r] = @scenario_options[:calls_per_second] if @scenario_options[:calls_per_second]
+      options[:s] = @scenario_options[:to_user] if @scenario_options[:to_user]
 
       options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
@@ -112,6 +114,7 @@ module SippyCup
         options[:no_rate_quit] = nil
         options[:rate_max] = @scenario_options[:calls_per_second_max]
         options[:rate_increase] = @scenario_options[:calls_per_second_incr] || 1
+        options[:rate_interval] = @scenario_options[:calls_per_second_interval] if @scenario_options[:calls_per_second_interval]
       end
 
       if @scenario_options[:stats_file]

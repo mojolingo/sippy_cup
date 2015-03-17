@@ -20,9 +20,6 @@ describe SippyCup::Runner do
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-concurrent_max: 5
-calls_per_second: 2
-number_of_calls: 10
 steps:
   - invite
   - wait_for_answer
@@ -48,7 +45,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 -i dah.com bar.com}
+      expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -i dah.com bar.com}
       subject.run
     end
 
@@ -79,6 +76,34 @@ steps:
         subject.stub :process_exit_status
         subject.should_receive :spawn
         Process.should_not_receive :wait2
+        subject.run
+      end
+    end
+
+    context "specifying outbound options in the manifest" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+to_user: 1
+concurrent_max: 5
+calls_per_second: 2
+number_of_calls: 10
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should pass the appropriate options to sipp' do
+        expect_command_execution(/-l 5 -m 10 -r 2 -s 1/)
         subject.run
       end
     end
@@ -335,6 +360,7 @@ concurrent_max: 5
 calls_per_second: 2
 calls_per_second_max: 5
 calls_per_second_incr: 2
+calls_per_second_interval: 20
 number_of_calls: 10
 errors_report_file: errors.txt
 steps:
@@ -350,7 +376,7 @@ steps:
       end
 
       it 'should not terminate the test when reaching the rate limit and set the rate limit and increase appropriately' do
-        expect_command_execution(/-no_rate_quit -rate_max 5 -rate_increase 2/)
+        expect_command_execution(/-no_rate_quit -rate_max 5 -rate_increase 2 -rate_interval 20/)
         subject.run
       end
     end

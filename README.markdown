@@ -34,7 +34,7 @@ Sippy Cup is a tool to generate [SIPp](http://sipp.sourceforge.net/) load test p
 SippyCup relies on the following to generate scenarios and the associated media PCAP files:
 
 * Ruby 1.9.3 or later (2.1.2 recommended)
-* [SIPp](http://sipp.sourceforge.net/) - Download from http://sourceforge.net/projects/sipp/files/
+* [SIPp](http://sipp.sourceforge.net/) latest master branch - Download from https://github.com/sipp/sipp - NOTE: Version SIPp version 3.4 may work, but will be missing certain new Sippy Cup features, such as rate scaling
 * "root" user access via sudo: needed to run SIPp so it can bind to raw network sockets
 
 ## Installation
@@ -199,49 +199,58 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>Frequency (in seconds) of statistics collections. Defaults to 10. Has no effect unless :stats_file is also specified</dd>
 
   <dt>from_user</dt>
-  <dd>SIP user from which traffic should appear. Defaults to "sipp".</dd>
+  <dd>SIP user from which traffic should appear. Default: sipp</dd>
 
   <dt>to_user</dt>
-  <dd>SIP user to send requests to. Defaults to "1" (as in 1@127.0.0.1).</dd>
+  <dd>SIP user to send requests to. Defaults to SIPp's default: `s` (as in `s@127.0.0.1`)</dd>
 
   <dt>transport</dt>
-  <dd>Specify the SIP transport. Valid options are `udp` (default) or `tcp`.</dd>
+  <dd>Specify the SIP transport. Valid options are `udp` (default) or `tcp`. Default: `udp`</dd>
 
   <dt>full_sipp_output</dt>
-  <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
+  <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output. Default: `true`</dd>
 
   <dt>summary_report_file</dt>
-  <dd>Write a summary of the SIPp run to the specified file. This summary is the output from the SIPp `-trace_screen` command. Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/106.</dd>
+  <dd>Write a summary of the SIPp run to the specified file. This summary is the output from the SIPp `-trace_screen` command. Default: unused</dd>
 
   <dt>errors_report_file</dt>
-  <dd>Record SIPp's errors to the specified file. This report is the output from the SIPp `-trace_err` command.</dd>
+  <dd>Record SIPp's errors to the specified file. This report is the output from the SIPp `-trace_err` command. Default: unused</dd>
 
   <dt>options</dt>
-  <dd>A string of SIPp command line options included with the SIPp run.</dd>
+  <dd>A string of SIPp command line options included with the SIPp run. Default: none</dd>
 
   <dt>media_port</dt>
-  <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
+  <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here. Default: SIPp's default of 6000</dd>
 
   <dt>dtmf_mode</dt>
   <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO. Default: rfc2833</dd>
 
   <dt>scenario_variables</dt>
-  <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
+  <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).) Default: unused</dd>
+
+  <dt>number_of_calls</dt>
+  <dd>The total number of calls permitted for the entire test. When this limit is reached, the test is over. Defaults to none - test will run forever until manually stopped</dd>
+
+  <dt>number_of_calls</dt>
+  <dd>The total number of calls permitted for the entire test. When this limit is reached, the test is over. Defaults to nil.</dd>
 
   <dt>concurrent_max</dt>
-  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Default: 5</dd>
+  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Defaults to SIPp's default: (3 * call_duration (seconds) * calls_per_second)</dd>
 
   <dt>calls_per_second</dt>
-  <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Default: 10</dt>
+  <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Defaults to SIP's default of 10</dt>
 
   <dt>calls_per_second_incr</dt>
-  <dd>When used with `calls_per_second_max`, tells SIPp the amount by which calls-per-second should be incremented. CPS rate is adjusted each `stats_interval`. Default: 1.</dd>
+  <dd>When used with `calls_per_second_max`, tells SIPp the amount by which `calls_per_second` should be incremented. CPS rate is adjusted each `calls_per_second_interval`. Default: 1.</dd>
+
+  <dt>calls_per_second_interval</dt>
+  <dd>When used with `calls_per_second_max`, tells SIPp the time interval (in seconds) by which calls-per-second should be incremented. Default: Unset; SIPp's default (60s). NOTE: Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/107</dd>
 
   <dt>calls_per_second_max</dt>
-  <dd>The maximum rate of calls-per-second. If unset, the CPS rate will remain at the level set by `calls_per_second`.</dd>
+  <dd>The maximum rate of calls-per-second. Default: unused (`calls_per_second` will not change)</dd>
 
   <dt>advertise_address</dt>
-  <dd>The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).</dd>
+  <dd>The IP address to advertise in SIP and SDP if different from the bind IP. Default: `source` IP address</dd>
 </dl>
 
 ### Additional SIPp Scenario Attributes
