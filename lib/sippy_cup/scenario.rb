@@ -83,8 +83,8 @@ module SippyCup
     # @option options [String] :destination The target system at which to direct traffic.
     # @option options [String] :advertise_address The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).
     # @option options [String] :from_user The SIP user from which traffic should appear.
-    # @option options [String] :to_user The SIP user to send requests to.
-    # @option options [String] :to_domain The SIP domain to address requests to. Defaults to the same as `:destination`.
+    # @option options [String] :to_user The SIP user to send requests to. Alias for `:to`.
+    # @option options [String] :to The SIP user / address to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
     # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
     # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
@@ -779,7 +779,12 @@ Content-Length: 0
       end
 
       @from_user = args[:from_user] || "sipp"
-      @to_domain = args[:to_domain] || "[remote_ip]"
+
+      args[:to] ||= args[:to_user] if args.has_key?(:to_user)
+      if args[:to]
+        @to_user, @to_domain = args[:to].to_s.split('@')
+      end
+      @to_domain ||= "[remote_ip]"
     end
 
     def compile_media
