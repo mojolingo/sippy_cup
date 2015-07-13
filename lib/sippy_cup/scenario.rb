@@ -158,7 +158,7 @@ module SippyCup
       from_addr = "#{@from_user}@#{@adv_ip}:[local_port]"
       msg = <<-MSG
 
-INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
+INVITE sip:#{to_addr} SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
 To: <sip:#{to_addr}>
