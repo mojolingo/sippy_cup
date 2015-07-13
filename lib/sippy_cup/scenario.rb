@@ -149,13 +149,14 @@ module SippyCup
     # @param [Hash] opts A set of options to modify the message
     # @option opts [Integer] :retrans
     # @option opts [String] :headers Extra headers to place into the INVITE
+    # @option opts [String] :remote_sip_address Remote address to use in place of the SIPp constructed one
     #
     def invite(opts = {})
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       from_addr = "#{@from_user}@#{@adv_ip}:[local_port]"
-      to_addr   = "[service]@[remote_ip]:[remote_port]"
+      to_addr   = opts.delete(:remote_sip_address) || "[service]@[remote_ip]:[remote_port]"
       msg = <<-MSG
 
 INVITE sip:#{to_addr} SIP/2.0
@@ -325,7 +326,7 @@ Content-Type: application/sdp
 Content-Length: [len]
 
 v=0
-o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip} 
+o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip}
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0

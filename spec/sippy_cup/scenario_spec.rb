@@ -91,6 +91,13 @@ describe SippyCup::Scenario do
         subject.to_xml.should match(%r{Contact: <sip:sipp@})
       end
     end
+
+    context "when specifiying a remote_sip_address" do
+      it 'uses that in place of coonstructing a remote address' do
+        subject.invite remote_sip_address: 'foo@baz.com:5061'
+        subject.to_xml.should match(%r{To: <sip:foo@baz.com:5061>})
+      end
+    end
   end
 
   describe "#register" do
