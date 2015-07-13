@@ -97,8 +97,8 @@ describe SippyCup::Scenario do
 
       it "includes the specified user in the To header and URI line" do
         subject.invite
-        subject.to_xml.should match(%r{To: <sip:\[service\]@\[remote_ip\]})
-        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]})
+        subject.to_xml.should match(%r{To: <sip:\[service\]@\[remote_ip\]:\[remote_port\]})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\]})
       end
     end
 
@@ -107,16 +107,16 @@ describe SippyCup::Scenario do
 
       it "includes the specified address in the To header, but not the URI line" do
         subject.invite
-        subject.to_xml.should match(%r{To: <sip:\[service\]@foo.bar})
-        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]})
+        subject.to_xml.should match(%r{To: <sip:\[service\]@foo.bar:\[remote_port\]})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\]})
       end
     end
 
     context "when no to is specified" do
       it "uses a default of '[remote_ip]' in the To header and URI line" do
         subject.invite
-        subject.to_xml.should match(%r{To: <sip:\[service\]@\[remote_ip\]})
-        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]})
+        subject.to_xml.should match(%r{To: <sip:\[service\]@\[remote_ip\]:\[remote_port\]})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\]})
       end
     end
   end

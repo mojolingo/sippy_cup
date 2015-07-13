@@ -190,7 +190,7 @@ steps:
       end
 
       it 'should set the -s option' do
-        expect_command_execution(/-s frank/)
+        expect_command_execution(/-s frank /)
         subject.run
       end
     end

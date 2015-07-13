@@ -1,4 +1,5 @@
 # develop
+  * Bugfix: Ensure destination user is parsed out from `:to` correctly
 
 # [0.7.0](https://github.com/mojolingo/sippy_cup/compare/v0.6.0...v0.7.0)
   * Feature: Permit `To` domain to be different from the destination. This permits testing multi-tenant systems more easily.
