@@ -105,10 +105,10 @@ describe SippyCup::Scenario do
     context "when a to address is specified" do
       let(:args) { {to: 'usera@foo.bar'} }
 
-      it "includes the specified address in the To header, but not the URI line" do
+      it "includes the specified address in the To header and URI line" do
         subject.invite
         subject.to_xml.should match(%r{To: <sip:\[service\]@foo.bar:\[remote_port\]})
-        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]:\[remote_port\]})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@foo.bar:\[remote_port\]})
       end
     end
 
