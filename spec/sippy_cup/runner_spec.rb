@@ -86,7 +86,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-to_user: 1
+to: 1
 concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -166,7 +166,7 @@ steps:
       end
     end
 
-    context "specifying a to_user in the Scenario" do
+    context "specifying a to in the Scenario" do
       let(:manifest) do
         <<-MANIFEST
 name: foobar
@@ -176,7 +176,7 @@ concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 from_user: pat
-to_user: frank
+to: frank@there.com
 steps:
   - invite
   - wait_for_answer
@@ -450,9 +450,7 @@ steps:
         let(:exit_code) { 0 }
 
         it "doesn't raise anything if SIPp returns 0" do
-          quietly do
-            subject.run.should be true
-          end
+          subject.run.should be true
         end
       end
 
@@ -460,10 +458,8 @@ steps:
         let(:exit_code) { 1 }
 
         it "returns false if SIPp returns 1" do
-          quietly do
-            logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-            subject.run.should be false
-          end
+          logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
+          subject.run.should be false
         end
       end
 
@@ -471,9 +467,7 @@ steps:
         let(:exit_code) { 97 }
 
         it "raises a ExitOnInternalCommand error if SIPp returns 97" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::ExitOnInternalCommand, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::ExitOnInternalCommand, error_string
         end
       end
 
@@ -481,9 +475,7 @@ steps:
         let(:exit_code) { 99 }
 
         it "raises a NoCallsProcessed error if SIPp returns 99" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::NoCallsProcessed, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::NoCallsProcessed, error_string
         end
       end
 
@@ -491,9 +483,7 @@ steps:
         let(:exit_code) { 255 }
 
         it "raises a FatalError error if SIPp returns 255" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::FatalError, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::FatalError, error_string
         end
       end
 
@@ -501,9 +491,7 @@ steps:
         let(:exit_code) { 254 }
 
         it "raises a FatalSocketBindingError error if SIPp returns 254" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::FatalSocketBindingError, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::FatalSocketBindingError, error_string
         end
       end
 
@@ -511,15 +499,11 @@ steps:
         let(:exit_code) { 128 }
 
         it "raises a SippGenericError error if SIPp returns 255" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
         end
 
         it "raises a SippGenericError error with the appropriate message" do
-          quietly do
-            expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
-          end
+          expect { subject.run }.to raise_error SippyCup::SippGenericError, error_string
         end
       end
     end
@@ -537,24 +521,18 @@ steps:
 
       context "by default" do
         it "proxies stdout to the terminal" do
-          quietly do
-            capture(:stdout) { subject.run }.strip.should == output_string
-          end
+          capture(:stdout) { subject.run }.strip.should == output_string
         end
 
         it "proxies stderr to the terminal" do
-          quietly do
-            capture(:stderr) { subject.run }.strip.should == error_string
-          end
+          capture(:stderr) { subject.run }.strip.should == error_string
         end
 
         it "does not leak threads" do
           Thread.list.each { |t| t.kill unless t = Thread.main }
           sleep 0.1
           original_thread_count = active_thread_count
-          quietly do
-            subject.run
-          end
+          subject.run
           sleep 0.1
           active_thread_count.should == original_thread_count
         end
@@ -572,14 +550,12 @@ steps:
         end
 
         it "does not leak threads" do
-          quietly do
-            Thread.list.each { |t| t.kill unless t = Thread.main }
-            sleep 0.1
-            original_thread_count = active_thread_count
-            subject.run
-            sleep 0.1
-            active_thread_count.should == original_thread_count
-          end
+          Thread.list.each { |t| t.kill unless t = Thread.main }
+          sleep 0.1
+          original_thread_count = active_thread_count
+          subject.run
+          sleep 0.1
+          active_thread_count.should == original_thread_count
         end
       end
     end
