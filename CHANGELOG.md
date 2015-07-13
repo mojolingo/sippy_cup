@@ -1,4 +1,6 @@
 # develop
+
+# [0.7.2](https://github.com/mojolingo/sippy_cup/compare/v0.7.1...v0.7.2)
   * Bugfix: Logical destination for dialog formation belongs in request line
 
 # [0.7.1](https://github.com/mojolingo/sippy_cup/compare/v0.7.0...v0.7.1)
