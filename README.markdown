@@ -204,6 +204,9 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>to_user</dt>
   <dd>SIP user to send requests to. Defaults to SIPp's default: `s` (as in `s@127.0.0.1`)</dd>
 
+  <dt>to_domain</dt>
+  <dd>SIP domain to send requests to. Defaults to the same as `destination`. Useful for testing multi-tenant systems where the `To` domain is not the same as the hostname of the system.</dd>
+
   <dt>transport</dt>
   <dd>Specify the SIP transport. Valid options are `udp` (default) or `tcp`. Default: `udp`</dd>
 

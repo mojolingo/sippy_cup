@@ -91,6 +91,24 @@ describe SippyCup::Scenario do
         subject.to_xml.should match(%r{Contact: <sip:sipp@})
       end
     end
+
+    context "when a to domain is specified" do
+      let(:args) { {to_domain: 'foo.bar'} }
+
+      it "includes the specified domain in the To header, but not the URI line" do
+        subject.invite
+        subject.to_xml.should match(%r{To: <sip:\[service\]@foo.bar})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]})
+      end
+    end
+
+    context "when no to domain is specified" do
+      it "uses a default of '[remote_ip]' in the To header and URI line" do
+        subject.invite
+        subject.to_xml.should match(%r{To: <sip:\[service\]@\[remote_ip\]})
+        subject.to_xml.should match(%r{INVITE sip:\[service\]@\[remote_ip\]})
+      end
+    end
   end
 
   describe "#register" do
