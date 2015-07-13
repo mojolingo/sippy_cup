@@ -83,7 +83,8 @@ module SippyCup
     # @option options [String] :destination The target system at which to direct traffic.
     # @option options [String] :advertise_address The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).
     # @option options [String] :from_user The SIP user from which traffic should appear.
-    # @option options [String] :to_user The SIP user to send requests to.
+    # @option options [String] :to_user The SIP user to send requests to. Alias for `:to` and deprecated in favour of the same.
+    # @option options [String] :to The SIP user / address to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
     # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
     # @option options [String, Numeric] :number_of_calls The maximum number of calls to execute in the test run.
@@ -155,10 +156,9 @@ module SippyCup
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
       from_addr = "#{@from_user}@#{@adv_ip}:[local_port]"
-      to_addr   = "[service]@[remote_ip]:[remote_port]"
       msg = <<-MSG
 
-INVITE sip:#{to_addr} SIP/2.0
+INVITE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{from_addr}>;tag=[call_number]
 To: <sip:#{to_addr}>
@@ -325,7 +325,7 @@ Content-Type: application/sdp
 Content-Length: [len]
 
 v=0
-o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip} 
+o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip}
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
@@ -448,7 +448,7 @@ a=rtpmap:0 PCMU/8000
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+To: <sip:#{to_addr}>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
 Contact: <sip:[$local_addr];transport=[transport]>
@@ -499,7 +499,7 @@ Content-Length: 0
 INFO [next_url] SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
 From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
-To: <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+To: <sip:#{to_addr}>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] INFO
 Contact: <sip:[$local_addr];transport=[transport]>
@@ -736,6 +736,10 @@ Content-Length: 0
 
   private
 
+    def to_addr
+      @to_addr ||= "[service]@#{@to_domain}:[remote_port]"
+    end
+
     #TODO: SIPS support?
     def parse_user(user)
       user.slice! 0, 4 if user =~ /sip:/
@@ -774,9 +778,13 @@ Content-Length: 0
         @dtmf_mode = :rfc2833
       end
 
-      @from_addr, @from_port = args[:source].split ':' if args[:source]
-      @to_addr, @to_port = args[:destination].split ':' if args[:destination]
       @from_user = args[:from_user] || "sipp"
+
+      args[:to] ||= args[:to_user] if args.has_key?(:to_user)
+      if args[:to]
+        @to_user, @to_domain = args[:to].to_s.split('@')
+      end
+      @to_domain ||= "[remote_ip]"
     end
 
     def compile_media

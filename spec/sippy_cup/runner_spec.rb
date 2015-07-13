@@ -86,7 +86,7 @@ steps:
 name: foobar
 source: 'dah.com'
 destination: 'bar.com'
-to_user: 1
+to: 1
 concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
@@ -166,7 +166,7 @@ steps:
       end
     end
 
-    context "specifying a to_user in the Scenario" do
+    context "specifying a to in the Scenario" do
       let(:manifest) do
         <<-MANIFEST
 name: foobar
@@ -176,7 +176,7 @@ concurrent_max: 5
 calls_per_second: 2
 number_of_calls: 10
 from_user: pat
-to_user: frank
+to: frank@there.com
 steps:
   - invite
   - wait_for_answer
