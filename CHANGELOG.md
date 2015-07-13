@@ -1,4 +1,6 @@
 # develop
+
+# [0.7.1](https://github.com/mojolingo/sippy_cup/compare/v0.7.0...v0.7.1)
   * Bugfix: Ensure destination user is parsed out from `:to` correctly
 
 # [0.7.0](https://github.com/mojolingo/sippy_cup/compare/v0.6.0...v0.7.0)
