@@ -83,7 +83,7 @@ module SippyCup
     # @option options [String] :destination The target system at which to direct traffic.
     # @option options [String] :advertise_address The IP address to advertise in SIP and SDP if different from the bind IP (defaults to the bind IP).
     # @option options [String] :from_user The SIP user from which traffic should appear.
-    # @option options [String] :to_user The SIP user to send requests to. Alias for `:to`.
+    # @option options [String] :to_user The SIP user to send requests to. Alias for `:to` and deprecated in favour of the same.
     # @option options [String] :to The SIP user / address to send requests to.
     # @option options [Integer] :media_port The RTCP (media) port to bind to locally.
     # @option options [String, Numeric] :max_concurrent The maximum number of concurrent calls to execute.
@@ -325,7 +325,7 @@ Content-Type: application/sdp
 Content-Length: [len]
 
 v=0
-o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip} 
+o=user1 53655765 2353687637 IN IP[local_ip_type] #{@adv_ip}
 s=-
 c=IN IP[media_ip_type] [media_ip]
 t=0 0
