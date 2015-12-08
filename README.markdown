@@ -273,7 +273,7 @@ For more information on possible attributes, visit the [SIPp Documentation](http
 
 ## Credits
 
-Copyright (C) 2013-2014 [Mojo Lingo LLC](https://mojolingo.com)
+Copyright (C) 2013-2015 [Mojo Lingo LLC](https://mojolingo.com)
 
 Sippy Cup is released under the [MIT license](http://opensource.org/licenses/MIT). Please see the [LICENSE](https://github.com/bklang/sippy_cup/blob/master/LICENSE) file for details.
 
