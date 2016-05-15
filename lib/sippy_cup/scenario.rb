@@ -155,7 +155,7 @@ module SippyCup
       opts[:retrans] ||= 500
       # FIXME: The DTMF mapping (101) is hard-coded. It would be better if we could
       # get this from the DTMF payload generator
-      from_addr = "#{@from_user}@#{@adv_ip}:[local_port]"
+      from_addr = "#{@from_user}@#{@from_domain || @adv_ip}:[local_port]"
       msg = <<-MSG
 
 INVITE sip:#{to_addr} SIP/2.0
@@ -447,7 +447,7 @@ a=rtpmap:0 PCMU/8000
 
 ACK [next_url] SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@#{@from_domain || @adv_ip}:[local_port]>;tag=[call_number]
 To: <sip:#{to_addr}>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] ACK
@@ -498,7 +498,7 @@ Content-Length: 0
 
 INFO [next_url] SIP/2.0
 Via: SIP/2.0/[transport] #{@adv_ip}:[local_port];branch=[branch]
-From: "#{@from_user}" <sip:#{@from_user}@#{@adv_ip}:[local_port]>;tag=[call_number]
+From: "#{@from_user}" <sip:#{@from_user}@#{@from_domain || @adv_ip}:[local_port]>;tag=[call_number]
 To: <sip:#{to_addr}>[peer_tag_param]
 Call-ID: [call_id]
 CSeq: [cseq] INFO
@@ -779,6 +779,7 @@ Content-Length: 0
       end
 
       @from_user = args[:from_user] || "sipp"
+      @from_domain = args[:from_domain]
 
       args[:to] ||= args[:to_user] if args.has_key?(:to_user)
       if args[:to]

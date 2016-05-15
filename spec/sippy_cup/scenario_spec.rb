@@ -84,6 +84,15 @@ describe SippyCup::Scenario do
       end
     end
 
+    context "when a from_domain is specified" do
+      let(:args) { {from_domain: 'foo.bar'} }
+
+      it "includes the specified address in the From header" do
+        subject.invite
+        subject.to_xml.should match(%r{From: "sipp" <sip:sipp@foo.bar:\[local_port\]})
+      end
+    end
+
     context "when no from user is specified" do
       it "uses a default of 'sipp' in the From and Contact headers" do
         subject.invite
