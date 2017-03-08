@@ -1,4 +1,5 @@
 # develop
+  * Drop support for Ruby < 2.3.0 - Too many gem dependences require Ruby 2.3, so go along with it rather than fight it
 
 # [0.7.2](https://github.com/mojolingo/sippy_cup/compare/v0.7.1...v0.7.2)
   * Bugfix: Logical destination for dialog formation belongs in request line
