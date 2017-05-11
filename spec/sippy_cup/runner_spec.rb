@@ -13,7 +13,7 @@ describe SippyCup::Runner do
 
   let(:logger) { double }
 
-  before { logger.stub :info }
+  before { allow(logger).to receive :info }
 
   let(:manifest) do
     <<-MANIFEST
@@ -36,10 +36,10 @@ steps:
   subject { SippyCup::Runner.new scenario, default_settings.merge(settings) }
 
   def expect_command_execution(command = anything)
-    Process.stub :wait2
-    subject.stub :process_exit_status
+    allow(Process).to receive :wait2
+    allow(subject).to receive :process_exit_status
 
-    subject.should_receive(:spawn).with(command, anything)
+    expect(subject).to receive(:spawn).with(command, anything)
   end
 
   describe '#run' do
@@ -54,7 +54,7 @@ steps:
         Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
         expect_command_execution.and_raise
         expect { subject.run }.to raise_error
-        Dir.entries(Dir.tmpdir).should eql(['.', '..'])
+        expect(Dir.entries(Dir.tmpdir)).to eql(['.', '..'])
       end
     end
 
@@ -73,9 +73,9 @@ steps:
     context "async" do
       let(:settings) { {async: true} }
       it 'should not wait for SIPp to terminate' do
-        subject.stub :process_exit_status
-        subject.should_receive :spawn
-        Process.should_not_receive :wait2
+        allow(subject).to receive :process_exit_status
+        expect(subject).to receive :spawn
+        expect(Process).not_to receive :wait2
         subject.run
       end
     end
@@ -281,14 +281,14 @@ steps:
 
       it 'logs the path to the csv file' do
         expect_command_execution
-        logger.should_receive(:info).with "Statistics logged at #{File.expand_path('stats.csv')}"
+        expect(logger).to receive(:info).with "Statistics logged at #{File.expand_path('stats.csv')}"
         subject.run
       end
     end
 
     context "no stats file" do
       it 'does not log a statistics file path' do
-        logger.should_receive(:info).with(/Statistics logged at/).never
+        expect(logger).to receive(:info).with(/Statistics logged at/).never
         expect_command_execution
         subject.run
       end
@@ -404,8 +404,8 @@ steps:
       end
 
       it 'uses CSV in the test run' do
-        logger.should_receive(:info).ordered.with(/Preparing to run SIPp command/)
-        logger.should_receive(:info).ordered.with(/Test completed successfully/)
+        expect(logger).to receive(:info).ordered.with(/Preparing to run SIPp command/)
+        expect(logger).to receive(:info).ordered.with(/Test completed successfully/)
         expect_command_execution(%r{-inf /path/to/vars.csv})
         subject.run
       end
@@ -450,7 +450,7 @@ steps:
         let(:exit_code) { 0 }
 
         it "doesn't raise anything if SIPp returns 0" do
-          subject.run.should be true
+          expect(subject.run).to be true
         end
       end
 
@@ -458,8 +458,8 @@ steps:
         let(:exit_code) { 1 }
 
         it "returns false if SIPp returns 1" do
-          logger.should_receive(:info).ordered.with(/Test completed successfully but some calls failed./)
-          subject.run.should be false
+          expect(logger).to receive(:info).ordered.with(/Test completed successfully but some calls failed./)
+          expect(subject.run).to be false
         end
       end
 
@@ -521,11 +521,11 @@ steps:
 
       context "by default" do
         it "proxies stdout to the terminal" do
-          capture(:stdout) { subject.run }.strip.should == output_string
+          expect(capture(:stdout) { subject.run }.strip).to eq(output_string)
         end
 
         it "proxies stderr to the terminal" do
-          capture(:stderr) { subject.run }.strip.should == error_string
+          expect(capture(:stderr) { subject.run }.strip).to eq(error_string)
         end
 
         it "does not leak threads" do
@@ -534,7 +534,7 @@ steps:
           original_thread_count = active_thread_count
           subject.run
           sleep 0.1
-          active_thread_count.should == original_thread_count
+          expect(active_thread_count).to eq(original_thread_count)
         end
       end
 
@@ -542,11 +542,11 @@ steps:
         let(:settings) { { command: command, full_sipp_output: false } }
 
         it "swallows stdout from SIPp" do
-          capture(:stdout) { subject.run }.should == ''
+          expect(capture(:stdout) { subject.run }).to eq('')
         end
 
         it "swallows stderr from SIPp" do
-          capture(:stderr) { subject.run }.should == ''
+          expect(capture(:stderr) { subject.run }).to eq('')
         end
 
         it "does not leak threads" do
@@ -555,7 +555,7 @@ steps:
           original_thread_count = active_thread_count
           subject.run
           sleep 0.1
-          active_thread_count.should == original_thread_count
+          expect(active_thread_count).to eq(original_thread_count)
         end
       end
     end
@@ -564,18 +564,18 @@ steps:
   describe '#wait' do
     before { subject.sipp_pid = pid }
     it "waits for the SIPp process" do
-      Process.should_receive(:wait2).with pid.to_i
-      subject.should_receive(:process_exit_status)
-      subject.should_receive(:cleanup_input_files)
+      expect(Process).to receive(:wait2).with pid.to_i
+      expect(subject).to receive(:process_exit_status)
+      expect(subject).to receive(:cleanup_input_files)
       subject.wait
     end
 
     context "async" do
       subject { SippyCup::Runner.new scenario, logger: logger, async: true }
       it "waits for the SIPp process and cleans up input files" do
-        Process.should_receive(:wait2).with pid.to_i
-        subject.should_receive(:process_exit_status)
-        subject.should_receive(:cleanup_input_files)
+        expect(Process).to receive(:wait2).with pid.to_i
+        expect(subject).to receive(:process_exit_status)
+        expect(subject).to receive(:cleanup_input_files)
         subject.wait
       end
     end
@@ -585,7 +585,7 @@ steps:
     before { subject.sipp_pid = pid }
 
     it "tries to kill the SIPp process if there is a PID" do
-      Process.should_receive(:kill).with("KILL", pid)
+      expect(Process).to receive(:kill).with("KILL", pid)
       subject.stop
     end
 
@@ -593,18 +593,18 @@ steps:
       let(:pid) { nil }
 
       it "doesn't try to kill the SIPp process" do
-        Process.should_receive(:kill).never
+        expect(Process).to receive(:kill).never
         subject.stop
       end
     end
 
     it "raises a Errno::ESRCH if the PID does not exist" do
-      Process.should_receive(:kill).with("KILL", pid).and_raise(Errno::ESRCH)
+      expect(Process).to receive(:kill).with("KILL", pid).and_raise(Errno::ESRCH)
       expect { subject.stop }.to raise_error Errno::ESRCH
     end
 
     it "raises a Errno::EPERM if the user has no permission to kill the process" do
-      Process.should_receive(:kill).with("KILL", pid).and_raise(Errno::EPERM)
+      expect(Process).to receive(:kill).with("KILL", pid).and_raise(Errno::EPERM)
       expect { subject.stop }.to raise_error Errno::EPERM
     end
   end
