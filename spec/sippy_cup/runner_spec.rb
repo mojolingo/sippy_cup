@@ -49,6 +49,15 @@ steps:
       subject.run
     end
 
+    context 'with sudo disabled' do
+      let(:settings) { {sudo: false} }
+      it "executes the correct command to invoke SIPp" do
+        full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
+        expect_command_execution %r{sipp -p 8836 -sf #{full_scenario_path} -i dah.com bar.com}
+        subject.run
+      end
+    end
+
     it "ensures that input files are not left on the filesystem" do
       FakeFS do
         Dir.mkdir("/tmp") unless Dir.exist?("/tmp")
