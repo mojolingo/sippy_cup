@@ -55,31 +55,31 @@ describe SippyCup::XMLScenario do
 
   describe "#to_xml" do
     it "should return the XML representation of the scenario" do
-      subject.to_xml.should == xml
+      expect(subject.to_xml).to eq(xml)
     end
   end
 
   describe "#to_tmpfiles" do
     it "writes the scenario XML to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
-      files[:scenario].should be_a(Tempfile)
-      files[:scenario].read.should eql(xml)
+      expect(files[:scenario]).to be_a(Tempfile)
+      expect(files[:scenario].read).to eql(xml)
     end
 
     it "allows the scenario XML to be read from disk independently" do
       files = scenario.to_tmpfiles
-      File.read(files[:scenario].path).should eql(xml)
+      expect(File.read(files[:scenario].path)).to eql(xml)
     end
 
     it "writes the PCAP media to a Tempfile and returns it" do
       files = scenario.to_tmpfiles
-      files[:media].should be_a(Tempfile)
-      files[:media].read.should eql(media)
+      expect(files[:media]).to be_a(Tempfile)
+      expect(files[:media].read).to eql(media)
     end
 
     it "allows the PCAP media to be read from disk independently" do
       files = scenario.to_tmpfiles
-      File.read(files[:media].path).should eql(media)
+      expect(File.read(files[:media].path)).to eql(media)
     end
 
     context "when media is not provided" do
@@ -87,18 +87,18 @@ describe SippyCup::XMLScenario do
 
       it "should not create a media file" do
         files = scenario.to_tmpfiles
-        files[:media].should be_nil
+        expect(files[:media]).to be_nil
       end
     end
   end
 
   describe "#scenario_options" do
     it "should return options passed to the initializer" do
-      scenario.scenario_options.should == {
+      expect(scenario.scenario_options).to eq({
         name: 'Test',
         source: '127.0.0.1:5060',
         destination: '10.0.0.1:5080'
-      }
+      })
     end
   end
 end

@@ -15,6 +15,7 @@ module SippyCup
     # @param [Scenario, XMLScenario] scenario The scenario to execute
     # @param [Hash] opts Options to modify the runner
     # @option opts [optional, true, false] :full_sipp_output Whether or not to copy SIPp's stdout/stderr to the parent process. Defaults to true.
+    # @option opts [optional, true, false] :sudo Whether or not to invoke SIPp with sudo. Defaults to true.
     # @option opts [optional, Logger] :logger A logger to use in place of the internal logger to STDOUT.
     # @option opts [optional, String] :command The command to execute. This is mostly available for testing.
     #
@@ -22,7 +23,7 @@ module SippyCup
       @scenario = scenario
       @scenario_options = @scenario.scenario_options
 
-      defaults = { full_sipp_output: true }
+      defaults = { full_sipp_output: true, sudo: true }
       @options = defaults.merge(opts)
 
       @command = @options[:command]
@@ -87,7 +88,7 @@ module SippyCup
 
     def command
       @command ||= begin
-        command = "sudo $(which sipp)"
+        command = @options[:sudo] ? "sudo $(which sipp)" : 'sipp'
         command_options.each_pair do |key, value|
           command << (value ? " -#{key} #{value}" : " -#{key}")
         end
