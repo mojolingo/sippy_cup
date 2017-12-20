@@ -61,4 +61,14 @@ describe SippyCup::Media do
     expect(packet.class).to be PacketFu::PcapPacket
     expect(packet.data[-4, 4]).to eq(['0b0a00a0'].pack('H*'))
   end
+
+  it 'should indicate the end of a DTMF digit by setting the End of Event flag' do
+    @media << 'dtmf:1'
+    pf = @media.compile!
+    packet = pf.body.last
+    packet.class.should be PacketFu::PcapPacket
+    packet.data[-4, 4].should == ['018a00a0'].pack('H*')
+  end
+
+
 end
