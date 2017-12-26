@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency 'packetfu', ["= 1.1.11"] # 1.1.12 introduces a breaking change, removing PacketFu::UDPPacket
-  s.add_runtime_dependency 'nokogiri', ["~> 1.6.0"]
+  s.add_runtime_dependency 'nokogiri', ["~> 1.8.1"]
   s.add_runtime_dependency 'activesupport', [">= 3.0"]
   s.add_runtime_dependency 'psych', ["~> 2.0.1"] unless RUBY_PLATFORM == 'java'
 
