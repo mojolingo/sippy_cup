@@ -76,7 +76,7 @@ module SippyCup
             #dtmf_frame.rtp_timestamp = timestamp += dtmf_frame.timestamp_interval
             dtmf_frame.rtp_sequence_num = sequence_number += 1
             dtmf_frame.rtp_ssrc_id = ssrc_id
-            dtmf_frame.end_of_event = (count == i) # Last packet?
+            dtmf_frame.end_of_event = ((count-1) == i) # Last packet?
             packet.headers.last.body = dtmf_frame.to_bytes
             packet.recalc
             @pcap_file.body << get_pcap_packet(packet, next_ts(start_time, elapsed))
