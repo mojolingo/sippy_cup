@@ -2,6 +2,7 @@
 require 'nokogiri'
 require 'psych'
 require 'active_support/core_ext/hash'
+require 'active_support/core_ext/object/blank'
 require 'tempfile'
 require 'set'
 
@@ -659,7 +660,7 @@ Content-Length: 0
       @media_nodes.reverse.each do |nop|
         nopdup = docdup.xpath(nop.path)
 
-        if pcap_path.nil? or @media.empty?
+        if pcap_path.nil? or @media.blank?
           nopdup.remove
         else
           exec = nopdup.xpath("./action/exec").first
@@ -694,7 +695,7 @@ Content-Length: 0
     #   scenario.compile! # Leaves files at test_scenario.xml and test_scenario.pcap
     #
     def compile!
-      unless @media.nil?
+      unless @media.blank?
         print "Compiling media to #{@filename}.pcap..."
         compile_media.to_file filename: "#{@filename}.pcap"
         puts "done."
@@ -720,7 +721,7 @@ Content-Length: 0
     # @see http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tempfile/rdoc/Tempfile.html
     #
     def to_tmpfiles
-      unless @media.nil? || @media.empty?
+      unless @media.blank?
         media_file = Tempfile.new 'media'
         media_file.binmode
         media_file.write compile_media.to_s
