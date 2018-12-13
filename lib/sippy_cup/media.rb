@@ -67,11 +67,13 @@ module SippyCup
           # value is the DTMF digit to send
           # append that RFC2833 digit
           # Assume 0.25 second duration for now
-          count = 250 / DTMFPayload::PTIME
+          count = (250 / DTMFPayload::PTIME) + 1
           count.times do |i|
             packet = new_packet
+            elapsed += DTMFPayload::PTIME
             dtmf_frame = DTMFPayload.new value
             dtmf_frame.rtp_marker = 1 if i == 0
+            dtmf_frame.index = i
             dtmf_frame.rtp_timestamp = timestamp # Is this correct? This is what Blink does...
             #dtmf_frame.rtp_timestamp = timestamp += dtmf_frame.timestamp_interval
             dtmf_frame.rtp_sequence_num = sequence_number += 1
@@ -80,6 +82,16 @@ module SippyCup
             packet.headers.last.body = dtmf_frame.to_bytes
             packet.recalc
             @pcap_file.body << get_pcap_packet(packet, next_ts(start_time, elapsed))
+
+            # if the end-of-event, add some redundant packets in case of loss
+            # during transmission
+            if dtmf_frame.end_of_event
+              2.times do 
+                dtmf_frame.rtp_sequence_num = sequence_number += 1
+                packet.recalc
+                @pcap_file.body << get_pcap_packet(packet, next_ts(start_time, elapsed))
+              end
+            end
           end
           # Now bump up the timestamp to cover the gap
           timestamp += count * DTMFPayload::TIMESTAMP_INTERVAL

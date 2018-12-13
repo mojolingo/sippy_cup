@@ -9,7 +9,7 @@ module SippyCup
       TIMESTAMP_INTERVAL = 160
       END_OF_EVENT = 1 << 7
       DTMF = %w{0 1 2 3 4 5 6 7 8 9 * # A B C D}.freeze
-      attr_accessor :ptime
+      attr_accessor :ptime, :index
 
       def initialize(digit, opts = {})
         super RTP_PAYLOAD_ID
@@ -39,7 +39,7 @@ module SippyCup
       end
 
       def end_of_event
-        @flags & END_OF_EVENT
+        0 < (@flags & END_OF_EVENT)
       end
 
       def media
@@ -47,7 +47,7 @@ module SippyCup
       end
 
       def timestamp_interval
-        TIMESTAMP_INTERVAL
+        TIMESTAMP_INTERVAL * (index.to_i+1)
       end
     end
   end
