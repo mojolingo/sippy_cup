@@ -62,13 +62,49 @@ describe SippyCup::Media do
     expect(packet.data[-4, 4]).to eq(['0b0a00a0'].pack('H*'))
   end
 
-  it 'should indicate the end of a DTMF digit by setting the End of Event flag' do
+  it 'should generate 15 packets representing a DTMF digit' do
     @media << 'dtmf:1'
     pf = @media.compile!
-    packet = pf.body.last
-    packet.class.should be PacketFu::PcapPacket
-    packet.data[-4, 4].should == ['018a00a0'].pack('H*')
+
+    expect(pf.body.size).to eq 15
   end
 
+  it 'should not set the end-of-event flag on the first 12 packets representing a DTMF digit' do
+    @media << 'dtmf:1'
+    pf = @media.compile!
+
+    packets=pf.body.select{|packet| packet.data[-3,1] == ['0a'].pack('H*')}
+    expect(packets).to eq pf.body[0..11]
+  end
+
+  it 'should set the end-of-event flag on the last 3 packets representing a DTMF digit' do
+    @media << 'dtmf:1'
+    pf = @media.compile!
+
+    packets=pf.body.select{|packet| packet.data[-3,1] == ['8a'].pack('H*')}
+    expect(packets).to eq pf.body[12..14]
+  end
+
+  it 'should generate a 250 ms long DTFM event' do
+    @media << 'dtmf:1'
+    pf = @media.compile!
+
+    start_time = pf.body.first.timestamp.sec.to_f + (0.000001*pf.body.first.timestamp.usec.to_f)
+    end_time = pf.body.last.timestamp.sec.to_f + (0.000001*pf.body.last.timestamp.usec.to_f)
+
+    expect(end_time - start_time).to be_within(0.01).of(0.250)
+  end
+
+  it 'should generate RTP packets representing 20ms slices of a DTMF digit' do
+    @media << 'dtmf:1'
+    pf = @media.compile!
+    
+    expected_durations=
+      12.times.map {|i| 160*(i+1)} +  # body of event come in multiples of 160 rtp timestamp units (20ms)
+      3.times.map { 160*13 }          # 3 redundant end of event packets 
+
+    expect(pf.body.map{|packet| packet.data[-2,2].unpack('H*')[0].to_i(16)}).to eq expected_durations
+  end
+  
 
 end
