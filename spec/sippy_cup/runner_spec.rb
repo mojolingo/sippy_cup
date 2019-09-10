@@ -534,7 +534,7 @@ steps:
         end
 
         it "proxies stderr to the terminal" do
-          expect(capture(:stderr) { subject.run }.strip).to eq(error_string)
+          expect(capture(:stderr) { subject.run }.strip).to include(error_string)
         end
 
         it "does not leak threads" do
